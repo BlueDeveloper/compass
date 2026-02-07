@@ -96,8 +96,8 @@ export default function Home() {
 
   /* ---------------- EMA 평활화 함수 (Double EMA) ---------------- */
   const smoothHeadingEMA = (newHeading: number): number => {
-    const ALPHA = 0.15; // EMA 계수 (0.15로 낮춰서 더 부드럽게)
-    const ALPHA2 = 0.2; // 2차 EMA 계수
+    const ALPHA = 0.2; // EMA 계수 (0.15로 낮춰서 더 부드럽게)
+    const ALPHA2 = 0.25; // 2차 EMA 계수
 
     const lastSmoothed = lastSmoothedHeadingRef.current;
     const lastDoubleSmoothed = doubleSmoothedHeadingRef.current;
@@ -141,8 +141,8 @@ export default function Home() {
     if (!permissionGranted) return;
 
     let lastUpdate = 0;
-    const THROTTLE_MS = 200; // 200ms로 증가 (더 안정적)
-    const CHANGE_THRESHOLD = 3.0; // 3도 이하 변화는 무시 (더 안정적)
+    const THROTTLE_MS = 150; // 200ms로 증가 (더 안정적)
+    const CHANGE_THRESHOLD = 2.0; // 3도 이하 변화는 무시 (더 안정적)
     const WARMUP_SAMPLES = 15; // 초기 15개 샘플은 무시하지 않음
 
     // AbsoluteOrientationSensor 사용 시도 (Android Chrome)
