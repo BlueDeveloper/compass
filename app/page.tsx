@@ -23,7 +23,6 @@ export default function Home() {
 
   // EMA 평활화를 위한 이전 값
   const lastSmoothedHeadingRef = useRef<number | null>(null);
-  const doubleSmoothedHeadingRef = useRef<number | null>(null);
   const absoluteSensorRef = useRef<any>(null);
   const sensorReadCountRef = useRef<number>(0);
 
@@ -94,46 +93,32 @@ export default function Home() {
     return diff;
   };
 
-  /* ---------------- EMA 평활화 함수 (Double EMA) ---------------- */
+  /* ---------------- EMA 평활화 함수 (Single EMA - 빠른 반응) ---------------- */
   const smoothHeadingEMA = (newHeading: number): number => {
-    const ALPHA = 0.2; // EMA 계수 (0.15로 낮춰서 더 부드럽게)
-    const ALPHA2 = 0.25; // 2차 EMA 계수
+    const ALPHA = 0.35; // EMA 계수 (높을수록 빠른 반응, 낮을수록 부드러움)
 
     const lastSmoothed = lastSmoothedHeadingRef.current;
-    const lastDoubleSmoothed = doubleSmoothedHeadingRef.current;
 
     // 첫 값 초기화
     if (lastSmoothed === null) {
       lastSmoothedHeadingRef.current = newHeading;
-      doubleSmoothedHeadingRef.current = newHeading;
       return newHeading;
     }
 
-    // Outlier rejection: 30도 이상 급격한 변화는 무시
+    // Outlier rejection: 60도 이상 급격한 변화만 무시 (완화)
     const rawDiff = Math.abs(angleDiff(newHeading, lastSmoothed));
-    if (rawDiff > 30 && sensorReadCountRef.current > 10) {
+    if (rawDiff > 60 && sensorReadCountRef.current > 10) {
       // 센서 오류로 판단, 이전 값 유지
-      return lastDoubleSmoothed !== null ? lastDoubleSmoothed : lastSmoothed;
+      return lastSmoothed;
     }
 
-    // 1차 EMA
-    const diff1 = angleDiff(newHeading, lastSmoothed);
-    let smoothed1 = lastSmoothed + ALPHA * diff1;
-    smoothed1 = mod360(smoothed1);
-    lastSmoothedHeadingRef.current = smoothed1;
+    // Single EMA (빠른 반응)
+    const diff = angleDiff(newHeading, lastSmoothed);
+    let smoothed = lastSmoothed + ALPHA * diff;
+    smoothed = mod360(smoothed);
+    lastSmoothedHeadingRef.current = smoothed;
 
-    // 2차 EMA (Double EMA for extra smoothness)
-    if (lastDoubleSmoothed === null) {
-      doubleSmoothedHeadingRef.current = smoothed1;
-      return smoothed1;
-    }
-
-    const diff2 = angleDiff(smoothed1, lastDoubleSmoothed);
-    let smoothed2 = lastDoubleSmoothed + ALPHA2 * diff2;
-    smoothed2 = mod360(smoothed2);
-    doubleSmoothedHeadingRef.current = smoothed2;
-
-    return smoothed2;
+    return smoothed;
   };
 
   /* ---------------- 센서 처리 ---------------- */
@@ -141,9 +126,9 @@ export default function Home() {
     if (!permissionGranted) return;
 
     let lastUpdate = 0;
-    const THROTTLE_MS = 150; // 200ms로 증가 (더 안정적)
-    const CHANGE_THRESHOLD = 2.0; // 3도 이하 변화는 무시 (더 안정적)
-    const WARMUP_SAMPLES = 15; // 초기 15개 샘플은 무시하지 않음
+    const THROTTLE_MS = 50; // 50ms로 빠른 반응
+    const CHANGE_THRESHOLD = 0.5; // 0.5도 이상 변화만 반영 (민감하게)
+    const WARMUP_SAMPLES = 10; // 초기 10개 샘플은 무시하지 않음
 
     // AbsoluteOrientationSensor 사용 시도 (Android Chrome)
     // @ts-ignore
@@ -183,7 +168,7 @@ export default function Home() {
 
           setHeading(smoothedHeading);
           setSensorType('AbsoluteOrientationSensor');
-          setSensorDebug(`AOS: raw=${deviceHeading.toFixed(1)}° → 2xEMA=${smoothedHeading.toFixed(1)}° [${sensorReadCountRef.current}]`);
+          setSensorDebug(`AOS: raw=${deviceHeading.toFixed(1)}° → EMA=${smoothedHeading.toFixed(1)}° [${sensorReadCountRef.current}]`);
         });
 
         sensor.addEventListener('error', (event: any) => {
@@ -257,7 +242,7 @@ export default function Home() {
         }
 
         setHeading(smoothedHeading);
-        setSensorDebug(`${debugInfo} → 2xEMA=${smoothedHeading.toFixed(1)}° [${sensorReadCountRef.current}]`);
+        setSensorDebug(`${debugInfo} → EMA=${smoothedHeading.toFixed(1)}° [${sensorReadCountRef.current}]`);
       } else {
         setSensorDebug(`센서 값 없음 - alpha: ${event.alpha}, beta: ${event.beta}, gamma: ${event.gamma}`);
         setSensorType('센서 값 없음');
@@ -459,7 +444,7 @@ export default function Home() {
                         className="absolute inset-0 flex items-start justify-center"
                         style={{
                           transformOrigin: 'center center',
-                          transition: 'transform 0.8s ease-out'
+                          transition: 'transform 0.2s ease-out'
                         }}
                     >
                       <div className="mt-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
@@ -472,7 +457,7 @@ export default function Home() {
                         className="absolute inset-0"
                         style={{
                           transformOrigin: 'center center',
-                          transition: 'transform 0.8s ease-out',
+                          transition: 'transform 0.2s ease-out',
                           transform: heading !== null ? `rotate(${-heading}deg)` : 'rotate(0deg)'
                         }}
                     >
@@ -490,7 +475,7 @@ export default function Home() {
                         className="absolute inset-0 m-auto w-32 h-32"
                         style={{
                           transformOrigin: '50% 50%',
-                          transition: 'transform 0.8s ease-out'
+                          transition: 'transform 0.2s ease-out'
                         }}
                     >
                       <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl">
@@ -627,7 +612,7 @@ export default function Home() {
                     <div className="text-gray-500 text-xs pt-2 border-t border-gray-300 space-y-1">
                       <div>💡 TIP: Android는 AbsoluteOrientationSensor 사용 시 가장 정확합니다.</div>
                       <div className="font-mono text-xs">
-                        안정화: 2xEMA (α=0.15/0.2) | 임계값: 3° | 주기: 200ms
+                        안정화: EMA (α=0.35) | 임계값: 0.5° | 주기: 50ms | 빠른 반응 모드
                       </div>
                     </div>
                   </div>
