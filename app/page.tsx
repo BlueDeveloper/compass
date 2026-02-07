@@ -17,6 +17,9 @@ export default function Home() {
   const [distance, setDistance] = useState<number | null>(null);
   const [sensorDebug, setSensorDebug] = useState<string>('');
   const [sensorType, setSensorType] = useState<string>('');
+  const [bearing, setBearing] = useState<number | null>(null);
+  const [rotationAngle, setRotationAngle] = useState<number>(0);
+  const [isAligned, setIsAligned] = useState<boolean>(false);
 
   // EMA 평활화를 위한 이전 값
   const lastSmoothedHeadingRef = useRef<number | null>(null);
@@ -333,7 +336,7 @@ export default function Home() {
       return;
 
     // 목표 방위각 계산 (진북 기준, 0~360)
-    const bearing = calculateBearing(
+    const targetBearing = calculateBearing(
         userLat,
         userLon,
         TARGET_LAT,
@@ -349,15 +352,22 @@ export default function Home() {
     );
 
     setDistance(dist);
+    setBearing(targetBearing);
 
     // 화살표 회전 각도 계산
     // bearing: 목표 방향 (진북 기준)
     // heading: 현재 기기가 향하는 방향 (진북 기준)
     // rotation: 기기 방향에서 목표 방향까지의 각도
-    let rotation = angleDiff(bearing, heading);
+    let rotation = angleDiff(targetBearing, heading);
 
     // 0~360 범위로 정규화 (시계방향 회전)
     rotation = mod360(rotation);
+    setRotationAngle(rotation);
+
+    // 정렬 판정: ±15도 이내면 정렬된 것으로 간주
+    const alignmentThreshold = 15;
+    const isCurrentlyAligned = Math.abs(angleDiff(targetBearing, heading)) <= alignmentThreshold;
+    setIsAligned(isCurrentlyAligned);
 
     arrowRef.current.style.transform = `rotate(${rotation}deg)`;
   }, [userLat, userLon, heading]);
@@ -373,6 +383,30 @@ export default function Home() {
     if (dist === null) return '계산 중...';
     if (dist < 1) return `${(dist * 1000).toFixed(0)}m`;
     return `${dist.toFixed(2)}km`;
+  };
+
+  /* ---------------- 방향 안내 텍스트 ---------------- */
+  const getDirectionGuidance = (): { text: string; icon: string; color: string } => {
+    if (rotationAngle === 0) {
+      return { text: '목표 방향!', icon: '🎯', color: 'text-green-600' };
+    }
+
+    const angle = Math.abs(angleDiff(rotationAngle, 0));
+
+    if (angle <= 15) {
+      return { text: '목표 방향! 직진하세요', icon: '✅', color: 'text-green-600' };
+    } else if (angle <= 30) {
+      const direction = rotationAngle > 180 ? '왼쪽' : '오른쪽';
+      return { text: `거의 다 왔어요! ${direction}으로 조금`, icon: '👍', color: 'text-lime-600' };
+    } else if (angle <= 60) {
+      const direction = rotationAngle > 180 ? '왼쪽' : '오른쪽';
+      return { text: `${direction}으로 ${angle.toFixed(0)}°`, icon: '↗️', color: 'text-yellow-600' };
+    } else if (angle <= 120) {
+      const direction = rotationAngle > 180 ? '왼쪽' : '오른쪽';
+      return { text: `${direction}으로 크게 돌아주세요`, icon: '⤴️', color: 'text-orange-600' };
+    } else {
+      return { text: '뒤돌아 가세요', icon: '🔄', color: 'text-red-600' };
+    }
   };
 
   /* ---------------- UI ---------------- */
@@ -409,8 +443,15 @@ export default function Home() {
                 <div className="relative flex flex-col items-center">
                   {/* 나침반 배경 */}
                   <div className="relative w-64 h-64 mb-6">
-                    {/* 외곽 원 */}
-                    <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+                    {/* 외곽 원 - 정렬 상태에 따라 색상 변경 */}
+                    <div className={`absolute inset-0 rounded-full border-4 transition-colors duration-500 ${
+                        isAligned ? 'border-green-500 shadow-lg shadow-green-300' : 'border-gray-200'
+                    }`}></div>
+
+                    {/* 정렬 인디케이터 링 */}
+                    {isAligned && (
+                        <div className="absolute inset-0 rounded-full border-8 border-green-400 animate-pulse opacity-50"></div>
+                    )}
 
                     {/* 북쪽 표시 (회전하는 나침반 다이얼) */}
                     <div
@@ -452,27 +493,39 @@ export default function Home() {
                           transition: 'transform 0.8s ease-out'
                         }}
                     >
-                      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
+                      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl">
                         {/* 화살표 그림자 */}
                         <polygon
                             points="50,5 65,90 50,75 35,90"
                             fill="#000000"
-                            opacity="0.1"
-                            transform="translate(2, 2)"
+                            opacity="0.2"
+                            transform="translate(3, 3)"
                         />
-                        {/* 화살표 본체 */}
+                        {/* 화살표 본체 - 정렬 상태에 따라 색상 변경 */}
                         <polygon
                             points="50,5 65,90 50,75 35,90"
-                            fill="#DC2626"
-                            stroke="#991B1B"
-                            strokeWidth="2"
+                            fill={isAligned ? "#10B981" : "#DC2626"}
+                            stroke={isAligned ? "#059669" : "#991B1B"}
+                            strokeWidth="3"
+                            style={{ transition: 'fill 0.5s, stroke 0.5s' }}
                         />
                         {/* 화살표 하이라이트 */}
                         <polygon
                             points="50,5 55,50 50,75 45,50"
-                            fill="#EF4444"
-                            opacity="0.6"
+                            fill={isAligned ? "#34D399" : "#EF4444"}
+                            opacity="0.7"
+                            style={{ transition: 'fill 0.5s' }}
                         />
+                        {/* 화살표 외곽 글로우 (정렬 시) */}
+                        {isAligned && (
+                            <polygon
+                                points="50,5 65,90 50,75 35,90"
+                                fill="none"
+                                stroke="#10B981"
+                                strokeWidth="8"
+                                opacity="0.3"
+                            />
+                        )}
                       </svg>
                     </div>
 
@@ -480,13 +533,46 @@ export default function Home() {
                     <div className="absolute inset-0 m-auto w-4 h-4 rounded-full bg-gray-800 border-2 border-white shadow-md"></div>
                   </div>
 
+                  {/* 방향 안내 */}
+                  {heading !== null && (
+                      <div className={`text-center mb-4 p-4 rounded-2xl transition-all duration-500 ${
+                          isAligned
+                              ? 'bg-green-100 border-2 border-green-500'
+                              : 'bg-blue-50 border-2 border-blue-200'
+                      }`}>
+                        <div className={`text-2xl font-bold mb-2 transition-colors duration-500 ${
+                            getDirectionGuidance().color
+                        }`}>
+                          <span className="mr-2">{getDirectionGuidance().icon}</span>
+                          {getDirectionGuidance().text}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          회전 각도: <span className="font-mono font-bold">{rotationAngle.toFixed(0)}°</span>
+                        </div>
+                      </div>
+                  )}
+
                   {/* 거리 정보 */}
-                  <div className="text-center">
+                  <div className="text-center mb-4">
                     <div className="text-3xl font-bold text-gray-800 mb-1">
                       {formatDistance(distance)}
                     </div>
                     <div className="text-sm text-gray-500">목표까지 거리</div>
                   </div>
+
+                  {/* 방위각 정보 */}
+                  {bearing !== null && heading !== null && (
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="bg-gray-50 rounded-lg p-2">
+                          <div className="text-gray-500 mb-1">현재 방향</div>
+                          <div className="font-mono font-bold text-gray-800">{heading.toFixed(0)}°</div>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-2">
+                          <div className="text-gray-500 mb-1">목표 방향</div>
+                          <div className="font-mono font-bold text-blue-600">{bearing.toFixed(0)}°</div>
+                        </div>
+                      </div>
+                  )}
                 </div>
             )}
           </div>
@@ -503,49 +589,51 @@ export default function Home() {
               </div>
           )}
 
-          {/* 위치 정보 */}
-          <div className="bg-white rounded-lg shadow p-4 text-xs text-gray-600 space-y-1">
-            <div className="flex justify-between">
-              <span className="font-medium">현재 위치:</span>
-              <span className="font-mono">
-                {userLat && userLon
-                    ? `${userLat.toFixed(5)}, ${userLon.toFixed(5)}`
-                    : '확인 중...'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium">목표 지점:</span>
-              <span className="font-mono">{TARGET_LAT.toFixed(5)}, {TARGET_LON.toFixed(5)}</span>
-            </div>
-            {heading !== null && (
+          {/* 정보 아코디언 */}
+          <details className="bg-white rounded-lg shadow">
+            <summary className="cursor-pointer p-4 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+              📍 상세 정보 보기
+            </summary>
+            <div className="p-4 pt-0 space-y-4">
+              {/* 위치 정보 */}
+              <div className="text-xs text-gray-600 space-y-1">
                 <div className="flex justify-between">
-                  <span className="font-medium">방향:</span>
-                  <span className="font-mono">{heading.toFixed(1)}°</span>
+                  <span className="font-medium">현재 위치:</span>
+                  <span className="font-mono">
+                    {userLat && userLon
+                        ? `${userLat.toFixed(5)}, ${userLon.toFixed(5)}`
+                        : '확인 중...'}
+                  </span>
                 </div>
-            )}
-          </div>
-
-          {/* 센서 디버그 정보 */}
-          {permissionGranted && (
-              <div className="mt-4 bg-gray-100 rounded-lg shadow p-3 text-xs space-y-2">
-                <div>
-                  <div className="font-medium text-gray-700">센서 타입:</div>
-                  <div className="font-mono text-gray-600">{sensorType || '감지 중...'}</div>
-                </div>
-                {sensorDebug && (
-                    <div>
-                      <div className="font-medium text-gray-700">센서 값:</div>
-                      <div className="font-mono text-gray-600 break-all">{sensorDebug}</div>
-                    </div>
-                )}
-                <div className="text-gray-500 text-xs pt-2 border-t border-gray-300 space-y-1">
-                  <div>💡 TIP: Android는 AbsoluteOrientationSensor 사용 시 가장 정확합니다.</div>
-                  <div className="font-mono text-xs">
-                    안정화: 2xEMA (α=0.15/0.2) | 임계값: 3° | 주기: 200ms
-                  </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">목표 지점:</span>
+                  <span className="font-mono">{TARGET_LAT.toFixed(5)}, {TARGET_LON.toFixed(5)}</span>
                 </div>
               </div>
-          )}
+
+              {/* 센서 디버그 정보 */}
+              {permissionGranted && (
+                  <div className="bg-gray-50 rounded-lg p-3 text-xs space-y-2">
+                    <div>
+                      <div className="font-medium text-gray-700">센서 타입:</div>
+                      <div className="font-mono text-gray-600">{sensorType || '감지 중...'}</div>
+                    </div>
+                    {sensorDebug && (
+                        <div>
+                          <div className="font-medium text-gray-700">센서 값:</div>
+                          <div className="font-mono text-gray-600 break-all">{sensorDebug}</div>
+                        </div>
+                    )}
+                    <div className="text-gray-500 text-xs pt-2 border-t border-gray-300 space-y-1">
+                      <div>💡 TIP: Android는 AbsoluteOrientationSensor 사용 시 가장 정확합니다.</div>
+                      <div className="font-mono text-xs">
+                        안정화: 2xEMA (α=0.15/0.2) | 임계값: 3° | 주기: 200ms
+                      </div>
+                    </div>
+                  </div>
+              )}
+            </div>
+          </details>
         </div>
       </main>
   );
