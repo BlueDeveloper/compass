@@ -19,6 +19,7 @@ export default function Home() {
 
   // 평활화를 위한 heading 히스토리
   const headingHistoryRef = useRef<number[]>([]);
+  const lastHeadingRef = useRef<number | null>(null);
 
   /* ---------------- 위치 ---------------- */
   useEffect(() => {
@@ -93,14 +94,20 @@ export default function Home() {
 
     history.push(newHeading);
 
-    // 최근 5개 값만 유지
-    if (history.length > 5) {
+    // 최근 10개 값만 유지 (5개 → 10개로 증가하여 더 부드럽게)
+    if (history.length > 10) {
       history.shift();
     }
 
-    // 평균 계산
-    const sum = history.reduce((a, b) => a + b, 0);
-    let avg = sum / history.length;
+    // 가중 평균 계산 (최근 값에 더 높은 가중치)
+    let weightedSum = 0;
+    let weightTotal = 0;
+    for (let i = 0; i < history.length; i++) {
+      const weight = i + 1; // 최근 값일수록 높은 가중치
+      weightedSum += history[i] * weight;
+      weightTotal += weight;
+    }
+    let avg = weightedSum / weightTotal;
 
     // 0-360 범위로 정규화
     while (avg < 0) avg += 360;
@@ -113,7 +120,8 @@ export default function Home() {
     if (!permissionGranted) return;
 
     let lastUpdate = 0;
-    const THROTTLE_MS = 100; // 100ms마다 업데이트
+    const THROTTLE_MS = 150; // 100ms → 150ms로 증가하여 더 안정적으로
+    const CHANGE_THRESHOLD = 2; // 2도 이하 변화는 무시
 
     const handler = (event: DeviceOrientationEvent) => {
       const now = Date.now();
@@ -148,6 +156,23 @@ export default function Home() {
       if (deviceHeading !== null) {
         // 평활화 적용
         const smoothedHeading = smoothHeading(deviceHeading);
+
+        // 작은 변화는 무시 (떨림 방지)
+        const lastHeading = lastHeadingRef.current;
+        if (lastHeading !== null) {
+          let diff = Math.abs(smoothedHeading - lastHeading);
+          // 0도/360도 경계 처리
+          if (diff > 180) {
+            diff = 360 - diff;
+          }
+
+          // threshold 이하의 변화는 무시
+          if (diff < CHANGE_THRESHOLD) {
+            return;
+          }
+        }
+
+        lastHeadingRef.current = smoothedHeading;
         setHeading(smoothedHeading);
         setSensorDebug(`${debugInfo} → smoothed: ${smoothedHeading.toFixed(1)}°`);
       } else {
@@ -300,7 +325,7 @@ export default function Home() {
                         className="absolute inset-0 flex items-start justify-center"
                         style={{
                           transformOrigin: 'center center',
-                          transition: 'transform 0.3s ease-out'
+                          transition: 'transform 0.5s ease-out'
                         }}
                     >
                       <div className="mt-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
@@ -313,7 +338,7 @@ export default function Home() {
                         className="absolute inset-0"
                         style={{
                           transformOrigin: 'center center',
-                          transition: 'transform 0.3s ease-out',
+                          transition: 'transform 0.5s ease-out',
                           transform: heading !== null ? `rotate(${-heading}deg)` : 'rotate(0deg)'
                         }}
                     >
@@ -331,7 +356,7 @@ export default function Home() {
                         className="absolute inset-0 m-auto w-32 h-32"
                         style={{
                           transformOrigin: '50% 50%',
-                          transition: 'transform 0.3s ease-out'
+                          transition: 'transform 0.5s ease-out'
                         }}
                     >
                       <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
