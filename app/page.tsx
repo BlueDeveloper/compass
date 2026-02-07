@@ -1,65 +1,172 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+
+const TARGET_LAT = 37.5349;   // 한남동 예시
+const TARGET_LON = 127.0017;
 
 export default function Home() {
+  const arrowRef = useRef<HTMLDivElement>(null);
+
+  const [userLat, setUserLat] = useState<number | null>(null);
+  const [userLon, setUserLon] = useState<number | null>(null);
+  const [heading, setHeading] = useState<number | null>(null);
+  const [permissionGranted, setPermissionGranted] = useState(false);
+
+  /* ---------------- 위치 ---------------- */
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          setUserLat(pos.coords.latitude);
+          setUserLon(pos.coords.longitude);
+        },
+        (err) => {
+          debugger
+          console.error(err);
+        },
+        { enableHighAccuracy: true }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
+
+  /* ---------------- 방향 센서 ---------------- */
+  const requestOrientationPermission = async () => {
+    // iOS 대응
+    // @ts-ignore
+    if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
+      // @ts-ignore
+      const result = await DeviceOrientationEvent.requestPermission();
+      if (result === 'granted') {
+        setPermissionGranted(true);
+      }
+    } else {
+      setPermissionGranted(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!permissionGranted) return;
+
+    const handler = (event: DeviceOrientationEvent) => {
+      let deviceHeading: number | null = null;
+
+      // iOS
+      // @ts-ignore
+      if (event.webkitCompassHeading !== undefined) {
+        // @ts-ignore
+        deviceHeading = event.webkitCompassHeading;
+      } else if (event.alpha !== null) {
+        deviceHeading = 360 - event.alpha;
+      }
+
+      if (deviceHeading !== null) {
+        setHeading(deviceHeading);
+      }
+    };
+
+    window.addEventListener('deviceorientationabsolute', handler, true);
+    window.addEventListener('deviceorientation', handler, true);
+
+    return () => {
+      window.removeEventListener('deviceorientationabsolute', handler);
+      window.removeEventListener('deviceorientation', handler);
+    };
+  }, [permissionGranted]);
+
+  /* ---------------- 방위각 계산 ---------------- */
+  const calculateBearing = (
+      lat1: number,
+      lon1: number,
+      lat2: number,
+      lon2: number
+  ) => {
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const toDeg = (rad: number) => (rad * 180) / Math.PI;
+
+    const φ1 = toRad(lat1);
+    const φ2 = toRad(lat2);
+    const Δλ = toRad(lon2 - lon1);
+
+    const y = Math.sin(Δλ) * Math.cos(φ2);
+    const x =
+        Math.cos(φ1) * Math.sin(φ2) -
+        Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+
+    return (toDeg(Math.atan2(y, x)) + 360) % 360;
+  };
+
+  /* ---------------- 화살표 회전 ---------------- */
+  useEffect(() => {
+    if (
+        userLat === null ||
+        userLon === null ||
+        heading === null ||
+        !arrowRef.current
+    )
+      return;
+
+    const bearing = calculateBearing(
+        userLat,
+        userLon,
+        TARGET_LAT,
+        TARGET_LON
+    );
+
+    const rotation = bearing - heading;
+
+    arrowRef.current.style.transform = `rotate(${rotation}deg)`;
+  }, [userLat, userLon, heading]);
+
+  /* ---------------- UI ---------------- */
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+      <main
+          style={{
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 24,
+          }}
+      >
+        {!permissionGranted && (
+            <button
+                onClick={requestOrientationPermission}
+                style={{
+                  padding: '12px 20px',
+                  fontSize: 16,
+                }}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              시작하기
+            </button>
+        )}
+
+        <div
+            ref={arrowRef}
+            style={{
+              width: 120,
+              height: 120,
+              transition: 'transform 0.2s linear',
+              transformOrigin: '50% 50%',
+            }}
+        >
+          {/* 임시 화살표 (로고로 교체) */}
+          <svg viewBox="0 0 100 100">
+            <polygon
+                points="50,0 90,100 50,80 10,100"
+                fill="black"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </svg>
+        </div>
+
+        <div style={{ fontSize: 12, opacity: 0.6 }}>
+          {userLat && userLon
+              ? `lat: ${userLat.toFixed(5)}, lon: ${userLon.toFixed(5)}`
+              : '위치 확인 중'}
         </div>
       </main>
-    </div>
   );
 }
