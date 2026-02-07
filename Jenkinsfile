@@ -27,7 +27,6 @@ pipeline {
         sh '''
           set -euo pipefail
 
-          sudo -n /bin/mkdir -p /opt/compass-mvp
           sudo -n /bin/rm -rf /opt/compass-mvp/*
           sudo -n /bin/cp -r out/* /opt/compass-mvp/
 
