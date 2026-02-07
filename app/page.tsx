@@ -16,10 +16,11 @@ export default function Home() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [sensorDebug, setSensorDebug] = useState<string>('');
+  const [sensorType, setSensorType] = useState<string>('');
 
-  // 평활화를 위한 heading 히스토리
-  const headingHistoryRef = useRef<number[]>([]);
-  const lastHeadingRef = useRef<number | null>(null);
+  // EMA 평활화를 위한 이전 값
+  const lastSmoothedHeadingRef = useRef<number | null>(null);
+  const absoluteSensorRef = useRef<any>(null);
 
   /* ---------------- 위치 ---------------- */
   useEffect(() => {
@@ -75,54 +76,104 @@ export default function Home() {
     }
   };
 
-  /* ---------------- 평활화 함수 ---------------- */
-  const smoothHeading = (newHeading: number): number => {
-    const history = headingHistoryRef.current;
-
-    // 0도/360도 경계 처리
-    if (history.length > 0) {
-      const lastHeading = history[history.length - 1];
-      const diff = newHeading - lastHeading;
-
-      // 큰 점프는 360도 경계를 넘은 것으로 간주
-      if (diff > 180) {
-        newHeading -= 360;
-      } else if (diff < -180) {
-        newHeading += 360;
-      }
-    }
-
-    history.push(newHeading);
-
-    // 최근 10개 값만 유지 (5개 → 10개로 증가하여 더 부드럽게)
-    if (history.length > 10) {
-      history.shift();
-    }
-
-    // 가중 평균 계산 (최근 값에 더 높은 가중치)
-    let weightedSum = 0;
-    let weightTotal = 0;
-    for (let i = 0; i < history.length; i++) {
-      const weight = i + 1; // 최근 값일수록 높은 가중치
-      weightedSum += history[i] * weight;
-      weightTotal += weight;
-    }
-    let avg = weightedSum / weightTotal;
-
-    // 0-360 범위로 정규화
-    while (avg < 0) avg += 360;
-    while (avg >= 360) avg -= 360;
-
-    return avg;
+  /* ---------------- 유틸리티 함수 ---------------- */
+  const mod360 = (deg: number): number => {
+    return ((deg % 360) + 360) % 360;
   };
 
+  // 두 각도의 최단 거리 차이 계산 (-180 ~ 180)
+  const angleDiff = (a: number, b: number): number => {
+    let diff = a - b;
+    while (diff > 180) diff -= 360;
+    while (diff < -180) diff += 360;
+    return diff;
+  };
+
+  /* ---------------- EMA 평활화 함수 ---------------- */
+  const smoothHeadingEMA = (newHeading: number): number => {
+    const ALPHA = 0.25; // EMA 계수 (0.2~0.3 권장, 낮을수록 부드럽지만 느림)
+
+    const lastSmoothed = lastSmoothedHeadingRef.current;
+
+    if (lastSmoothed === null) {
+      // 첫 값은 그대로 사용
+      lastSmoothedHeadingRef.current = newHeading;
+      return newHeading;
+    }
+
+    // 0~360 경계를 고려한 EMA
+    const diff = angleDiff(newHeading, lastSmoothed);
+    let smoothed = lastSmoothed + ALPHA * diff;
+    smoothed = mod360(smoothed);
+
+    lastSmoothedHeadingRef.current = smoothed;
+    return smoothed;
+  };
+
+  /* ---------------- 센서 처리 ---------------- */
   useEffect(() => {
     if (!permissionGranted) return;
 
     let lastUpdate = 0;
-    const THROTTLE_MS = 150; // 100ms → 150ms로 증가하여 더 안정적으로
-    const CHANGE_THRESHOLD = 2; // 2도 이하 변화는 무시
+    const THROTTLE_MS = 100; // 센서 업데이트 주기
+    const CHANGE_THRESHOLD = 1.5; // 1.5도 이하 변화는 무시
 
+    // AbsoluteOrientationSensor 사용 시도 (Android Chrome)
+    // @ts-ignore
+    if (typeof AbsoluteOrientationSensor !== 'undefined') {
+      try {
+        // @ts-ignore
+        const sensor = new AbsoluteOrientationSensor({ frequency: 60 });
+        absoluteSensorRef.current = sensor;
+
+        sensor.addEventListener('reading', () => {
+          const now = Date.now();
+          if (now - lastUpdate < THROTTLE_MS) return;
+          lastUpdate = now;
+
+          // quaternion을 euler 각도로 변환
+          const q = sensor.quaternion;
+          const [x, y, z, w] = q;
+
+          // 요 (yaw) 계산 - 진북 기준
+          const yaw = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
+          let deviceHeading = mod360(yaw * (180 / Math.PI));
+
+          // EMA 평활화 적용
+          const smoothedHeading = smoothHeadingEMA(deviceHeading);
+
+          // 작은 변화 무시
+          const lastHeading = heading;
+          if (lastHeading !== null) {
+            const diff = Math.abs(angleDiff(smoothedHeading, lastHeading));
+            if (diff < CHANGE_THRESHOLD) return;
+          }
+
+          setHeading(smoothedHeading);
+          setSensorType('AbsoluteOrientationSensor');
+          setSensorDebug(`AOS: raw=${deviceHeading.toFixed(1)}° → EMA=${smoothedHeading.toFixed(1)}°`);
+        });
+
+        sensor.addEventListener('error', (event: any) => {
+          console.error('AbsoluteOrientationSensor error:', event.error);
+          setSensorDebug(`AOS 에러: ${event.error.name}`);
+        });
+
+        sensor.start();
+        setSensorType('AbsoluteOrientationSensor (시작됨)');
+
+        return () => {
+          if (absoluteSensorRef.current) {
+            absoluteSensorRef.current.stop();
+          }
+        };
+      } catch (error) {
+        console.warn('AbsoluteOrientationSensor 사용 불가, DeviceOrientation으로 fallback');
+        setSensorType('DeviceOrientation (AOS 실패)');
+      }
+    }
+
+    // DeviceOrientation fallback (iOS 및 기타)
     const handler = (event: DeviceOrientationEvent) => {
       const now = Date.now();
       if (now - lastUpdate < THROTTLE_MS) return;
@@ -131,52 +182,48 @@ export default function Home() {
       let deviceHeading: number | null = null;
       let debugInfo = '';
 
-      // iOS Safari - webkitCompassHeading 사용
+      // iOS Safari - webkitCompassHeading 사용 (진북 기준)
       // @ts-ignore
       if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
         // @ts-ignore
         const iosHeading = event.webkitCompassHeading as number;
-        deviceHeading = iosHeading;
-        debugInfo = `iOS webkitCompassHeading: ${iosHeading.toFixed(1)}°`;
+        deviceHeading = mod360(iosHeading);
+        debugInfo = `iOS webkit: ${iosHeading.toFixed(1)}°`;
+        setSensorType('iOS webkitCompassHeading');
       }
       // Android/Others - alpha 사용
       else if (event.alpha !== null) {
-        // absolute 이벤트인 경우 alpha가 북쪽 기준
-        // 일반 이벤트인 경우 360 - alpha
         // @ts-ignore
         if (event.absolute === true || event.type === 'deviceorientationabsolute') {
-          deviceHeading = event.alpha;
-          debugInfo = `Android absolute: ${event.alpha.toFixed(1)}°`;
+          // absolute 이벤트: alpha가 진북 기준
+          deviceHeading = mod360(event.alpha);
+          debugInfo = `Android abs: ${event.alpha.toFixed(1)}°`;
+          setSensorType('DeviceOrientation (absolute)');
         } else {
-          deviceHeading = 360 - event.alpha;
-          debugInfo = `Android relative: ${(360 - event.alpha).toFixed(1)}° (alpha: ${event.alpha.toFixed(1)})`;
+          // relative 이벤트: 화면 초기 방향 기준
+          // 주의: 이 경우 진북이 아니므로 정확하지 않을 수 있음
+          deviceHeading = mod360(360 - event.alpha);
+          debugInfo = `Android rel: ${(360 - event.alpha).toFixed(1)}° (부정확 가능)`;
+          setSensorType('DeviceOrientation (relative - 부정확)');
         }
       }
 
       if (deviceHeading !== null) {
-        // 평활화 적용
-        const smoothedHeading = smoothHeading(deviceHeading);
+        // EMA 평활화 적용
+        const smoothedHeading = smoothHeadingEMA(deviceHeading);
 
-        // 작은 변화는 무시 (떨림 방지)
-        const lastHeading = lastHeadingRef.current;
+        // 작은 변화 무시
+        const lastHeading = heading;
         if (lastHeading !== null) {
-          let diff = Math.abs(smoothedHeading - lastHeading);
-          // 0도/360도 경계 처리
-          if (diff > 180) {
-            diff = 360 - diff;
-          }
-
-          // threshold 이하의 변화는 무시
-          if (diff < CHANGE_THRESHOLD) {
-            return;
-          }
+          const diff = Math.abs(angleDiff(smoothedHeading, lastHeading));
+          if (diff < CHANGE_THRESHOLD) return;
         }
 
-        lastHeadingRef.current = smoothedHeading;
         setHeading(smoothedHeading);
-        setSensorDebug(`${debugInfo} → smoothed: ${smoothedHeading.toFixed(1)}°`);
+        setSensorDebug(`${debugInfo} → EMA=${smoothedHeading.toFixed(1)}°`);
       } else {
         setSensorDebug(`센서 값 없음 - alpha: ${event.alpha}, beta: ${event.beta}, gamma: ${event.gamma}`);
+        setSensorType('센서 값 없음');
       }
     };
 
@@ -188,8 +235,11 @@ export default function Home() {
     return () => {
       window.removeEventListener('deviceorientationabsolute', handler);
       window.removeEventListener('deviceorientation', handler);
+      if (absoluteSensorRef.current) {
+        absoluteSensorRef.current.stop();
+      }
     };
-  }, [permissionGranted]);
+  }, [permissionGranted, heading]);
 
   /* ---------------- 방위각 계산 ---------------- */
   const calculateBearing = (
@@ -248,6 +298,7 @@ export default function Home() {
     )
       return;
 
+    // 목표 방위각 계산 (진북 기준, 0~360)
     const bearing = calculateBearing(
         userLat,
         userLon,
@@ -255,6 +306,7 @@ export default function Home() {
         TARGET_LON
     );
 
+    // 거리 계산
     const dist = calculateDistance(
         userLat,
         userLon,
@@ -264,7 +316,14 @@ export default function Home() {
 
     setDistance(dist);
 
-    const rotation = bearing - heading;
+    // 화살표 회전 각도 계산
+    // bearing: 목표 방향 (진북 기준)
+    // heading: 현재 기기가 향하는 방향 (진북 기준)
+    // rotation: 기기 방향에서 목표 방향까지의 각도
+    let rotation = angleDiff(bearing, heading);
+
+    // 0~360 범위로 정규화 (시계방향 회전)
+    rotation = mod360(rotation);
 
     arrowRef.current.style.transform = `rotate(${rotation}deg)`;
   }, [userLat, userLon, heading]);
@@ -433,10 +492,21 @@ export default function Home() {
           </div>
 
           {/* 센서 디버그 정보 */}
-          {sensorDebug && permissionGranted && (
-              <div className="mt-4 bg-gray-100 rounded-lg shadow p-3 text-xs">
-                <div className="font-medium text-gray-700 mb-1">센서 디버그:</div>
-                <div className="font-mono text-gray-600 break-all">{sensorDebug}</div>
+          {permissionGranted && (
+              <div className="mt-4 bg-gray-100 rounded-lg shadow p-3 text-xs space-y-2">
+                <div>
+                  <div className="font-medium text-gray-700">센서 타입:</div>
+                  <div className="font-mono text-gray-600">{sensorType || '감지 중...'}</div>
+                </div>
+                {sensorDebug && (
+                    <div>
+                      <div className="font-medium text-gray-700">센서 값:</div>
+                      <div className="font-mono text-gray-600 break-all">{sensorDebug}</div>
+                    </div>
+                )}
+                <div className="text-gray-500 text-xs pt-2 border-t border-gray-300">
+                  💡 TIP: Android는 AbsoluteOrientationSensor 사용 시 가장 정확합니다.
+                </div>
               </div>
           )}
         </div>
