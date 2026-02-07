@@ -127,8 +127,9 @@ export default function Home() {
       // @ts-ignore
       if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
         // @ts-ignore
-        deviceHeading = event.webkitCompassHeading;
-        debugInfo = `iOS webkitCompassHeading: ${deviceHeading.toFixed(1)}°`;
+        const iosHeading = event.webkitCompassHeading as number;
+        deviceHeading = iosHeading;
+        debugInfo = `iOS webkitCompassHeading: ${iosHeading.toFixed(1)}°`;
       }
       // Android/Others - alpha 사용
       else if (event.alpha !== null) {
@@ -137,10 +138,10 @@ export default function Home() {
         // @ts-ignore
         if (event.absolute === true || event.type === 'deviceorientationabsolute') {
           deviceHeading = event.alpha;
-          debugInfo = `Android absolute: ${deviceHeading.toFixed(1)}°`;
+          debugInfo = `Android absolute: ${event.alpha.toFixed(1)}°`;
         } else {
           deviceHeading = 360 - event.alpha;
-          debugInfo = `Android relative: ${deviceHeading.toFixed(1)}° (alpha: ${event.alpha.toFixed(1)})`;
+          debugInfo = `Android relative: ${(360 - event.alpha).toFixed(1)}° (alpha: ${event.alpha.toFixed(1)})`;
         }
       }
 
