@@ -15,6 +15,10 @@ export default function Home() {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
+  const [sensorDebug, setSensorDebug] = useState<string>('');
+
+  // 평활화를 위한 heading 히스토리
+  const headingHistoryRef = useRef<number[]>([]);
 
   /* ---------------- 위치 ---------------- */
   useEffect(() => {
@@ -52,37 +56,107 @@ export default function Home() {
     // iOS 대응
     // @ts-ignore
     if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
-      // @ts-ignore
-      const result = await DeviceOrientationEvent.requestPermission();
-      if (result === 'granted') {
-        setPermissionGranted(true);
+      try {
+        // @ts-ignore
+        const result = await DeviceOrientationEvent.requestPermission();
+        if (result === 'granted') {
+          setPermissionGranted(true);
+          setSensorDebug('iOS 권한 승인됨');
+        } else {
+          setSensorDebug('iOS 권한 거부됨: ' + result);
+        }
+      } catch (error) {
+        setSensorDebug('iOS 권한 에러: ' + error);
       }
     } else {
       setPermissionGranted(true);
+      setSensorDebug('Android/Desktop 모드');
     }
+  };
+
+  /* ---------------- 평활화 함수 ---------------- */
+  const smoothHeading = (newHeading: number): number => {
+    const history = headingHistoryRef.current;
+
+    // 0도/360도 경계 처리
+    if (history.length > 0) {
+      const lastHeading = history[history.length - 1];
+      const diff = newHeading - lastHeading;
+
+      // 큰 점프는 360도 경계를 넘은 것으로 간주
+      if (diff > 180) {
+        newHeading -= 360;
+      } else if (diff < -180) {
+        newHeading += 360;
+      }
+    }
+
+    history.push(newHeading);
+
+    // 최근 5개 값만 유지
+    if (history.length > 5) {
+      history.shift();
+    }
+
+    // 평균 계산
+    const sum = history.reduce((a, b) => a + b, 0);
+    let avg = sum / history.length;
+
+    // 0-360 범위로 정규화
+    while (avg < 0) avg += 360;
+    while (avg >= 360) avg -= 360;
+
+    return avg;
   };
 
   useEffect(() => {
     if (!permissionGranted) return;
 
-    const handler = (event: DeviceOrientationEvent) => {
-      let deviceHeading: number | null = null;
+    let lastUpdate = 0;
+    const THROTTLE_MS = 100; // 100ms마다 업데이트
 
-      // iOS
+    const handler = (event: DeviceOrientationEvent) => {
+      const now = Date.now();
+      if (now - lastUpdate < THROTTLE_MS) return;
+      lastUpdate = now;
+
+      let deviceHeading: number | null = null;
+      let debugInfo = '';
+
+      // iOS Safari - webkitCompassHeading 사용
       // @ts-ignore
-      if (event.webkitCompassHeading !== undefined) {
+      if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
         // @ts-ignore
         deviceHeading = event.webkitCompassHeading;
-      } else if (event.alpha !== null) {
-        deviceHeading = 360 - event.alpha;
+        debugInfo = `iOS webkitCompassHeading: ${deviceHeading.toFixed(1)}°`;
+      }
+      // Android/Others - alpha 사용
+      else if (event.alpha !== null) {
+        // absolute 이벤트인 경우 alpha가 북쪽 기준
+        // 일반 이벤트인 경우 360 - alpha
+        // @ts-ignore
+        if (event.absolute === true || event.type === 'deviceorientationabsolute') {
+          deviceHeading = event.alpha;
+          debugInfo = `Android absolute: ${deviceHeading.toFixed(1)}°`;
+        } else {
+          deviceHeading = 360 - event.alpha;
+          debugInfo = `Android relative: ${deviceHeading.toFixed(1)}° (alpha: ${event.alpha.toFixed(1)})`;
+        }
       }
 
       if (deviceHeading !== null) {
-        setHeading(deviceHeading);
+        // 평활화 적용
+        const smoothedHeading = smoothHeading(deviceHeading);
+        setHeading(smoothedHeading);
+        setSensorDebug(`${debugInfo} → smoothed: ${smoothedHeading.toFixed(1)}°`);
+      } else {
+        setSensorDebug(`센서 값 없음 - alpha: ${event.alpha}, beta: ${event.beta}, gamma: ${event.gamma}`);
       }
     };
 
+    // deviceorientationabsolute 먼저 시도 (Android)
     window.addEventListener('deviceorientationabsolute', handler, true);
+    // 일반 deviceorientation (iOS 및 fallback)
     window.addEventListener('deviceorientation', handler, true);
 
     return () => {
@@ -222,8 +296,11 @@ export default function Home() {
                     {/* 북쪽 표시 (회전하는 나침반 다이얼) */}
                     <div
                         ref={compassRef}
-                        className="absolute inset-0 flex items-start justify-center transition-transform duration-300 ease-out"
-                        style={{ transformOrigin: 'center center' }}
+                        className="absolute inset-0 flex items-start justify-center"
+                        style={{
+                          transformOrigin: 'center center',
+                          transition: 'transform 0.3s ease-out'
+                        }}
                     >
                       <div className="mt-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
                         N
@@ -232,9 +309,12 @@ export default function Home() {
 
                     {/* 방향 표시 (E, S, W) */}
                     <div
-                        ref={compassRef}
-                        className="absolute inset-0 transition-transform duration-300 ease-out"
-                        style={{ transformOrigin: 'center center' }}
+                        className="absolute inset-0"
+                        style={{
+                          transformOrigin: 'center center',
+                          transition: 'transform 0.3s ease-out',
+                          transform: heading !== null ? `rotate(${-heading}deg)` : 'rotate(0deg)'
+                        }}
                     >
                       <div className="absolute top-1/2 right-4 -translate-y-1/2 text-gray-400 text-xs font-bold">E</div>
                       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-gray-400 text-xs font-bold">S</div>
@@ -247,8 +327,11 @@ export default function Home() {
                     {/* 화살표 */}
                     <div
                         ref={arrowRef}
-                        className="absolute inset-0 m-auto w-32 h-32 transition-transform duration-200 ease-linear"
-                        style={{ transformOrigin: '50% 50%' }}
+                        className="absolute inset-0 m-auto w-32 h-32"
+                        style={{
+                          transformOrigin: '50% 50%',
+                          transition: 'transform 0.3s ease-out'
+                        }}
                     >
                       <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
                         {/* 화살표 그림자 */}
@@ -318,10 +401,18 @@ export default function Home() {
             {heading !== null && (
                 <div className="flex justify-between">
                   <span className="font-medium">방향:</span>
-                  <span className="font-mono">{heading.toFixed(0)}°</span>
+                  <span className="font-mono">{heading.toFixed(1)}°</span>
                 </div>
             )}
           </div>
+
+          {/* 센서 디버그 정보 */}
+          {sensorDebug && permissionGranted && (
+              <div className="mt-4 bg-gray-100 rounded-lg shadow p-3 text-xs">
+                <div className="font-medium text-gray-700 mb-1">센서 디버그:</div>
+                <div className="font-mono text-gray-600 break-all">{sensorDebug}</div>
+              </div>
+          )}
         </div>
       </main>
   );
