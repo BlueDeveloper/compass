@@ -16,7 +16,7 @@ pipeline {
           node -v
           npm -v
 
-          npm ci
+          npm ci --legacy-peer-deps
           npm run build
         '''
       }
