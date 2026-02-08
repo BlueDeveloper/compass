@@ -16,6 +16,8 @@ export default function RadarPage() {
   const [permissionGranted, setPermissionGranted] = useState(false);
 
   const lastHeadingRef = useRef<number | null>(null);
+  const lastBearingRef = useRef<number | null>(null);
+  const lastDistanceRef = useRef<number | null>(null);
 
   /* ---------------- 유틸리티 함수 ---------------- */
   const mod360 = (deg: number): number => {
@@ -27,6 +29,39 @@ export default function RadarPage() {
     while (diff > 180) diff -= 360;
     while (diff < -180) diff += 360;
     return diff;
+  };
+
+  /* ---------------- 평활화 함수 ---------------- */
+  const smoothAngle = (newAngle: number, lastAngleRef: React.MutableRefObject<number | null>): number => {
+    const ALPHA = 0.3; // 각도 평활화 계수
+
+    const lastAngle = lastAngleRef.current;
+    if (lastAngle === null) {
+      lastAngleRef.current = newAngle;
+      return newAngle;
+    }
+
+    const diff = angleDiff(newAngle, lastAngle);
+    let smoothed = lastAngle + ALPHA * diff;
+    smoothed = mod360(smoothed);
+    lastAngleRef.current = smoothed;
+
+    return smoothed;
+  };
+
+  const smoothDistance = (newDistance: number): number => {
+    const ALPHA = 0.3; // 거리 평활화 계수
+
+    const lastDistance = lastDistanceRef.current;
+    if (lastDistance === null) {
+      lastDistanceRef.current = newDistance;
+      return newDistance;
+    }
+
+    const smoothed = lastDistance + ALPHA * (newDistance - lastDistance);
+    lastDistanceRef.current = smoothed;
+
+    return smoothed;
   };
 
   /* ---------------- 위치 추적 ---------------- */
@@ -78,7 +113,8 @@ export default function RadarPage() {
       }
 
       if (deviceHeading !== null) {
-        setHeading(deviceHeading);
+        const smoothedHeading = smoothAngle(deviceHeading, lastHeadingRef);
+        setHeading(smoothedHeading);
       }
     };
 
@@ -112,7 +148,9 @@ export default function RadarPage() {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const dist = R * c;
 
-    setDistance(dist);
+    // 거리 평활화
+    const smoothedDist = smoothDistance(dist);
+    setDistance(smoothedDist);
 
     // 방위각 계산
     const toDeg = (rad: number) => (rad * 180) / Math.PI;
@@ -121,7 +159,10 @@ export default function RadarPage() {
         Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
 
     const bearingCalc = (toDeg(Math.atan2(y, x)) + 360) % 360;
-    setBearing(bearingCalc);
+
+    // 방위각 평활화
+    const smoothedBearing = smoothAngle(bearingCalc, lastBearingRef);
+    setBearing(smoothedBearing);
   }, [userLat, userLon]);
 
   /* ---------------- 자동 줌 조정 ---------------- */

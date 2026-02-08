@@ -94,9 +94,9 @@ export default function Home() {
     return diff;
   };
 
-  /* ---------------- EMA 평활화 함수 (Single EMA - 빠른 반응) ---------------- */
+  /* ---------------- EMA 평활화 함수 (Single EMA - 균형) ---------------- */
   const smoothHeadingEMA = (newHeading: number): number => {
-    const ALPHA = 0.35; // EMA 계수 (높을수록 빠른 반응, 낮을수록 부드러움)
+    const ALPHA = 0.25; // EMA 계수 (균형: 빠른 반응 + 안정성)
 
     const lastSmoothed = lastSmoothedHeadingRef.current;
 
@@ -127,8 +127,8 @@ export default function Home() {
     if (!permissionGranted) return;
 
     let lastUpdate = 0;
-    const THROTTLE_MS = 50; // 50ms로 빠른 반응
-    const CHANGE_THRESHOLD = 0.5; // 0.5도 이상 변화만 반영 (민감하게)
+    const THROTTLE_MS = 100; // 100ms (균형: 초당 10회 업데이트)
+    const CHANGE_THRESHOLD = 1.5; // 1.5도 (균형: 적절한 민감도)
     const WARMUP_SAMPLES = 10; // 초기 10개 샘플은 무시하지 않음
 
     // AbsoluteOrientationSensor 사용 시도 (Android Chrome)
@@ -438,7 +438,7 @@ export default function Home() {
                         className="absolute inset-0 flex items-start justify-center"
                         style={{
                           transformOrigin: 'center center',
-                          transition: 'transform 0.2s ease-out'
+                          transition: 'transform 0.3s ease-out'
                         }}
                     >
                       <div className="mt-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
@@ -451,7 +451,7 @@ export default function Home() {
                         className="absolute inset-0"
                         style={{
                           transformOrigin: 'center center',
-                          transition: 'transform 0.2s ease-out',
+                          transition: 'transform 0.3s ease-out',
                           transform: heading !== null ? `rotate(${-heading}deg)` : 'rotate(0deg)'
                         }}
                     >
@@ -469,7 +469,7 @@ export default function Home() {
                         className="absolute inset-0 m-auto w-32 h-32"
                         style={{
                           transformOrigin: '50% 50%',
-                          transition: 'transform 0.2s ease-out'
+                          transition: 'transform 0.3s ease-out'
                         }}
                     >
                       <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
@@ -587,7 +587,7 @@ export default function Home() {
                     <div className="text-gray-500 text-xs pt-2 border-t border-gray-300 space-y-1">
                       <div>💡 TIP: Android는 AbsoluteOrientationSensor 사용 시 가장 정확합니다.</div>
                       <div className="font-mono text-xs">
-                        안정화: EMA (α=0.35) | 임계값: 0.5° | 주기: 50ms | 빠른 반응 모드
+                        안정화: EMA (α=0.25) | 임계값: 1.5° | 주기: 100ms | 균형 모드
                       </div>
                     </div>
                   </div>
