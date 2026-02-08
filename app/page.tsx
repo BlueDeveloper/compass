@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 
 const TARGET_LAT = 37.5547;   // 한남동 예시
 const TARGET_LON = 126.9708;
@@ -428,15 +429,8 @@ export default function Home() {
                 <div className="relative flex flex-col items-center">
                   {/* 나침반 배경 */}
                   <div className="relative w-64 h-64 mb-6">
-                    {/* 외곽 원 - 정렬 상태에 따라 색상 변경 */}
-                    <div className={`absolute inset-0 rounded-full border-4 transition-colors duration-500 ${
-                        isAligned ? 'border-green-500 shadow-lg shadow-green-300' : 'border-gray-200'
-                    }`}></div>
-
-                    {/* 정렬 인디케이터 링 */}
-                    {isAligned && (
-                        <div className="absolute inset-0 rounded-full border-8 border-green-400 animate-pulse opacity-50"></div>
-                    )}
+                    {/* 외곽 원 */}
+                    <div className="absolute inset-0 rounded-full border-4 border-gray-300"></div>
 
                     {/* 북쪽 표시 (회전하는 나침반 다이얼) */}
                     <div
@@ -478,39 +472,27 @@ export default function Home() {
                           transition: 'transform 0.2s ease-out'
                         }}
                     >
-                      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl">
+                      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
                         {/* 화살표 그림자 */}
                         <polygon
                             points="50,5 65,90 50,75 35,90"
                             fill="#000000"
-                            opacity="0.2"
-                            transform="translate(3, 3)"
+                            opacity="0.1"
+                            transform="translate(2, 2)"
                         />
-                        {/* 화살표 본체 - 정렬 상태에 따라 색상 변경 */}
+                        {/* 화살표 본체 */}
                         <polygon
                             points="50,5 65,90 50,75 35,90"
-                            fill={isAligned ? "#10B981" : "#DC2626"}
-                            stroke={isAligned ? "#059669" : "#991B1B"}
-                            strokeWidth="3"
-                            style={{ transition: 'fill 0.5s, stroke 0.5s' }}
+                            fill="#DC2626"
+                            stroke="#991B1B"
+                            strokeWidth="2"
                         />
                         {/* 화살표 하이라이트 */}
                         <polygon
                             points="50,5 55,50 50,75 45,50"
-                            fill={isAligned ? "#34D399" : "#EF4444"}
-                            opacity="0.7"
-                            style={{ transition: 'fill 0.5s' }}
+                            fill="#EF4444"
+                            opacity="0.6"
                         />
-                        {/* 화살표 외곽 글로우 (정렬 시) */}
-                        {isAligned && (
-                            <polygon
-                                points="50,5 65,90 50,75 35,90"
-                                fill="none"
-                                stroke="#10B981"
-                                strokeWidth="8"
-                                opacity="0.3"
-                            />
-                        )}
                       </svg>
                     </div>
 
@@ -520,19 +502,12 @@ export default function Home() {
 
                   {/* 방향 안내 */}
                   {heading !== null && (
-                      <div className={`text-center mb-4 p-4 rounded-2xl transition-all duration-500 ${
-                          isAligned
-                              ? 'bg-green-100 border-2 border-green-500'
-                              : 'bg-blue-50 border-2 border-blue-200'
-                      }`}>
-                        <div className={`text-2xl font-bold mb-2 transition-colors duration-500 ${
-                            getDirectionGuidance().color
-                        }`}>
-                          <span className="mr-2">{getDirectionGuidance().icon}</span>
+                      <div className="text-center mb-4 p-3 bg-white rounded-lg border border-gray-200">
+                        <div className="text-xl font-bold text-gray-800 mb-1">
                           {getDirectionGuidance().text}
                         </div>
-                        <div className="text-sm text-gray-600">
-                          회전 각도: <span className="font-mono font-bold">{rotationAngle.toFixed(0)}°</span>
+                        <div className="text-sm text-gray-500">
+                          {rotationAngle.toFixed(0)}°
                         </div>
                       </div>
                   )}
@@ -619,6 +594,14 @@ export default function Home() {
               )}
             </div>
           </details>
+
+          {/* 레이더 모드 버튼 */}
+          <Link
+              href="/radar"
+              className="mt-4 block text-center bg-slate-800 hover:bg-slate-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+          >
+            🎯 레이더 모드로 전환
+          </Link>
         </div>
       </main>
   );
