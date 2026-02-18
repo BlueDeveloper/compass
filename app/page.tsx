@@ -1,608 +1,820 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
-const TARGET_LAT = 37.5547;   // 한남동 예시
-const TARGET_LON = 126.9708;
+/* ═══════════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════════ */
+const DEFAULT_LAT = 37.5547;
+const DEFAULT_LON = 126.9708;
+const ARRIVAL_KM  = 0.05;   // 50m → 도착 판정
+const ALIGN_DEG   = 15;     // ±15° → 방향 맞음 판정
 
-export default function Home() {
-  const arrowRef = useRef<HTMLDivElement>(null);
-  const compassRef = useRef<HTMLDivElement>(null);
+/* ═══════════════════════════════════════════
+   COMPONENT
+═══════════════════════════════════════════ */
+export default function CompassPage() {
 
-  const [userLat, setUserLat] = useState<number | null>(null);
-  const [userLon, setUserLon] = useState<number | null>(null);
-  const [heading, setHeading] = useState<number | null>(null);
+  /* ── UI Phase ── */
+  const [phase,          setPhase]          = useState<'search' | 'compass'>('search');
+  const [compassVisible, setCompassVisible] = useState(false);
+  const [isShaking,      setIsShaking]      = useState(false);
+
+  /* ── Search Form ── */
+  const [inputLat,  setInputLat]  = useState('');
+  const [inputLon,  setInputLon]  = useState('');
+  const [formError, setFormError] = useState('');
+
+  /* ── Target ── */
+  const [targetLat, setTargetLat] = useState(DEFAULT_LAT);
+  const [targetLon, setTargetLon] = useState(DEFAULT_LON);
+
+  /* ── Sensor ── */
+  const [userLat,          setUserLat]          = useState<number | null>(null);
+  const [userLon,          setUserLon]          = useState<number | null>(null);
+  const [heading,          setHeading]          = useState<number | null>(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
-  const [distance, setDistance] = useState<number | null>(null);
-  const [sensorDebug, setSensorDebug] = useState<string>('');
-  const [sensorType, setSensorType] = useState<string>('');
-  const [bearing, setBearing] = useState<number | null>(null);
-  const [rotationAngle, setRotationAngle] = useState<number>(0);
-  const [isAligned, setIsAligned] = useState<boolean>(false);
 
-  // EMA 평활화를 위한 이전 값
-  const lastSmoothedHeadingRef = useRef<number | null>(null);
-  const absoluteSensorRef = useRef<any>(null);
-  const sensorReadCountRef = useRef<number>(0);
+  /* ── Navigation ── */
+  const [distance,  setDistance]  = useState<number | null>(null);
+  const [bearing,   setBearing]   = useState<number | null>(null);
+  const [rotAngle,  setRotAngle]  = useState(0);   // 화살표 회전 (0 = 정면)
+  const [isAligned, setIsAligned] = useState(false);
+  const [isArrived, setIsArrived] = useState(false);
 
-  /* ---------------- 위치 ---------------- */
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocationError('위치 서비스를 지원하지 않는 브라우저입니다.');
-      return;
+  /* ── Refs ── */
+  const audioCtxRef   = useRef<AudioContext | null>(null);
+  const noiseSrcRef   = useRef<AudioBufferSourceNode | null>(null);
+  const gainRef       = useRef<GainNode | null>(null);
+  const lastHRef      = useRef<number | null>(null);
+  const cntRef        = useRef(0);
+  const absSensorRef  = useRef<any>(null);
+
+  /* ═══════════════════════════════════════════
+     AUDIO
+  ═══════════════════════════════════════════ */
+  const initAudio = useCallback(() => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
-
-    const watchId = navigator.geolocation.watchPosition(
-        (pos) => {
-          setUserLat(pos.coords.latitude);
-          setUserLon(pos.coords.longitude);
-          setLocationError(null);
-        },
-        (err) => {
-          console.error(err);
-          if (err.code === err.PERMISSION_DENIED) {
-            setLocationError('위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.');
-          } else if (err.code === err.POSITION_UNAVAILABLE) {
-            setLocationError('위치 정보를 사용할 수 없습니다.');
-          } else if (err.code === err.TIMEOUT) {
-            setLocationError('위치 요청 시간이 초과되었습니다.');
-          } else {
-            setLocationError('위치를 가져오는 중 오류가 발생했습니다.');
-          }
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-
-    return () => navigator.geolocation.clearWatch(watchId);
+    if (audioCtxRef.current.state === 'suspended') {
+      audioCtxRef.current.resume();
+    }
   }, []);
 
-  /* ---------------- 방향 센서 ---------------- */
-  const requestOrientationPermission = async () => {
-    // iOS 대응
-    // @ts-ignore
-    if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
-      try {
-        // @ts-ignore
-        const result = await DeviceOrientationEvent.requestPermission();
-        if (result === 'granted') {
-          setPermissionGranted(true);
-          setSensorDebug('iOS 권한 승인됨');
-        } else {
-          setSensorDebug('iOS 권한 거부됨: ' + result);
-        }
-      } catch (error) {
-        setSensorDebug('iOS 권한 에러: ' + error);
-      }
+  const makeBuf = useCallback(() => {
+    const ctx = audioCtxRef.current!;
+    const len = ctx.sampleRate * 2;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d   = buf.getChannelData(0);
+    // Brown noise
+    let last = 0;
+    for (let i = 0; i < len; i++) {
+      const w = Math.random() * 2 - 1;
+      last = (last + 0.02 * w) / 1.02;
+      d[i] = last * 3.8;
+    }
+    return buf;
+  }, []);
+
+  const startNoise = useCallback((vol: number) => {
+    if (!audioCtxRef.current) return;
+    try {
+      if (noiseSrcRef.current) { try { noiseSrcRef.current.stop(); } catch {} noiseSrcRef.current = null; }
+      const ctx  = audioCtxRef.current;
+      const src  = ctx.createBufferSource();
+      src.buffer = makeBuf();
+      src.loop   = true;
+
+      const gain = ctx.createGain();
+      gain.gain.value = vol;
+
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 180;
+
+      src.connect(hp);
+      hp.connect(gain);
+      gain.connect(ctx.destination);
+      src.start();
+
+      noiseSrcRef.current = src;
+      gainRef.current     = gain;
+    } catch {}
+  }, [makeBuf]);
+
+  const stopNoise = useCallback(() => {
+    if (noiseSrcRef.current) {
+      try { noiseSrcRef.current.stop(); } catch {}
+      noiseSrcRef.current = null;
+    }
+  }, []);
+
+  const setNoiseVol = useCallback((vol: number) => {
+    if (gainRef.current && audioCtxRef.current) {
+      gainRef.current.gain.setTargetAtTime(vol, audioCtxRef.current.currentTime, 0.08);
+    }
+  }, []);
+
+  /* ═══════════════════════════════════════════
+     GEOLOCATION
+  ═══════════════════════════════════════════ */
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    const id = navigator.geolocation.watchPosition(
+      pos => { setUserLat(pos.coords.latitude); setUserLon(pos.coords.longitude); },
+      err  => console.error(err),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+    return () => navigator.geolocation.clearWatch(id);
+  }, []);
+
+  /* ═══════════════════════════════════════════
+     HEADING SENSOR
+  ═══════════════════════════════════════════ */
+  const mod360 = (d: number) => ((d % 360) + 360) % 360;
+  const angDiff = (a: number, b: number) => {
+    let d = a - b;
+    while (d >  180) d -= 360;
+    while (d < -180) d += 360;
+    return d;
+  };
+
+  const smoothH = (h: number): number => {
+    const last = lastHRef.current;
+    if (last === null) { lastHRef.current = h; return h; }
+    if (Math.abs(angDiff(h, last)) > 60 && cntRef.current > 10) return last;
+    const s = mod360(last + 0.25 * angDiff(h, last));
+    lastHRef.current = s;
+    return s;
+  };
+
+  const requestPermission = useCallback(async () => {
+    initAudio();
+    if (typeof (DeviceOrientationEvent as any)?.requestPermission === 'function') {
+      const r = await (DeviceOrientationEvent as any).requestPermission();
+      if (r === 'granted') setPermissionGranted(true);
     } else {
       setPermissionGranted(true);
-      setSensorDebug('Android/Desktop 모드');
     }
-  };
+  }, [initAudio]);
 
-  /* ---------------- 유틸리티 함수 ---------------- */
-  const mod360 = (deg: number): number => {
-    return ((deg % 360) + 360) % 360;
-  };
-
-  // 두 각도의 최단 거리 차이 계산 (-180 ~ 180)
-  const angleDiff = (a: number, b: number): number => {
-    let diff = a - b;
-    while (diff > 180) diff -= 360;
-    while (diff < -180) diff += 360;
-    return diff;
-  };
-
-  /* ---------------- EMA 평활화 함수 (Single EMA - 균형) ---------------- */
-  const smoothHeadingEMA = (newHeading: number): number => {
-    const ALPHA = 0.25; // EMA 계수 (균형: 빠른 반응 + 안정성)
-
-    const lastSmoothed = lastSmoothedHeadingRef.current;
-
-    // 첫 값 초기화
-    if (lastSmoothed === null) {
-      lastSmoothedHeadingRef.current = newHeading;
-      return newHeading;
-    }
-
-    // Outlier rejection: 60도 이상 급격한 변화만 무시 (완화)
-    const rawDiff = Math.abs(angleDiff(newHeading, lastSmoothed));
-    if (rawDiff > 60 && sensorReadCountRef.current > 10) {
-      // 센서 오류로 판단, 이전 값 유지
-      return lastSmoothed;
-    }
-
-    // Single EMA (빠른 반응)
-    const diff = angleDiff(newHeading, lastSmoothed);
-    let smoothed = lastSmoothed + ALPHA * diff;
-    smoothed = mod360(smoothed);
-    lastSmoothedHeadingRef.current = smoothed;
-
-    return smoothed;
-  };
-
-  /* ---------------- 센서 처리 ---------------- */
   useEffect(() => {
     if (!permissionGranted) return;
+    let lastT = 0;
+    const THROTTLE = 80;
 
-    let lastUpdate = 0;
-    const THROTTLE_MS = 100; // 100ms (균형: 초당 10회 업데이트)
-    const CHANGE_THRESHOLD = 1.5; // 1.5도 (균형: 적절한 민감도)
-    const WARMUP_SAMPLES = 10; // 초기 10개 샘플은 무시하지 않음
-
-    // AbsoluteOrientationSensor 사용 시도 (Android Chrome)
-    // @ts-ignore
-    if (typeof AbsoluteOrientationSensor !== 'undefined') {
+    // AbsoluteOrientationSensor (Android Chrome)
+    if (typeof (window as any).AbsoluteOrientationSensor !== 'undefined') {
       try {
-        // @ts-ignore
-        const sensor = new AbsoluteOrientationSensor({ frequency: 60 });
-        absoluteSensorRef.current = sensor;
-
+        const sensor = new (window as any).AbsoluteOrientationSensor({ frequency: 60 });
+        absSensorRef.current = sensor;
         sensor.addEventListener('reading', () => {
           const now = Date.now();
-          if (now - lastUpdate < THROTTLE_MS) return;
-          lastUpdate = now;
-
-          sensorReadCountRef.current++;
-
-          // quaternion을 euler 각도로 변환
-          const q = sensor.quaternion;
-          const [x, y, z, w] = q;
-
-          // 요 (yaw) 계산 - 진북 기준
+          if (now - lastT < THROTTLE) return;
+          lastT = now; cntRef.current++;
+          const [x, y, z, w] = sensor.quaternion;
           const yaw = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
-          let deviceHeading = mod360(yaw * (180 / Math.PI));
-
-          // Double EMA 평활화 적용
-          const smoothedHeading = smoothHeadingEMA(deviceHeading);
-
-          // 초기 안정화 기간에는 threshold 체크 생략
-          if (sensorReadCountRef.current > WARMUP_SAMPLES) {
-            // 작은 변화 무시
-            const lastHeading = heading;
-            if (lastHeading !== null) {
-              const diff = Math.abs(angleDiff(smoothedHeading, lastHeading));
-              if (diff < CHANGE_THRESHOLD) return;
-            }
-          }
-
-          setHeading(smoothedHeading);
-          setSensorType('AbsoluteOrientationSensor');
-          setSensorDebug(`AOS: raw=${deviceHeading.toFixed(1)}° → EMA=${smoothedHeading.toFixed(1)}° [${sensorReadCountRef.current}]`);
+          setHeading(smoothH(mod360(yaw * 180 / Math.PI)));
         });
-
-        sensor.addEventListener('error', (event: any) => {
-          console.error('AbsoluteOrientationSensor error:', event.error);
-          setSensorDebug(`AOS 에러: ${event.error.name}`);
-        });
-
         sensor.start();
-        setSensorType('AbsoluteOrientationSensor (시작됨)');
-
-        return () => {
-          if (absoluteSensorRef.current) {
-            absoluteSensorRef.current.stop();
-          }
-        };
-      } catch (error) {
-        console.warn('AbsoluteOrientationSensor 사용 불가, DeviceOrientation으로 fallback');
-        setSensorType('DeviceOrientation (AOS 실패)');
-      }
+        return () => { try { sensor.stop(); } catch {} };
+      } catch {}
     }
 
-    // DeviceOrientation fallback (iOS 및 기타)
-    const handler = (event: DeviceOrientationEvent) => {
+    // DeviceOrientation fallback (iOS + others)
+    const handler = (e: DeviceOrientationEvent) => {
       const now = Date.now();
-      if (now - lastUpdate < THROTTLE_MS) return;
-      lastUpdate = now;
-
-      sensorReadCountRef.current++;
-
-      let deviceHeading: number | null = null;
-      let debugInfo = '';
-
-      // iOS Safari - webkitCompassHeading 사용 (진북 기준)
-      // @ts-ignore
-      if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
-        // @ts-ignore
-        const iosHeading = event.webkitCompassHeading as number;
-        deviceHeading = mod360(iosHeading);
-        debugInfo = `iOS webkit: ${iosHeading.toFixed(1)}°`;
-        setSensorType('iOS webkitCompassHeading');
-      }
-      // Android/Others - alpha 사용
-      else if (event.alpha !== null) {
-        // @ts-ignore
-        if (event.absolute === true || event.type === 'deviceorientationabsolute') {
-          // absolute 이벤트: alpha가 진북 기준
-          deviceHeading = mod360(event.alpha);
-          debugInfo = `Android abs: ${event.alpha.toFixed(1)}°`;
-          setSensorType('DeviceOrientation (absolute)');
-        } else {
-          // relative 이벤트: 화면 초기 방향 기준
-          // 주의: 이 경우 진북이 아니므로 정확하지 않을 수 있음
-          deviceHeading = mod360(360 - event.alpha);
-          debugInfo = `Android rel: ${(360 - event.alpha).toFixed(1)}° (부정확 가능)`;
-          setSensorType('DeviceOrientation (relative - 부정확)');
-        }
-      }
-
-      if (deviceHeading !== null) {
-        // Double EMA 평활화 적용
-        const smoothedHeading = smoothHeadingEMA(deviceHeading);
-
-        // 초기 안정화 기간에는 threshold 체크 생략
-        if (sensorReadCountRef.current > WARMUP_SAMPLES) {
-          // 작은 변화 무시
-          const lastHeading = heading;
-          if (lastHeading !== null) {
-            const diff = Math.abs(angleDiff(smoothedHeading, lastHeading));
-            if (diff < CHANGE_THRESHOLD) return;
-          }
-        }
-
-        setHeading(smoothedHeading);
-        setSensorDebug(`${debugInfo} → EMA=${smoothedHeading.toFixed(1)}° [${sensorReadCountRef.current}]`);
-      } else {
-        setSensorDebug(`센서 값 없음 - alpha: ${event.alpha}, beta: ${event.beta}, gamma: ${event.gamma}`);
-        setSensorType('센서 값 없음');
-      }
+      if (now - lastT < THROTTLE) return;
+      lastT = now; cntRef.current++;
+      let raw: number | null = null;
+      if ((e as any).webkitCompassHeading != null) raw = mod360((e as any).webkitCompassHeading);
+      else if (e.alpha != null) raw = mod360(e.absolute ? e.alpha : 360 - e.alpha);
+      if (raw !== null) setHeading(smoothH(raw));
     };
 
-    // deviceorientationabsolute 먼저 시도 (Android)
-    window.addEventListener('deviceorientationabsolute', handler, true);
-    // 일반 deviceorientation (iOS 및 fallback)
+    window.addEventListener('deviceorientationabsolute', handler as any, true);
     window.addEventListener('deviceorientation', handler, true);
-
     return () => {
-      window.removeEventListener('deviceorientationabsolute', handler);
+      window.removeEventListener('deviceorientationabsolute', handler as any);
       window.removeEventListener('deviceorientation', handler);
-      if (absoluteSensorRef.current) {
-        absoluteSensorRef.current.stop();
-      }
     };
-  }, [permissionGranted, heading]);
+  }, [permissionGranted]);
 
-  /* ---------------- 방위각 계산 ---------------- */
-  const calculateBearing = (
-      lat1: number,
-      lon1: number,
-      lat2: number,
-      lon2: number
-  ) => {
-    const toRad = (deg: number) => (deg * Math.PI) / 180;
-    const toDeg = (rad: number) => (rad * 180) / Math.PI;
-
-    const φ1 = toRad(lat1);
-    const φ2 = toRad(lat2);
-    const Δλ = toRad(lon2 - lon1);
-
-    const y = Math.sin(Δλ) * Math.cos(φ2);
-    const x =
-        Math.cos(φ1) * Math.sin(φ2) -
-        Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-
-    return (toDeg(Math.atan2(y, x)) + 360) % 360;
+  /* ═══════════════════════════════════════════
+     NAVIGATION MATH
+  ═══════════════════════════════════════════ */
+  const calcBearing = (la1: number, lo1: number, la2: number, lo2: number): number => {
+    const r  = Math.PI / 180;
+    const dl = (lo2 - lo1) * r;
+    return (
+      Math.atan2(
+        Math.sin(dl) * Math.cos(la2 * r),
+        Math.cos(la1 * r) * Math.sin(la2 * r) - Math.sin(la1 * r) * Math.cos(la2 * r) * Math.cos(dl)
+      ) * 180 / Math.PI + 360
+    ) % 360;
   };
 
-  /* ---------------- 거리 계산 (Haversine) ---------------- */
-  const calculateDistance = (
-      lat1: number,
-      lon1: number,
-      lat2: number,
-      lon2: number
-  ): number => {
-    const toRad = (deg: number) => (deg * Math.PI) / 180;
-    const R = 6371; // 지구 반지름 (km)
-
-    const φ1 = toRad(lat1);
-    const φ2 = toRad(lat2);
-    const Δφ = toRad(lat2 - lat1);
-    const Δλ = toRad(lon2 - lon1);
-
-    const a =
-        Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-        Math.cos(φ1) * Math.cos(φ2) *
-        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c; // km
+  const calcDist = (la1: number, lo1: number, la2: number, lo2: number): number => {
+    const r = Math.PI / 180, R = 6371;
+    const dp = (la2 - la1) * r, dl = (lo2 - lo1) * r;
+    const a  = Math.sin(dp / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin(dl / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
-  /* ---------------- 화살표 회전 및 거리 계산 ---------------- */
   useEffect(() => {
-    if (
-        userLat === null ||
-        userLon === null ||
-        heading === null ||
-        !arrowRef.current
-    )
-      return;
+    if (userLat === null || userLon === null || heading === null) return;
+    const b   = calcBearing(userLat, userLon, targetLat, targetLon);
+    const d   = calcDist(userLat, userLon, targetLat, targetLon);
+    const rot = mod360(angDiff(b, heading));
+    setBearing(b);
+    setDistance(d);
+    setRotAngle(rot);
+    setIsAligned(Math.abs(angDiff(b, heading)) <= ALIGN_DEG);
+    setIsArrived(d < ARRIVAL_KM);
+  }, [userLat, userLon, heading, targetLat, targetLon]);
 
-    // 목표 방위각 계산 (진북 기준, 0~360)
-    const targetBearing = calculateBearing(
-        userLat,
-        userLon,
-        TARGET_LAT,
-        TARGET_LON
-    );
-
-    // 거리 계산
-    const dist = calculateDistance(
-        userLat,
-        userLon,
-        TARGET_LAT,
-        TARGET_LON
-    );
-
-    setDistance(dist);
-    setBearing(targetBearing);
-
-    // 화살표 회전 각도 계산
-    // bearing: 목표 방향 (진북 기준)
-    // heading: 현재 기기가 향하는 방향 (진북 기준)
-    // rotation: 기기 방향에서 목표 방향까지의 각도
-    let rotation = angleDiff(targetBearing, heading);
-
-    // 0~360 범위로 정규화 (시계방향 회전)
-    rotation = mod360(rotation);
-    setRotationAngle(rotation);
-
-    // 정렬 판정: ±15도 이내면 정렬된 것으로 간주
-    const alignmentThreshold = 15;
-    const isCurrentlyAligned = Math.abs(angleDiff(targetBearing, heading)) <= alignmentThreshold;
-    setIsAligned(isCurrentlyAligned);
-
-    arrowRef.current.style.transform = `rotate(${rotation}deg)`;
-  }, [userLat, userLon, heading]);
-
-  /* ---------------- 북쪽 표시 회전 ---------------- */
+  /* ═══════════════════════════════════════════
+     NOISE EFFECT
+  ═══════════════════════════════════════════ */
   useEffect(() => {
-    if (heading === null || !compassRef.current) return;
-    compassRef.current.style.transform = `rotate(${-heading}deg)`;
-  }, [heading]);
-
-  /* ---------------- 거리 포맷팅 ---------------- */
-  const formatDistance = (dist: number | null) => {
-    if (dist === null) return '계산 중...';
-    if (dist < 1) return `${(dist * 1000).toFixed(0)}m`;
-    return `${dist.toFixed(2)}km`;
-  };
-
-  /* ---------------- 방향 안내 텍스트 ---------------- */
-  const getDirectionGuidance = (): { text: string; icon: string; color: string } => {
-    if (rotationAngle === 0) {
-      return { text: '목표 방향!', icon: '🎯', color: 'text-green-600' };
-    }
-
-    const angle = Math.abs(angleDiff(rotationAngle, 0));
-
-    if (angle <= 15) {
-      return { text: '목표 방향! 직진하세요', icon: '✅', color: 'text-green-600' };
-    } else if (angle <= 30) {
-      const direction = rotationAngle > 180 ? '왼쪽' : '오른쪽';
-      return { text: `거의 다 왔어요! ${direction}으로 조금`, icon: '👍', color: 'text-lime-600' };
-    } else if (angle <= 60) {
-      const direction = rotationAngle > 180 ? '왼쪽' : '오른쪽';
-      return { text: `${direction}으로 ${angle.toFixed(0)}°`, icon: '↗️', color: 'text-yellow-600' };
-    } else if (angle <= 120) {
-      const direction = rotationAngle > 180 ? '왼쪽' : '오른쪽';
-      return { text: `${direction}으로 크게 돌아주세요`, icon: '⤴️', color: 'text-orange-600' };
+    if (!permissionGranted || phase !== 'compass') return;
+    if (isArrived) {
+      if (noiseSrcRef.current) setNoiseVol(0.55);
+      else startNoise(0.55);
+    } else if (!isAligned) {
+      if (noiseSrcRef.current) setNoiseVol(0.09);
+      else startNoise(0.09);
     } else {
-      return { text: '뒤돌아 가세요', icon: '🔄', color: 'text-red-600' };
+      stopNoise();
     }
+  }, [isAligned, isArrived, permissionGranted, phase, startNoise, stopNoise, setNoiseVol]);
+
+  /* ═══════════════════════════════════════════
+     SEARCH SUBMIT
+  ═══════════════════════════════════════════ */
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+    const lat = parseFloat(inputLat);
+    const lon = parseFloat(inputLon);
+
+    if (isNaN(lat) || isNaN(lon))           { setFormError('유효한 좌표를 입력하세요'); return; }
+    if (lat < -90  || lat > 90)             { setFormError('위도: -90 ~ +90 범위'); return; }
+    if (lon < -180 || lon > 180)            { setFormError('경도: -180 ~ +180 범위'); return; }
+
+    // 지진 흔들기 + 플리커 + 노이즈
+    initAudio();
+    startNoise(0.38);
+    setIsShaking(true);
+
+    setTimeout(() => {
+      stopNoise();
+      setIsShaking(false);
+      setTargetLat(lat);
+      setTargetLon(lon);
+      setPhase('compass');
+      requestPermission();
+      setTimeout(() => setCompassVisible(true), 250);
+    }, 1050);
   };
 
-  /* ---------------- UI ---------------- */
+  /* ═══════════════════════════════════════════
+     FORMATTERS
+  ═══════════════════════════════════════════ */
+  const fmtDist  = (d: number | null) =>
+    d === null ? '---' : d < 1 ? `${(d * 1000).toFixed(0)}m` : `${d.toFixed(2)}km`;
+  const fmtCoord = (v: number | null) =>
+    v === null ? '---.-----' : v.toFixed(5);
+  const fmtDeg   = (v: number | null) =>
+    v === null ? '---.-°' : `${v.toFixed(1)}°`;
+
+  /* ═══════════════════════════════════════════
+     SPIRIT LEVEL BUBBLE POSITION
+  ═══════════════════════════════════════════ */
+  const signedA      = rotAngle > 180 ? rotAngle - 360 : rotAngle;
+  const bubbleFactor = Math.min(Math.abs(signedA) / 90, 1);
+  const bubbleRad    = rotAngle * Math.PI / 180;
+  const BX           = 150 + Math.sin(bubbleRad) * 44 * bubbleFactor;
+  const BY           = 150 - Math.cos(bubbleRad) * 44 * bubbleFactor;
+
+  /* ═══════════════════════════════════════════
+     RENDER
+  ═══════════════════════════════════════════ */
   return (
-      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-4">
-        <div className="max-w-md w-full">
-          {/* 헤더 */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">나침반</h1>
-            <p className="text-sm text-gray-600">목표 지점을 향해 방향을 안내합니다</p>
+    <div
+      className="min-h-screen bg-black text-green-400 overflow-hidden select-none"
+      style={{ fontFamily: 'var(--font-geist-mono), "Courier New", monospace' }}
+    >
+      <style>{`
+        /* ─ Shake: earthquake ─ */
+        @keyframes shake {
+          0%,100% { transform: translate(0,0) rotate(0deg); }
+          7%   { transform: translate(-7px,-4px) rotate(-1.5deg); }
+          14%  { transform: translate(10px, 6px) rotate( 1.2deg); }
+          21%  { transform: translate(-9px, 7px) rotate(-2deg); }
+          28%  { transform: translate(7px,-8px)  rotate( 1.8deg); }
+          35%  { transform: translate(-6px, 5px) rotate(-1.2deg); }
+          42%  { transform: translate(9px,-6px)  rotate( 2.2deg); }
+          49%  { transform: translate(-11px,7px) rotate(-1.8deg); }
+          56%  { transform: translate(6px,-5px)  rotate( 1.2deg); }
+          63%  { transform: translate(-5px, 9px) rotate(-2.5deg); }
+          70%  { transform: translate(8px,-4px)  rotate( 1.5deg); }
+          77%  { transform: translate(-4px, 6px) rotate(-1deg); }
+          84%  { transform: translate(5px,-7px)  rotate( 1.2deg); }
+          91%  { transform: translate(-3px, 4px) rotate(-0.8deg); }
+        }
+
+        /* ─ Background flicker (misaligned) ─ */
+        @keyframes bgFlicker {
+          0%,100% { opacity:0; }
+          6%   { opacity:0.20; }
+          12%  { opacity:0; }
+          22%  { opacity:0.14; }
+          30%  { opacity:0; }
+          40%  { opacity:0.25; }
+          52%  { opacity:0; }
+          60%  { opacity:0.10; }
+          72%  { opacity:0; }
+          82%  { opacity:0.18; }
+          92%  { opacity:0; }
+        }
+
+        /* ─ Background flicker (arrived) ─ */
+        @keyframes bgArrived {
+          0%   { opacity:0.35; filter:invert(0); }
+          5%   { opacity:0.95; filter:invert(1); }
+          10%  { opacity:0.15; filter:invert(0); }
+          15%  { opacity:1;    filter:invert(1); }
+          20%  { opacity:0.08; filter:invert(0); }
+          25%  { opacity:0.85; filter:invert(1); }
+          30%  { opacity:0.25; filter:invert(0); }
+          35%  { opacity:0.98; filter:invert(1); }
+          40%  { opacity:0.12; filter:invert(0); }
+          45%  { opacity:0.80; filter:invert(1); }
+          50%  { opacity:0.40; filter:invert(0); }
+          55%  { opacity:0.90; filter:invert(1); }
+          60%  { opacity:0.05; filter:invert(0); }
+          65%  { opacity:0.88; filter:invert(1); }
+          70%  { opacity:0.45; filter:invert(0); }
+          75%  { opacity:0.75; filter:invert(1); }
+          80%  { opacity:0.18; filter:invert(0); }
+          85%  { opacity:0.92; filter:invert(1); }
+          90%  { opacity:0.30; filter:invert(0); }
+          95%  { opacity:0.82; filter:invert(1); }
+          100% { opacity:0.35; filter:invert(0); }
+        }
+
+        /* ─ Compass fade-in ─ */
+        @keyframes compassAppear {
+          from { opacity:0; transform:scale(0.90) translateY(12px); }
+          to   { opacity:1; transform:scale(1)    translateY(0); }
+        }
+
+        /* ─ Scanline pulse ─ */
+        @keyframes scanPulse {
+          0%,100% { opacity:0.045; }
+          50%     { opacity:0.09; }
+        }
+
+        /* ─ Pulse ring on alignment ─ */
+        @keyframes pulseRing {
+          0%,100% { stroke-opacity:0.65; stroke-width:2; r:127; }
+          50%     { stroke-opacity:0.20; stroke-width:5; r:130; }
+        }
+
+        /* ─ Arrived ring pulse ─ */
+        @keyframes arrivedRing {
+          0%,100% { stroke-opacity:0.9; stroke-width:3; }
+          50%     { stroke-opacity:0.3; stroke-width:7; }
+        }
+
+        /* ─ Applied classes ─ */
+        .shaking        { animation: shake 1.05s cubic-bezier(.36,.07,.19,.97) both; }
+        .compass-appear { animation: compassAppear 1.8s ease-out forwards; }
+
+        .flicker-overlay {
+          position:fixed; inset:0; pointer-events:none; z-index:100;
+          background:rgba(200,255,200,0.18);
+        }
+        .flicker-overlay.active  { animation: bgFlicker 0.20s steps(1) infinite; }
+        .flicker-overlay.arrived { animation: bgArrived 0.10s steps(1) infinite; background:rgba(255,255,255,0.55); }
+
+        .scanlines {
+          position:absolute; inset:0; pointer-events:none;
+          background: repeating-linear-gradient(
+            0deg, transparent, transparent 3px,
+            rgba(0,0,0,0.14) 3px, rgba(0,0,0,0.14) 4px
+          );
+          animation: scanPulse 3.5s ease-in-out infinite;
+        }
+
+        .pulse-ring-el   { animation: pulseRing  1.6s ease-in-out infinite; }
+        .arrived-ring-el { animation: arrivedRing 0.5s ease-in-out infinite; }
+
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; }
+        input[type=number] { -moz-appearance:textfield; }
+      `}</style>
+
+      {/* ── Flicker overlay ── */}
+      <div className={`flicker-overlay ${
+        isArrived ? 'arrived' : (!isAligned && phase === 'compass') ? 'active' : ''
+      }`} />
+
+      {/* ══════════════════════════════════════════════
+          SEARCH PHASE
+      ══════════════════════════════════════════════ */}
+      {phase === 'search' && (
+        <div
+          className={`min-h-screen flex flex-col items-center justify-center p-6 relative${isShaking ? ' shaking' : ''}`}
+        >
+          <div className="scanlines" />
+
+          {/* Header */}
+          <div className="mb-10 text-center z-10">
+            <div className="text-[10px] tracking-[0.35em] text-green-800 mb-2">
+              ◈ &nbsp; NAVIGATION SYSTEM v1.0 &nbsp; ◈
+            </div>
+            <div
+              className="text-5xl font-bold tracking-[0.12em] text-green-400 mb-2"
+              style={{ textShadow: '0 0 22px #00ff4190, 0 0 45px #00ff4135' }}
+            >
+              COMPASS
+            </div>
+            <div className="text-[10px] tracking-[0.25em] text-green-900">
+              // TARGET_COORDINATE_INPUT_REQUIRED //
+            </div>
           </div>
 
-          {/* 나침반 컨테이너 */}
-          <div className="bg-white rounded-3xl shadow-2xl p-8 mb-6">
-            {!permissionGranted ? (
-                <div className="flex flex-col items-center gap-4 py-12">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-2">
-                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <p className="text-gray-700 text-center mb-2">
-                    나침반 기능을 사용하려면<br/>센서 권한이 필요합니다
-                  </p>
-                  <button
-                      onClick={requestOrientationPermission}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-full transition-colors shadow-lg"
-                  >
-                    시작하기
-                  </button>
+          {/* Terminal Form */}
+          <form onSubmit={handleSearch} className="w-full max-w-xs z-10">
+            <div
+              className="border border-green-900 p-6 relative"
+              style={{ background: 'rgba(0,8,0,0.85)', boxShadow: '0 0 24px #00ff4112, inset 0 0 24px #00000050' }}
+            >
+              <div
+                className="absolute top-0 left-5 -translate-y-1/2 bg-black px-2 text-[10px] tracking-[0.25em] text-green-800"
+              >
+                TARGET_COORD
+              </div>
+
+              {/* Latitude */}
+              <div className="mb-5">
+                <div className="text-[9px] tracking-[0.2em] text-green-800 mb-1.5">
+                  LAT &nbsp;/&nbsp; 위도 &nbsp;&nbsp;[ -90 ~ +90 ]
                 </div>
-            ) : (
-                <div className="relative flex flex-col items-center">
-                  {/* 나침반 배경 */}
-                  <div className="relative w-64 h-64 mb-6">
-                    {/* 외곽 원 */}
-                    <div className="absolute inset-0 rounded-full border-4 border-gray-300"></div>
-
-                    {/* 북쪽 표시 (회전하는 나침반 다이얼) */}
-                    <div
-                        ref={compassRef}
-                        className="absolute inset-0 flex items-start justify-center"
-                        style={{
-                          transformOrigin: 'center center',
-                          transition: 'transform 0.3s ease-out'
-                        }}
-                    >
-                      <div className="mt-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                        N
-                      </div>
-                    </div>
-
-                    {/* 방향 표시 (E, S, W) */}
-                    <div
-                        className="absolute inset-0"
-                        style={{
-                          transformOrigin: 'center center',
-                          transition: 'transform 0.3s ease-out',
-                          transform: heading !== null ? `rotate(${-heading}deg)` : 'rotate(0deg)'
-                        }}
-                    >
-                      <div className="absolute top-1/2 right-4 -translate-y-1/2 text-gray-400 text-xs font-bold">E</div>
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-gray-400 text-xs font-bold">S</div>
-                      <div className="absolute top-1/2 left-4 -translate-y-1/2 text-gray-400 text-xs font-bold">W</div>
-                    </div>
-
-                    {/* 중앙 원 */}
-                    <div className="absolute inset-0 m-auto w-48 h-48 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-300 shadow-inner"></div>
-
-                    {/* 화살표 */}
-                    <div
-                        ref={arrowRef}
-                        className="absolute inset-0 m-auto w-32 h-32"
-                        style={{
-                          transformOrigin: '50% 50%',
-                          transition: 'transform 0.3s ease-out'
-                        }}
-                    >
-                      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
-                        {/* 화살표 그림자 */}
-                        <polygon
-                            points="50,5 65,90 50,75 35,90"
-                            fill="#000000"
-                            opacity="0.1"
-                            transform="translate(2, 2)"
-                        />
-                        {/* 화살표 본체 */}
-                        <polygon
-                            points="50,5 65,90 50,75 35,90"
-                            fill="#DC2626"
-                            stroke="#991B1B"
-                            strokeWidth="2"
-                        />
-                        {/* 화살표 하이라이트 */}
-                        <polygon
-                            points="50,5 55,50 50,75 45,50"
-                            fill="#EF4444"
-                            opacity="0.6"
-                        />
-                      </svg>
-                    </div>
-
-                    {/* 중앙 점 */}
-                    <div className="absolute inset-0 m-auto w-4 h-4 rounded-full bg-gray-800 border-2 border-white shadow-md"></div>
-                  </div>
-
-                  {/* 방향 안내 */}
-                  {heading !== null && (
-                      <div className="text-center mb-4 p-3 bg-white rounded-lg border border-gray-200">
-                        <div className="text-xl font-bold text-gray-800 mb-1">
-                          {getDirectionGuidance().text}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {rotationAngle.toFixed(0)}°
-                        </div>
-                      </div>
-                  )}
-
-                  {/* 거리 정보 */}
-                  <div className="text-center mb-4">
-                    <div className="text-3xl font-bold text-gray-800 mb-1">
-                      {formatDistance(distance)}
-                    </div>
-                    <div className="text-sm text-gray-500">목표까지 거리</div>
-                  </div>
-
-                  {/* 방위각 정보 */}
-                  {bearing !== null && heading !== null && (
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="bg-gray-50 rounded-lg p-2">
-                          <div className="text-gray-500 mb-1">현재 방향</div>
-                          <div className="font-mono font-bold text-gray-800">{heading.toFixed(0)}°</div>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-2">
-                          <div className="text-gray-500 mb-1">목표 방향</div>
-                          <div className="font-mono font-bold text-blue-600">{bearing.toFixed(0)}°</div>
-                        </div>
-                      </div>
-                  )}
+                <div className="flex items-center border-b border-green-900 pb-1.5">
+                  <span className="text-green-700 mr-2 text-sm">&gt;</span>
+                  <input
+                    type="number" step="any"
+                    value={inputLat}
+                    onChange={e => setInputLat(e.target.value)}
+                    placeholder="37.55470"
+                    className="flex-1 bg-transparent text-green-400 outline-none text-sm placeholder-green-950"
+                  />
                 </div>
+              </div>
+
+              {/* Longitude */}
+              <div className="mb-7">
+                <div className="text-[9px] tracking-[0.2em] text-green-800 mb-1.5">
+                  LON &nbsp;/&nbsp; 경도 &nbsp;&nbsp;[ -180 ~ +180 ]
+                </div>
+                <div className="flex items-center border-b border-green-900 pb-1.5">
+                  <span className="text-green-700 mr-2 text-sm">&gt;</span>
+                  <input
+                    type="number" step="any"
+                    value={inputLon}
+                    onChange={e => setInputLon(e.target.value)}
+                    placeholder="126.97080"
+                    className="flex-1 bg-transparent text-green-400 outline-none text-sm placeholder-green-950"
+                  />
+                </div>
+              </div>
+
+              {formError && (
+                <div className="text-red-500 text-[10px] mb-4 tracking-wide">
+                  &gt;&gt; ERR: {formError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full border border-green-800 text-green-400 py-3 text-sm tracking-[0.22em] transition-all duration-200 hover:border-green-500 hover:bg-green-950"
+                style={{ boxShadow: '0 0 12px #00ff4118' }}
+              >
+                [ &nbsp; EXECUTE &nbsp; ]
+              </button>
+            </div>
+          </form>
+
+          {/* Status */}
+          <div className="mt-10 text-[9px] tracking-[0.2em] text-green-900 text-center space-y-1 z-10">
+            <div>GPS_STATUS: {userLat !== null ? `LOCK_ACQUIRED ✓` : 'SEARCHING_SIGNAL...'}</div>
+            <div>SYSTEM: ■■■■■■■■░░ READY</div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          COMPASS PHASE
+      ══════════════════════════════════════════════ */}
+      {phase === 'compass' && (
+        <div className="min-h-screen flex flex-col items-center justify-center py-6 px-4 relative">
+          <div className="scanlines" />
+
+          <div
+            className={`flex flex-col items-center w-full ${compassVisible ? 'compass-appear' : 'opacity-0'}`}
+          >
+            {/* Header */}
+            <div className="text-[9px] tracking-[0.3em] text-green-900 mb-4 text-center">
+              ◈ &nbsp; COMPASS NAVIGATION SYSTEM &nbsp; ◈
+            </div>
+
+            {/* Sensor init button */}
+            {!permissionGranted && (
+              <button
+                onClick={requestPermission}
+                className="mb-5 border border-green-800 text-green-500 text-[11px] px-6 py-2.5 tracking-[0.2em] hover:border-green-500 transition-colors"
+              >
+                [ INITIALIZE SENSOR ]
+              </button>
             )}
-          </div>
 
-          {/* 에러 메시지 */}
-          {locationError && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                  <p className="text-sm text-red-700">{locationError}</p>
-                </div>
+            {/* ─────────────────────────────────
+                SVG SPIRIT-LEVEL COMPASS
+            ───────────────────────────────── */}
+            <div className="relative" style={{ width: 300, height: 300 }}>
+              <svg width="300" height="300" viewBox="0 0 300 300">
+                <defs>
+                  {/* Glow filter */}
+                  <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                  <filter id="glowStrong" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="5" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                  <filter id="glowRed" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="3" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+
+                  {/* Clip paths for road visualization intersection */}
+                  <clipPath id="cpCircleA">
+                    <circle cx="114" cy="150" r="112"/>
+                  </clipPath>
+                  <clipPath id="cpCircleB">
+                    <circle cx="186" cy="150" r="112"/>
+                  </clipPath>
+
+                  {/* Radial gradient for intersection glow */}
+                  <radialGradient id="roadGradA" cx="65%" cy="50%" r="50%">
+                    <stop offset="0%"   stopColor="#00ff41" stopOpacity="0.6"/>
+                    <stop offset="60%"  stopColor="#00ff41" stopOpacity="0.25"/>
+                    <stop offset="100%" stopColor="#00ff41" stopOpacity="0"/>
+                  </radialGradient>
+                  <radialGradient id="roadGradB" cx="35%" cy="50%" r="50%">
+                    <stop offset="0%"   stopColor="#00ff41" stopOpacity="0.6"/>
+                    <stop offset="60%"  stopColor="#00ff41" stopOpacity="0.25"/>
+                    <stop offset="100%" stopColor="#00ff41" stopOpacity="0"/>
+                  </radialGradient>
+                </defs>
+
+                {/* ── 도로 시각화: 겹쳐지는 원 (그라데이션 교차선) ── */}
+                {/* Ghost rings (almost invisible) */}
+                <circle cx="114" cy="150" r="112" fill="none" stroke="#00ff41" strokeWidth="0.7" strokeOpacity="0.05"/>
+                <circle cx="186" cy="150" r="112" fill="none" stroke="#00ff41" strokeWidth="0.7" strokeOpacity="0.05"/>
+
+                {/* Circle A's stroke visible ONLY inside Circle B → intersection highlight */}
+                <g clipPath="url(#cpCircleB)">
+                  <circle cx="114" cy="150" r="112" fill="none" stroke="url(#roadGradA)" strokeWidth="18" strokeOpacity="0.35"/>
+                  <circle cx="114" cy="150" r="112" fill="none" stroke="#00ff41" strokeWidth="1.8" strokeOpacity="0.50" filter="url(#glow)"/>
+                </g>
+
+                {/* Circle B's stroke visible ONLY inside Circle A → intersection highlight */}
+                <g clipPath="url(#cpCircleA)">
+                  <circle cx="186" cy="150" r="112" fill="none" stroke="url(#roadGradB)" strokeWidth="18" strokeOpacity="0.35"/>
+                  <circle cx="186" cy="150" r="112" fill="none" stroke="#00ff41" strokeWidth="1.8" strokeOpacity="0.50" filter="url(#glow)"/>
+                </g>
+
+                {/* ── Outer compass housing ── */}
+                <circle cx="150" cy="150" r="132" fill="#030703" stroke="#0f1f0f" strokeWidth="2"/>
+                <circle cx="150" cy="150" r="130" fill="none" stroke="#00ff41" strokeWidth="0.6" strokeOpacity="0.22"/>
+                <circle cx="150" cy="150" r="127" fill="none" stroke="#00ff41" strokeWidth="0.3" strokeOpacity="0.12"/>
+
+                {/* ── Rotating compass disk (heading-based) ── */}
+                <g transform={`rotate(${heading !== null ? -heading : 0}, 150, 150)`}>
+
+                  {/* Spirit-level concentric rings */}
+                  {[104, 84, 64, 44, 26].map((r, i) => (
+                    <circle key={r} cx="150" cy="150" r={r}
+                      fill="none" stroke="#00ff41"
+                      strokeWidth="0.5"
+                      strokeOpacity={0.06 + i * 0.025}
+                    />
+                  ))}
+
+                  {/* Disk crosshairs */}
+                  <line x1="150" y1="48"  x2="150" y2="252" stroke="#00ff41" strokeWidth="0.35" strokeOpacity="0.10"/>
+                  <line x1="48"  y1="150" x2="252" y2="150" stroke="#00ff41" strokeWidth="0.35" strokeOpacity="0.10"/>
+
+                  {/* Degree tick marks (72 × 5°) */}
+                  {Array.from({ length: 72 }, (_, i) => {
+                    const a    = i * 5;
+                    const rad  = a * Math.PI / 180;
+                    const isN  = a % 90 === 0;
+                    const is45 = a % 45 === 0;
+                    const is10 = a % 10 === 0;
+                    const r1   = isN ? 105 : is45 ? 108 : is10 ? 112 : 116;
+                    return (
+                      <line key={i}
+                        x1={150 + r1 * Math.sin(rad)} y1={150 - r1 * Math.cos(rad)}
+                        x2={150 + 123 * Math.sin(rad)} y2={150 - 123 * Math.cos(rad)}
+                        stroke="#00ff41"
+                        strokeWidth={isN ? 2.2 : is45 ? 1.5 : is10 ? 1 : 0.5}
+                        strokeOpacity={isN ? 0.90 : is45 ? 0.70 : is10 ? 0.45 : 0.22}
+                      />
+                    );
+                  })}
+
+                  {/* Cardinal direction labels */}
+                  {[
+                    { l: 'N', a: 0,   c: '#ff3333', sz: 14, fw: 'bold' },
+                    { l: 'E', a: 90,  c: '#00ff41', sz: 10, fw: 'normal' },
+                    { l: 'S', a: 180, c: '#00cc33', sz: 10, fw: 'normal' },
+                    { l: 'W', a: 270, c: '#00ff41', sz: 10, fw: 'normal' },
+                  ].map(({ l, a, c, sz, fw }) => {
+                    const rad = a * Math.PI / 180;
+                    return (
+                      <text key={l}
+                        x={150 + 95 * Math.sin(rad)}
+                        y={150 - 95 * Math.cos(rad) + 4}
+                        textAnchor="middle" fill={c} fontSize={sz}
+                        fontFamily="monospace" fontWeight={fw}
+                        style={{ filter: l === 'N' ? 'drop-shadow(0 0 5px #ff333388)' : undefined }}
+                      >{l}</text>
+                    );
+                  })}
+                </g>
+
+                {/* ── Target direction arrow ── */}
+                <g transform={`rotate(${rotAngle}, 150, 150)`} opacity={heading !== null ? 1 : 0.25}>
+                  <line x1="150" y1="150" x2="150" y2="68"
+                    stroke="#ff6600" strokeWidth="2" strokeOpacity="0.88"
+                    filter="url(#glow)"/>
+                  <polygon points="150,53 142,75 158,75"
+                    fill="#ff6600" opacity="0.90" filter="url(#glow)"/>
+                  <circle cx="150" cy="53" r="3"
+                    fill="none" stroke="#ff6600" strokeWidth="1.5" strokeOpacity="0.7"/>
+                  {/* Tail */}
+                  <line x1="145" y1="172" x2="155" y2="172"
+                    stroke="#ff6600" strokeWidth="1.5" strokeOpacity="0.45"/>
+                </g>
+
+                {/* ── Spirit level bubble ── */}
+                {/* Target ring (center zone indicator) */}
+                <circle cx="150" cy="150" r="16"
+                  fill="none" stroke="#00ff41" strokeWidth="0.8" strokeOpacity="0.28"
+                  strokeDasharray="4,4"/>
+
+                {heading !== null && (
+                  <>
+                    {/* Outer bubble ring */}
+                    <circle cx={BX} cy={BY} r={isAligned ? 10 : 11}
+                      fill="rgba(0,8,0,0.6)"
+                      stroke={isAligned ? '#00ff41' : '#ff7700'}
+                      strokeWidth="1.8"
+                      filter={isAligned ? 'url(#glowStrong)' : undefined}
+                    />
+                    {/* Inner bubble dot */}
+                    <circle cx={BX} cy={BY} r={isAligned ? 5 : 4.5}
+                      fill={isAligned ? '#00ff41' : '#ff7700'}
+                      fillOpacity={isAligned ? 0.85 : 0.55}
+                      filter={isAligned ? 'url(#glowStrong)' : undefined}
+                    />
+                  </>
+                )}
+
+                {/* ── Center reticle ── */}
+                <circle cx="150" cy="150" r="6"
+                  fill="#030703" stroke="#00ff41" strokeWidth="1.5" strokeOpacity="0.80"/>
+                <circle cx="150" cy="150" r="1.8" fill="#00ff41"/>
+                {/* Reticle cross lines */}
+                {[0, 90, 180, 270].map(a => {
+                  const rad = a * Math.PI / 180;
+                  return (
+                    <line key={a}
+                      x1={150 + 9  * Math.sin(rad)} y1={150 - 9  * Math.cos(rad)}
+                      x2={150 + 18 * Math.sin(rad)} y2={150 - 18 * Math.cos(rad)}
+                      stroke="#00ff41" strokeWidth="1.2" strokeOpacity="0.65"
+                    />
+                  );
+                })}
+
+                {/* ── Alignment glow ring (on course) ── */}
+                {isAligned && !isArrived && (
+                  <circle cx="150" cy="150" r="127"
+                    fill="none" stroke="#00ff41" strokeWidth="2"
+                    className="pulse-ring-el"
+                    style={{ filter: 'drop-shadow(0 0 9px #00ff41)' }}
+                  />
+                )}
+
+                {/* ── Arrival indicator ── */}
+                {isArrived && (
+                  <>
+                    <circle cx="150" cy="150" r="127"
+                      fill="none" stroke="#ff0000" strokeWidth="3"
+                      className="arrived-ring-el"
+                      style={{ filter: 'drop-shadow(0 0 12px #ff0000)' }}
+                    />
+                    <text x="150" y="38"
+                      textAnchor="middle" fill="#ff3333" fontSize="8"
+                      fontFamily="monospace" fontWeight="bold"
+                      style={{ filter: 'drop-shadow(0 0 5px #ff000080)' }}
+                    >
+                      ▲ DESTINATION_REACHED ▲
+                    </text>
+                  </>
+                )}
+              </svg>
+            </div>
+
+            {/* ─── Distance ─── */}
+            <div className="text-center mt-2 mb-5">
+              <div
+                className="text-[42px] font-bold tracking-widest leading-none"
+                style={{
+                  color: isArrived ? '#ff3333' : '#00ff41',
+                  textShadow: isArrived
+                    ? '0 0 20px #ff333380'
+                    : '0 0 18px #00ff4160',
+                }}
+              >
+                {fmtDist(distance)}
               </div>
-          )}
-
-          {/* 정보 아코디언 */}
-          <details className="bg-white rounded-lg shadow">
-            <summary className="cursor-pointer p-4 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-              📍 상세 정보 보기
-            </summary>
-            <div className="p-4 pt-0 space-y-4">
-              {/* 위치 정보 */}
-              <div className="text-xs text-gray-600 space-y-1">
-                <div className="flex justify-between">
-                  <span className="font-medium">현재 위치:</span>
-                  <span className="font-mono">
-                    {userLat && userLon
-                        ? `${userLat.toFixed(5)}, ${userLon.toFixed(5)}`
-                        : '확인 중...'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">목표 지점:</span>
-                  <span className="font-mono">{TARGET_LAT.toFixed(5)}, {TARGET_LON.toFixed(5)}</span>
-                </div>
+              <div className="text-[9px] tracking-[0.3em] text-green-900 mt-1">
+                DISTANCE_TO_TARGET
               </div>
+            </div>
 
-              {/* 센서 디버그 정보 */}
-              {permissionGranted && (
-                  <div className="bg-gray-50 rounded-lg p-3 text-xs space-y-2">
-                    <div>
-                      <div className="font-medium text-gray-700">센서 타입:</div>
-                      <div className="font-mono text-gray-600">{sensorType || '감지 중...'}</div>
-                    </div>
-                    {sensorDebug && (
-                        <div>
-                          <div className="font-medium text-gray-700">센서 값:</div>
-                          <div className="font-mono text-gray-600 break-all">{sensorDebug}</div>
-                        </div>
-                    )}
-                    <div className="text-gray-500 text-xs pt-2 border-t border-gray-300 space-y-1">
-                      <div>💡 TIP: Android는 AbsoluteOrientationSensor 사용 시 가장 정확합니다.</div>
-                      <div className="font-mono text-xs">
-                        안정화: EMA (α=0.25) | 임계값: 1.5° | 주기: 100ms | 균형 모드
-                      </div>
-                    </div>
+            {/* ─── Data readouts ─── */}
+            <div className="grid grid-cols-2 gap-2 w-full max-w-[290px]">
+              {[
+                { label: 'HEADING',  value: fmtDeg(heading),   sub: '현재 방향각', rt: true  },
+                { label: 'BEARING',  value: fmtDeg(bearing),   sub: '목표 방향각', rt: false },
+                { label: 'CUR_LAT',  value: fmtCoord(userLat), sub: '현재 위도',   rt: true  },
+                { label: 'CUR_LON',  value: fmtCoord(userLon), sub: '현재 경도',   rt: true  },
+                { label: 'TGT_LAT',  value: fmtCoord(targetLat), sub: '목표 위도', rt: false },
+                { label: 'TGT_LON',  value: fmtCoord(targetLon), sub: '목표 경도', rt: false },
+              ].map(item => (
+                <div
+                  key={item.label}
+                  className="border border-green-950 p-2.5"
+                  style={{ background: 'rgba(0,12,0,0.6)' }}
+                >
+                  <div className="flex justify-between items-center mb-0.5">
+                    <span className="text-[9px] tracking-[0.15em] text-green-800">{item.label}</span>
+                    {item.rt && <span className="text-[7px] text-green-800 animate-pulse">●LIVE</span>}
                   </div>
+                  <div className="text-green-400 text-[11px] font-bold tabular-nums">{item.value}</div>
+                  <div className="text-[8px] text-green-950 mt-0.5">{item.sub}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* ─── Status line ─── */}
+            <div className="text-center mt-4">
+              {isArrived ? (
+                <div className="text-[11px] tracking-[0.22em]"
+                  style={{ color: '#ff3333', textShadow: '0 0 12px #ff333380' }}>
+                  ■ &nbsp; DESTINATION_REACHED &nbsp; ■
+                </div>
+              ) : isAligned ? (
+                <div className="text-[11px] tracking-[0.22em]"
+                  style={{ color: '#00ff41', textShadow: '0 0 10px #00ff4180' }}>
+                  ◆ &nbsp; ON_COURSE &nbsp; ◆
+                </div>
+              ) : (
+                <div className="text-[11px] tracking-[0.22em] text-orange-600">
+                  ◇ &nbsp; RECALIBRATING &nbsp; ◇
+                </div>
               )}
             </div>
-          </details>
 
-          {/* 레이더 모드 버튼 */}
-          <Link
-              href="/radar"
-              className="mt-4 block text-center bg-slate-800 hover:bg-slate-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-          >
-            🎯 레이더 모드로 전환
-          </Link>
+            {/* ─── Reset ─── */}
+            <button
+              onClick={() => { stopNoise(); setPhase('search'); setCompassVisible(false); }}
+              className="mt-6 text-[9px] tracking-[0.2em] text-green-950 hover:text-green-800 transition-colors"
+            >
+              [ RESET / 좌표 재입력 ]
+            </button>
+          </div>
         </div>
-      </main>
+      )}
+    </div>
   );
 }
