@@ -396,11 +396,24 @@ export default function CompassPage() {
         }
       `}</style>
 
+      {/* Start overlay */}
+      {phase === 'search' && !audioStarted && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center cursor-pointer"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
+          onClick={handleScreenInteraction}
+        >
+          <div className="text-center">
+            <p className="text-lg text-gray-800">Tap to start</p>
+          </div>
+        </div>
+      )}
+
       {/* ══════════════════════════════════════════════
           SEARCH PHASE - 메인화면.png 스타일
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
-        <div className="min-h-screen flex flex-col" onClick={handleScreenInteraction}>
+        <div className="min-h-screen flex flex-col">
           <div className="flex-1 flex items-start pt-8 px-4">
             <div className="w-full">
               <div className="flex gap-2">
