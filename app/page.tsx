@@ -270,6 +270,21 @@ export default function CompassPage() {
   }, [audioStarted, phase, initAudio, startNoise]);
 
   useEffect(() => {
+    if (phase === 'search' && !audioStarted) {
+      // 페이지 로드 시 자동 재생 시도
+      const tryAutoplay = async () => {
+        try {
+          initAudio();
+          startNoise(0.25);
+          setAudioStarted(true);
+        } catch (err) {
+          // 자동 재생 실패 시 오버레이가 표시됨
+          console.log('Autoplay blocked, waiting for user interaction');
+        }
+      };
+      tryAutoplay();
+    }
+
     if (phase !== 'search') {
       setAudioStarted(false);
     }
@@ -278,7 +293,7 @@ export default function CompassPage() {
         stopNoise();
       }
     };
-  }, [phase, stopNoise]);
+  }, [phase, audioStarted, initAudio, startNoise, stopNoise]);
 
   /* ═══════════════════════════════════════════
      ARRIVAL DETECTION & SOUND
