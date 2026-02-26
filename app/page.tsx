@@ -260,17 +260,20 @@ export default function CompassPage() {
   /* ═══════════════════════════════════════════
      INITIAL NOISE ON SEARCH SCREEN
   ═══════════════════════════════════════════ */
-  useEffect(() => {
-    if (phase === 'search') {
-      initAudio();
-      startNoise(0.15);
+  const handleInputFocus = useCallback(() => {
+    initAudio();
+    if (!noiseSrcRef.current && phase === 'search') {
+      startNoise(0.25);
     }
+  }, [initAudio, startNoise, phase]);
+
+  useEffect(() => {
     return () => {
       if (phase === 'search') {
         stopNoise();
       }
     };
-  }, [phase, initAudio, startNoise, stopNoise]);
+  }, [phase, stopNoise]);
 
   /* ═══════════════════════════════════════════
      ARRIVAL DETECTION & SOUND
@@ -403,6 +406,8 @@ export default function CompassPage() {
                   placeholder="Ex: 37.5344789 126.9993445"
                   className="flex-1 px-3 py-2 border-2 border-gray-300 text-sm focus:outline-none focus:border-gray-500"
                   onKeyPress={e => e.key === 'Enter' && handleSearch()}
+                  onFocus={handleInputFocus}
+                  onClick={handleInputFocus}
                 />
                 <button
                   onClick={handleSearch}
