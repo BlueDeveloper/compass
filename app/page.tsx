@@ -382,12 +382,12 @@ export default function CompassPage() {
      COMPASS BUBBLE POSITIONS
   ═══════════════════════════════════════════ */
   const targetAngle = rotAngle * Math.PI / 180;
-  const targetX = 150 + Math.sin(targetAngle) * 100;
-  const targetY = 150 - Math.cos(targetAngle) * 100;
+  const targetX = 150 + Math.sin(targetAngle) * 140;
+  const targetY = 150 - Math.cos(targetAngle) * 140;
 
   const currentAngle = 0;
-  const currentX = 150 + Math.sin(currentAngle) * 50;
-  const currentY = 150 - Math.cos(currentAngle) * 50;
+  const currentX = 150 + Math.sin(currentAngle) * 70;
+  const currentY = 150 - Math.cos(currentAngle) * 70;
 
   // Eclipse effect
   const eclipseProgress = Math.abs(rotAngle > 180 ? 360 - rotAngle : rotAngle) / 180;
@@ -497,14 +497,16 @@ export default function CompassPage() {
               <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="2"/>
 
               {/* Eclipse effect */}
-              <circle
-                cx="150"
-                cy="150"
-                r="140"
-                fill="black"
-                mask="url(#eclipseMask)"
-                opacity="0.8"
-              />
+              {!isAligned && (
+                <circle
+                  cx="150"
+                  cy="150"
+                  r="140"
+                  fill="black"
+                  mask="url(#eclipseMask)"
+                  opacity="0.8"
+                />
+              )}
 
               {/* Inner circle */}
               <circle cx="150" cy="150" r="70" fill="none" stroke="black" strokeWidth="2"/>
