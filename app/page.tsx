@@ -67,7 +67,6 @@ export default function CompassPage() {
     const len = ctx.sampleRate * 2;
     const buf = ctx.createBuffer(1, len, ctx.sampleRate);
     const d   = buf.getChannelData(0);
-    // Brown noise
     let last = 0;
     for (let i = 0; i < len; i++) {
       const w = Math.random() * 2 - 1;
@@ -85,19 +84,15 @@ export default function CompassPage() {
       const src  = ctx.createBufferSource();
       src.buffer = makeBuf();
       src.loop   = true;
-
       const gain = ctx.createGain();
       gain.gain.value = vol;
-
       const hp = ctx.createBiquadFilter();
       hp.type = 'highpass';
       hp.frequency.value = 180;
-
       src.connect(hp);
       hp.connect(gain);
       gain.connect(ctx.destination);
       src.start();
-
       noiseSrcRef.current = src;
       gainRef.current     = gain;
     } catch {}
@@ -164,7 +159,6 @@ export default function CompassPage() {
     let lastT = 0;
     const THROTTLE = 80;
 
-    // AbsoluteOrientationSensor (Android Chrome)
     if (typeof (window as any).AbsoluteOrientationSensor !== 'undefined') {
       try {
         const sensor = new (window as any).AbsoluteOrientationSensor({ frequency: 60 });
@@ -182,7 +176,6 @@ export default function CompassPage() {
       } catch {}
     }
 
-    // DeviceOrientation fallback (iOS + others)
     const handler = (e: DeviceOrientationEvent) => {
       const now = Date.now();
       if (now - lastT < THROTTLE) return;
@@ -243,13 +236,10 @@ export default function CompassPage() {
       const ctx = audioCtxRef.current;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-
       osc.frequency.setValueAtTime(800, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.3);
-
       gain.gain.setValueAtTime(0.3, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
@@ -289,7 +279,6 @@ export default function CompassPage() {
       if (noiseSrcRef.current) setNoiseVol(0.55);
       else startNoise(0.55);
     } else if (!isAligned) {
-      // 방향 차이에 따라 노이즈 볼륨 조절
       const angleDifference = Math.abs(rotAngle > 180 ? 360 - rotAngle : rotAngle);
       const noiseVol = 0.05 + (angleDifference / 180) * 0.25;
       if (noiseSrcRef.current) setNoiseVol(noiseVol);
@@ -306,10 +295,9 @@ export default function CompassPage() {
     e.preventDefault();
     setFormError('');
 
-    // 위도 경도를 공백으로 분리
     const parts = inputCoords.trim().split(/\s+/);
     if (parts.length !== 2) {
-      setFormError('위도와 경도를 공백으로 구분하여 입력하세요 (예: 37.5547 126.9708)');
+      setFormError('위도와 경도를 공백으로 구분하여 입력하세요');
       return;
     }
 
@@ -320,7 +308,6 @@ export default function CompassPage() {
     if (lat < -90  || lat > 90)             { setFormError('위도: -90 ~ +90 범위'); return; }
     if (lon < -180 || lon > 180)            { setFormError('경도: -180 ~ +180 범위'); return; }
 
-    // 지진 흔들기 + 플리커 + 노이즈
     initAudio();
     startNoise(0.38);
     setIsShaking(true);
@@ -341,554 +328,188 @@ export default function CompassPage() {
   ═══════════════════════════════════════════ */
   const fmtDist  = (d: number | null) =>
     d === null ? '---' : d < 1 ? `${(d * 1000).toFixed(0)}m` : `${d.toFixed(2)}km`;
-  const fmtCoord = (v: number | null) =>
-    v === null ? '---.-----' : v.toFixed(5);
-  const fmtDeg   = (v: number | null) =>
-    v === null ? '---.-°' : `${v.toFixed(1)}°`;
+
+  const getDirectionText = () => {
+    if (heading === null || bearing === null) return 'Initializing...';
+
+    const diff = Math.abs(angDiff(bearing, heading));
+    const direction = angDiff(bearing, heading) > 0 ? 'right' : 'left';
+
+    if (diff < 15) return 'Go straight ahead';
+    if (diff < 45) return `Turn ${Math.round(diff)} degrees to the ${direction}...`;
+    if (diff < 90) return `Turn ${Math.round(diff)} degrees to the ${direction}...`;
+    return `Turn around (${Math.round(diff)}° to the ${direction})`;
+  };
 
   /* ═══════════════════════════════════════════
-     SPIRIT LEVEL BUBBLE POSITION
+     COMPASS BUBBLE POSITIONS
   ═══════════════════════════════════════════ */
-  const signedA      = rotAngle > 180 ? rotAngle - 360 : rotAngle;
-  const bubbleFactor = Math.min(Math.abs(signedA) / 90, 1);
-  const bubbleRad    = rotAngle * Math.PI / 180;
-  const BX           = 150 + Math.sin(bubbleRad) * 44 * bubbleFactor;
-  const BY           = 150 - Math.cos(bubbleRad) * 44 * bubbleFactor;
+  const targetAngle = rotAngle * Math.PI / 180;
+  const targetX = 150 + Math.sin(targetAngle) * 100;
+  const targetY = 150 - Math.cos(targetAngle) * 100;
+
+  const currentAngle = 0;
+  const currentX = 150 + Math.sin(currentAngle) * 50;
+  const currentY = 150 - Math.cos(currentAngle) * 50;
+
+  // Eclipse effect
+  const eclipseProgress = Math.abs(rotAngle > 180 ? 360 - rotAngle : rotAngle) / 180;
 
   /* ═══════════════════════════════════════════
      RENDER
   ═══════════════════════════════════════════ */
   return (
-    <div
-      className="min-h-screen bg-black text-green-400 overflow-hidden select-none"
-      style={{ fontFamily: 'var(--font-geist-mono), "Courier New", monospace' }}
-    >
+    <div className="min-h-screen bg-white text-black overflow-hidden select-none" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <style>{`
-        /* ─ Shake: earthquake ─ */
-        @keyframes shake {
-          0%,100% { transform: translate(0,0) rotate(0deg); }
-          7%   { transform: translate(-7px,-4px) rotate(-1.5deg); }
-          14%  { transform: translate(10px, 6px) rotate( 1.2deg); }
-          21%  { transform: translate(-9px, 7px) rotate(-2deg); }
-          28%  { transform: translate(7px,-8px)  rotate( 1.8deg); }
-          35%  { transform: translate(-6px, 5px) rotate(-1.2deg); }
-          42%  { transform: translate(9px,-6px)  rotate( 2.2deg); }
-          49%  { transform: translate(-11px,7px) rotate(-1.8deg); }
-          56%  { transform: translate(6px,-5px)  rotate( 1.2deg); }
-          63%  { transform: translate(-5px, 9px) rotate(-2.5deg); }
-          70%  { transform: translate(8px,-4px)  rotate( 1.5deg); }
-          77%  { transform: translate(-4px, 6px) rotate(-1deg); }
-          84%  { transform: translate(5px,-7px)  rotate( 1.2deg); }
-          91%  { transform: translate(-3px, 4px) rotate(-0.8deg); }
+        @keyframes flicker {
+          0%, 100% { opacity: 0; }
+          50% { opacity: var(--flicker-intensity, 0.15); }
         }
-
-        /* ─ Background flicker (misaligned) ─ */
-        @keyframes bgFlicker {
-          0%   { opacity:0; }
-          8%   { opacity:var(--flicker-intensity, 0.15); }
-          16%  { opacity:0; }
-          24%  { opacity:calc(var(--flicker-intensity, 0.15) * 0.7); }
-          32%  { opacity:0; }
-          48%  { opacity:var(--flicker-intensity, 0.15); }
-          56%  { opacity:0; }
-          64%  { opacity:calc(var(--flicker-intensity, 0.15) * 0.5); }
-          80%  { opacity:0; }
-          88%  { opacity:calc(var(--flicker-intensity, 0.15) * 0.9); }
-          100% { opacity:0; }
-        }
-
-        /* ─ Background flicker (arrived) ─ */
-        @keyframes bgArrived {
-          0%   { opacity:0.35; filter:invert(0); }
-          5%   { opacity:0.95; filter:invert(1); }
-          10%  { opacity:0.15; filter:invert(0); }
-          15%  { opacity:1;    filter:invert(1); }
-          20%  { opacity:0.08; filter:invert(0); }
-          25%  { opacity:0.85; filter:invert(1); }
-          30%  { opacity:0.25; filter:invert(0); }
-          35%  { opacity:0.98; filter:invert(1); }
-          40%  { opacity:0.12; filter:invert(0); }
-          45%  { opacity:0.80; filter:invert(1); }
-          50%  { opacity:0.40; filter:invert(0); }
-          55%  { opacity:0.90; filter:invert(1); }
-          60%  { opacity:0.05; filter:invert(0); }
-          65%  { opacity:0.88; filter:invert(1); }
-          70%  { opacity:0.45; filter:invert(0); }
-          75%  { opacity:0.75; filter:invert(1); }
-          80%  { opacity:0.18; filter:invert(0); }
-          85%  { opacity:0.92; filter:invert(1); }
-          90%  { opacity:0.30; filter:invert(0); }
-          95%  { opacity:0.82; filter:invert(1); }
-          100% { opacity:0.35; filter:invert(0); }
-        }
-
-        /* ─ Compass fade-in ─ */
-        @keyframes compassAppear {
-          from { opacity:0; transform:scale(0.90) translateY(12px); }
-          to   { opacity:1; transform:scale(1)    translateY(0); }
-        }
-
-        /* ─ Scanline pulse ─ */
-        @keyframes scanPulse {
-          0%,100% { opacity:0.045; }
-          50%     { opacity:0.09; }
-        }
-
-        /* ─ Pulse ring on alignment ─ */
-        @keyframes pulseRing {
-          0%,100% { stroke-opacity:0.65; stroke-width:2; r:127; }
-          50%     { stroke-opacity:0.20; stroke-width:5; r:130; }
-        }
-
-        /* ─ Arrived ring pulse ─ */
-        @keyframes arrivedRing {
-          0%,100% { stroke-opacity:0.9; stroke-width:3; }
-          50%     { stroke-opacity:0.3; stroke-width:7; }
-        }
-
-        /* ─ Applied classes ─ */
-        .shaking        { animation: shake 1.05s cubic-bezier(.36,.07,.19,.97) both; }
-        .compass-appear { animation: compassAppear 1.8s ease-out forwards; }
 
         .flicker-overlay {
-          position:fixed; inset:0; pointer-events:none; z-index:100;
-          background:rgba(200,255,200,0.18);
-        }
-        .flicker-overlay.active  { animation: bgFlicker 0.20s steps(1) infinite; }
-        .flicker-overlay.arrived { animation: bgArrived 0.10s steps(1) infinite; background:rgba(255,255,255,0.55); }
-
-        .scanlines {
-          position:absolute; inset:0; pointer-events:none;
-          background: repeating-linear-gradient(
-            0deg, transparent, transparent 3px,
-            rgba(0,0,0,0.14) 3px, rgba(0,0,0,0.14) 4px
-          );
-          animation: scanPulse 3.5s ease-in-out infinite;
+          position: fixed;
+          inset: 0;
+          pointer-events: none;
+          background: rgba(255, 255, 255, 0.8);
+          animation: flicker 0.2s steps(2) infinite;
+          z-index: 9999;
         }
 
-        .pulse-ring-el   { animation: pulseRing  1.6s ease-in-out infinite; }
-        .arrived-ring-el { animation: arrivedRing 0.5s ease-in-out infinite; }
+        .flicker-overlay.active {
+          display: block;
+        }
 
-        input[type=number]::-webkit-inner-spin-button,
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; }
-        input[type=number] { -moz-appearance:textfield; }
+        .flicker-overlay.inactive {
+          display: none;
+        }
       `}</style>
 
-      {/* ── Flicker overlay ── */}
+      {/* Flicker overlay */}
       <div
-        className={`flicker-overlay ${
-          isArrived ? 'arrived' : (!isAligned && phase === 'compass') ? 'active' : (phase === 'search' ? 'active' : '')
-        }`}
+        className={`flicker-overlay ${phase === 'search' || (!isAligned && phase === 'compass') ? 'active' : 'inactive'}`}
         style={{ '--flicker-intensity': flickerIntensity } as React.CSSProperties}
       />
 
       {/* ══════════════════════════════════════════════
-          SEARCH PHASE
+          SEARCH PHASE - 메인화면.png 스타일
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
-        <div
-          className={`min-h-screen flex flex-col items-center justify-center p-6 relative${isShaking ? ' shaking' : ''}`}
-        >
-          <div className="scanlines" />
-
-          {/* Header */}
-          <div className="mb-10 text-center z-10">
-            <div className="text-[10px] tracking-[0.35em] text-green-800 mb-2">
-              ◈ &nbsp; NAVIGATION SYSTEM v1.0 &nbsp; ◈
-            </div>
-            <div
-              className="text-5xl font-bold tracking-[0.12em] text-green-400 mb-2"
-              style={{ textShadow: '0 0 22px #00ff4190, 0 0 45px #00ff4135' }}
-            >
-              COMPASS
-            </div>
-            <div className="text-[10px] tracking-[0.25em] text-green-900">
-              // TARGET_COORDINATE_INPUT_REQUIRED //
-            </div>
-          </div>
-
-          {/* Terminal Form */}
-          <form onSubmit={handleSearch} className="w-full max-w-xs z-10">
-            <div
-              className="border border-green-900 p-6 relative"
-              style={{ background: 'rgba(0,8,0,0.85)', boxShadow: '0 0 24px #00ff4112, inset 0 0 24px #00000050' }}
-            >
-              <div
-                className="absolute top-0 left-5 -translate-y-1/2 bg-black px-2 text-[10px] tracking-[0.25em] text-green-800"
-              >
-                TARGET_COORD
-              </div>
-
-              {/* Coordinates */}
-              <div className="mb-7">
-                <div className="text-[9px] tracking-[0.2em] text-green-800 mb-1.5">
-                  COORDINATES &nbsp;/&nbsp; 위도 경도
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 flex items-center border-b border-green-900 pb-1.5">
-                    <span className="text-green-700 mr-2 text-sm">&gt;</span>
-                    <input
-                      type="text"
-                      value={inputCoords}
-                      onChange={e => setInputCoords(e.target.value)}
-                      placeholder="Ex: 37.5344789 126.9993445"
-                      className="flex-1 bg-transparent text-green-400 outline-none text-sm placeholder-green-950"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 border border-green-800 text-green-400 text-xs tracking-[0.15em] transition-all duration-200 hover:border-green-500 hover:bg-green-950"
-                    style={{ boxShadow: '0 0 8px #00ff4115' }}
-                  >
-                    검색
-                  </button>
-                </div>
-              </div>
-
+        <div className="min-h-screen flex flex-col p-8">
+          <div className="flex-1 flex items-start pt-12">
+            <form onSubmit={handleSearch} className="w-full max-w-md">
+              <input
+                type="text"
+                value={inputCoords}
+                onChange={e => setInputCoords(e.target.value)}
+                placeholder="Ex: 37.5344789 126.9993445"
+                className="w-full px-4 py-3 border-2 border-gray-300 text-base focus:outline-none focus:border-gray-500"
+              />
               {formError && (
-                <div className="text-red-500 text-[10px] tracking-wide">
-                  &gt;&gt; ERR: {formError}
-                </div>
+                <div className="mt-2 text-sm text-red-600">{formError}</div>
               )}
-            </div>
-          </form>
-
-          {/* Status */}
-          <div className="mt-10 text-[9px] tracking-[0.2em] text-green-900 text-center space-y-1 z-10">
-            <div>GPS_STATUS: {userLat !== null ? `LOCK_ACQUIRED ✓` : 'SEARCHING_SIGNAL...'}</div>
-            <div>SYSTEM: ■■■■■■■■░░ READY</div>
+            </form>
           </div>
 
-          {/* Logo */}
-          <div className="mt-12 z-10">
-            <img
-              src="/MPa_LOGO.png"
-              alt="MPa Logo"
-              className="h-12 opacity-60"
-            />
+          <div className="flex justify-center pb-12">
+            <img src="/MPa_LOGO.png" alt="MPa Logo" className="h-16" />
           </div>
         </div>
       )}
 
       {/* ══════════════════════════════════════════════
-          COMPASS PHASE
+          COMPASS PHASE - 메인화면2.png 스타일
       ══════════════════════════════════════════════ */}
       {phase === 'compass' && (
-        <div className="min-h-screen flex flex-col items-center justify-center py-6 px-4 relative">
-          <div className="scanlines" />
-
-          <div
-            className={`flex flex-col items-center w-full ${compassVisible ? 'compass-appear' : 'opacity-0'}`}
-          >
-            {/* Header */}
-            <div className="text-[9px] tracking-[0.3em] text-green-900 mb-4 text-center">
-              ◈ &nbsp; COMPASS NAVIGATION SYSTEM &nbsp; ◈
-            </div>
-
-            {/* Sensor init button */}
-            {!permissionGranted && (
-              <button
-                onClick={requestPermission}
-                className="mb-5 border border-green-800 text-green-500 text-[11px] px-6 py-2.5 tracking-[0.2em] hover:border-green-500 transition-colors"
-              >
-                [ INITIALIZE SENSOR ]
-              </button>
-            )}
-
-            {/* ─────────────────────────────────
-                SVG SPIRIT-LEVEL COMPASS
-            ───────────────────────────────── */}
-            <div className="relative" style={{ width: 300, height: 300 }}>
-              <svg width="300" height="300" viewBox="0 0 300 300">
-                <defs>
-                  {/* Glow filter */}
-                  <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feGaussianBlur stdDeviation="2.5" result="blur"/>
-                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                  </filter>
-                  <filter id="glowStrong" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="5" result="blur"/>
-                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                  </filter>
-                  <filter id="glowRed" x="-30%" y="-30%" width="160%" height="160%">
-                    <feGaussianBlur stdDeviation="3" result="blur"/>
-                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                  </filter>
-
-                  {/* Clip paths for road visualization intersection */}
-                  <clipPath id="cpCircleA">
-                    <circle cx="114" cy="150" r="112"/>
-                  </clipPath>
-                  <clipPath id="cpCircleB">
-                    <circle cx="186" cy="150" r="112"/>
-                  </clipPath>
-
-                  {/* Radial gradient for intersection glow */}
-                  <radialGradient id="roadGradA" cx="65%" cy="50%" r="50%">
-                    <stop offset="0%"   stopColor="#00ff41" stopOpacity="0.6"/>
-                    <stop offset="60%"  stopColor="#00ff41" stopOpacity="0.25"/>
-                    <stop offset="100%" stopColor="#00ff41" stopOpacity="0"/>
-                  </radialGradient>
-                  <radialGradient id="roadGradB" cx="35%" cy="50%" r="50%">
-                    <stop offset="0%"   stopColor="#00ff41" stopOpacity="0.6"/>
-                    <stop offset="60%"  stopColor="#00ff41" stopOpacity="0.25"/>
-                    <stop offset="100%" stopColor="#00ff41" stopOpacity="0"/>
-                  </radialGradient>
-
-                  {/* Eclipse effect mask */}
-                  <mask id="eclipseMask">
-                    <rect width="300" height="300" fill="white"/>
-                    {/* Moving circle for eclipse effect */}
-                    <circle
-                      cx={150 + (Math.abs(rotAngle > 180 ? 360 - rotAngle : rotAngle) / 180) * 135}
-                      cy="150"
-                      r="132"
-                      fill="black"
-                    />
-                  </mask>
-                </defs>
-
-                {/* ── 도로 시각화: 겹쳐지는 원 (그라데이션 교차선) ── */}
-                {/* Ghost rings (almost invisible) */}
-                <circle cx="114" cy="150" r="112" fill="none" stroke="#00ff41" strokeWidth="0.7" strokeOpacity="0.05"/>
-                <circle cx="186" cy="150" r="112" fill="none" stroke="#00ff41" strokeWidth="0.7" strokeOpacity="0.05"/>
-
-                {/* Circle A's stroke visible ONLY inside Circle B → intersection highlight */}
-                <g clipPath="url(#cpCircleB)">
-                  <circle cx="114" cy="150" r="112" fill="none" stroke="url(#roadGradA)" strokeWidth="18" strokeOpacity="0.35"/>
-                  <circle cx="114" cy="150" r="112" fill="none" stroke="#00ff41" strokeWidth="1.8" strokeOpacity="0.50" filter="url(#glow)"/>
-                </g>
-
-                {/* Circle B's stroke visible ONLY inside Circle A → intersection highlight */}
-                <g clipPath="url(#cpCircleA)">
-                  <circle cx="186" cy="150" r="112" fill="none" stroke="url(#roadGradB)" strokeWidth="18" strokeOpacity="0.35"/>
-                  <circle cx="186" cy="150" r="112" fill="none" stroke="#00ff41" strokeWidth="1.8" strokeOpacity="0.50" filter="url(#glow)"/>
-                </g>
-
-                {/* ── Outer compass housing ── */}
-                <circle cx="150" cy="150" r="132" fill="#030703" stroke="#0f1f0f" strokeWidth="2"/>
-
-                {/* Eclipse effect - black fill that covers based on alignment */}
-                <circle
-                  cx="150"
-                  cy="150"
-                  r="130"
-                  fill="black"
-                  mask="url(#eclipseMask)"
-                  opacity={0.7}
-                />
-
-                <circle cx="150" cy="150" r="130" fill="none" stroke="#00ff41" strokeWidth="0.6" strokeOpacity="0.22"/>
-                <circle cx="150" cy="150" r="127" fill="none" stroke="#00ff41" strokeWidth="0.3" strokeOpacity="0.12"/>
-
-                {/* ── Rotating compass disk (heading-based) ── */}
-                <g transform={`rotate(${heading !== null ? -heading : 0}, 150, 150)`}>
-
-                  {/* Spirit-level concentric rings */}
-                  {[104, 84, 64, 44, 26].map((r, i) => (
-                    <circle key={r} cx="150" cy="150" r={r}
-                      fill="none" stroke="#00ff41"
-                      strokeWidth="0.5"
-                      strokeOpacity={0.06 + i * 0.025}
-                    />
-                  ))}
-
-                  {/* Disk crosshairs */}
-                  <line x1="150" y1="48"  x2="150" y2="252" stroke="#00ff41" strokeWidth="0.35" strokeOpacity="0.10"/>
-                  <line x1="48"  y1="150" x2="252" y2="150" stroke="#00ff41" strokeWidth="0.35" strokeOpacity="0.10"/>
-
-                  {/* Degree tick marks (72 × 5°) */}
-                  {Array.from({ length: 72 }, (_, i) => {
-                    const a    = i * 5;
-                    const rad  = a * Math.PI / 180;
-                    const isN  = a % 90 === 0;
-                    const is45 = a % 45 === 0;
-                    const is10 = a % 10 === 0;
-                    const r1   = isN ? 105 : is45 ? 108 : is10 ? 112 : 116;
-                    return (
-                      <line key={i}
-                        x1={150 + r1 * Math.sin(rad)} y1={150 - r1 * Math.cos(rad)}
-                        x2={150 + 123 * Math.sin(rad)} y2={150 - 123 * Math.cos(rad)}
-                        stroke="#00ff41"
-                        strokeWidth={isN ? 2.2 : is45 ? 1.5 : is10 ? 1 : 0.5}
-                        strokeOpacity={isN ? 0.90 : is45 ? 0.70 : is10 ? 0.45 : 0.22}
-                      />
-                    );
-                  })}
-
-                  {/* Cardinal direction labels */}
-                  {[
-                    { l: 'N', a: 0,   c: '#ff3333', sz: 14, fw: 'bold' },
-                    { l: 'E', a: 90,  c: '#00ff41', sz: 10, fw: 'normal' },
-                    { l: 'S', a: 180, c: '#00cc33', sz: 10, fw: 'normal' },
-                    { l: 'W', a: 270, c: '#00ff41', sz: 10, fw: 'normal' },
-                  ].map(({ l, a, c, sz, fw }) => {
-                    const rad = a * Math.PI / 180;
-                    return (
-                      <text key={l}
-                        x={150 + 95 * Math.sin(rad)}
-                        y={150 - 95 * Math.cos(rad) + 4}
-                        textAnchor="middle" fill={c} fontSize={sz}
-                        fontFamily="monospace" fontWeight={fw}
-                        style={{ filter: l === 'N' ? 'drop-shadow(0 0 5px #ff333388)' : undefined }}
-                      >{l}</text>
-                    );
-                  })}
-                </g>
-
-                {/* ── Target direction arrow ── */}
-                <g transform={`rotate(${rotAngle}, 150, 150)`} opacity={heading !== null ? 1 : 0.25}>
-                  <line x1="150" y1="150" x2="150" y2="68"
-                    stroke="#ff6600" strokeWidth="2" strokeOpacity="0.88"
-                    filter="url(#glow)"/>
-                  <polygon points="150,53 142,75 158,75"
-                    fill="#ff6600" opacity="0.90" filter="url(#glow)"/>
-                  <circle cx="150" cy="53" r="3"
-                    fill="none" stroke="#ff6600" strokeWidth="1.5" strokeOpacity="0.7"/>
-                  {/* Tail */}
-                  <line x1="145" y1="172" x2="155" y2="172"
-                    stroke="#ff6600" strokeWidth="1.5" strokeOpacity="0.45"/>
-                </g>
-
-                {/* ── Spirit level bubble ── */}
-                {/* Target ring (center zone indicator) */}
-                <circle cx="150" cy="150" r="16"
-                  fill="none" stroke="#00ff41" strokeWidth="0.8" strokeOpacity="0.28"
-                  strokeDasharray="4,4"/>
-
-                {heading !== null && (
-                  <>
-                    {/* Outer bubble ring */}
-                    <circle cx={BX} cy={BY} r={isAligned ? 10 : 11}
-                      fill="rgba(0,8,0,0.6)"
-                      stroke={isAligned ? '#00ff41' : '#ff7700'}
-                      strokeWidth="1.8"
-                      filter={isAligned ? 'url(#glowStrong)' : undefined}
-                    />
-                    {/* Inner bubble dot */}
-                    <circle cx={BX} cy={BY} r={isAligned ? 5 : 4.5}
-                      fill={isAligned ? '#00ff41' : '#ff7700'}
-                      fillOpacity={isAligned ? 0.85 : 0.55}
-                      filter={isAligned ? 'url(#glowStrong)' : undefined}
-                    />
-                  </>
-                )}
-
-                {/* ── Center reticle ── */}
-                <circle cx="150" cy="150" r="6"
-                  fill="#030703" stroke="#00ff41" strokeWidth="1.5" strokeOpacity="0.80"/>
-                <circle cx="150" cy="150" r="1.8" fill="#00ff41"/>
-                {/* Reticle cross lines */}
-                {[0, 90, 180, 270].map(a => {
-                  const rad = a * Math.PI / 180;
-                  return (
-                    <line key={a}
-                      x1={150 + 9  * Math.sin(rad)} y1={150 - 9  * Math.cos(rad)}
-                      x2={150 + 18 * Math.sin(rad)} y2={150 - 18 * Math.cos(rad)}
-                      stroke="#00ff41" strokeWidth="1.2" strokeOpacity="0.65"
-                    />
-                  );
-                })}
-
-                {/* ── Alignment glow ring (on course) ── */}
-                {isAligned && !isArrived && (
-                  <circle cx="150" cy="150" r="127"
-                    fill="none" stroke="#00ff41" strokeWidth="2"
-                    className="pulse-ring-el"
-                    style={{ filter: 'drop-shadow(0 0 9px #00ff41)' }}
-                  />
-                )}
-
-                {/* ── Arrival indicator ── */}
-                {isArrived && (
-                  <>
-                    <circle cx="150" cy="150" r="127"
-                      fill="none" stroke="#ff0000" strokeWidth="3"
-                      className="arrived-ring-el"
-                      style={{ filter: 'drop-shadow(0 0 12px #ff0000)' }}
-                    />
-                    <text x="150" y="38"
-                      textAnchor="middle" fill="#ff3333" fontSize="8"
-                      fontFamily="monospace" fontWeight="bold"
-                      style={{ filter: 'drop-shadow(0 0 5px #ff000080)' }}
-                    >
-                      ▲ DESTINATION_REACHED ▲
-                    </text>
-                  </>
-                )}
-              </svg>
-            </div>
-
-            {/* ─── Distance ─── */}
-            <div className="text-center mt-2 mb-5">
-              <div
-                className="text-[42px] font-bold tracking-widest leading-none"
-                style={{
-                  color: isArrived ? '#ff3333' : '#00ff41',
-                  textShadow: isArrived
-                    ? '0 0 20px #ff333380'
-                    : '0 0 18px #00ff4160',
-                }}
-              >
-                {fmtDist(distance)}
-              </div>
-              <div className="text-[9px] tracking-[0.3em] text-green-900 mt-1">
-                DISTANCE_TO_TARGET
-              </div>
-            </div>
-
-            {/* ─── Data readouts ─── */}
-            <div className="grid grid-cols-2 gap-2 w-full max-w-[290px]">
-              {[
-                { label: 'HEADING',  value: fmtDeg(heading),   sub: '현재 방향각', rt: true  },
-                { label: 'BEARING',  value: fmtDeg(bearing),   sub: '목표 방향각', rt: false },
-                { label: 'CUR_LAT',  value: fmtCoord(userLat), sub: '현재 위도',   rt: true  },
-                { label: 'CUR_LON',  value: fmtCoord(userLon), sub: '현재 경도',   rt: true  },
-                { label: 'TGT_LAT',  value: fmtCoord(targetLat), sub: '목표 위도', rt: false },
-                { label: 'TGT_LON',  value: fmtCoord(targetLon), sub: '목표 경도', rt: false },
-              ].map(item => (
-                <div
-                  key={item.label}
-                  className="border border-green-950 p-2.5"
-                  style={{ background: 'rgba(0,12,0,0.6)' }}
-                >
-                  <div className="flex justify-between items-center mb-0.5">
-                    <span className="text-[9px] tracking-[0.15em] text-green-800">{item.label}</span>
-                    {item.rt && <span className="text-[7px] text-green-800 animate-pulse">●LIVE</span>}
-                  </div>
-                  <div className="text-green-400 text-[11px] font-bold tabular-nums">{item.value}</div>
-                  <div className="text-[8px] text-green-950 mt-0.5">{item.sub}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* ─── Status line ─── */}
-            <div className="text-center mt-4">
-              {isArrived ? (
-                <div className="text-[11px] tracking-[0.22em]"
-                  style={{ color: '#ff3333', textShadow: '0 0 12px #ff333380' }}>
-                  ■ &nbsp; DESTINATION_REACHED &nbsp; ■
-                </div>
-              ) : isAligned ? (
-                <div className="text-[11px] tracking-[0.22em]"
-                  style={{ color: '#00ff41', textShadow: '0 0 10px #00ff4180' }}>
-                  ◆ &nbsp; ON_COURSE &nbsp; ◆
-                </div>
-              ) : (
-                <div className="text-[11px] tracking-[0.22em] text-orange-600">
-                  ◇ &nbsp; RECALIBRATING &nbsp; ◇
-                </div>
-              )}
-            </div>
-
-            {/* ─── Reset ─── */}
+        <div className="min-h-screen flex flex-col items-center justify-start p-8 pt-12">
+          {!permissionGranted && (
             <button
-              onClick={() => { stopNoise(); setPhase('search'); setCompassVisible(false); }}
-              className="mt-6 text-[9px] tracking-[0.2em] text-green-950 hover:text-green-800 transition-colors"
+              onClick={requestPermission}
+              className="mb-8 px-6 py-3 border-2 border-black hover:bg-black hover:text-white transition-colors"
             >
-              [ RESET / 좌표 재입력 ]
+              Enable Sensor
             </button>
+          )}
+
+          {/* Direction instruction */}
+          <div className="mb-8 text-center">
+            <p className="text-lg">{getDirectionText()}</p>
           </div>
+
+          {/* Compass circles */}
+          <div className="relative mb-8" style={{ width: 300, height: 300 }}>
+            <svg width="300" height="300" viewBox="0 0 300 300">
+              <defs>
+                <mask id="eclipseMask">
+                  <rect width="300" height="300" fill="white"/>
+                  <circle
+                    cx={150 + eclipseProgress * 135}
+                    cy="150"
+                    r="142"
+                    fill="black"
+                  />
+                </mask>
+              </defs>
+
+              {/* Outer circle */}
+              <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="2"/>
+
+              {/* Eclipse effect */}
+              <circle
+                cx="150"
+                cy="150"
+                r="140"
+                fill="black"
+                mask="url(#eclipseMask)"
+                opacity="0.8"
+              />
+
+              {/* Inner circle */}
+              <circle cx="150" cy="150" r="70" fill="none" stroke="black" strokeWidth="2"/>
+
+              {/* Current position (center) */}
+              <circle cx={currentX} cy={currentY} r="8" fill="none" stroke="black" strokeWidth="2"/>
+              <circle cx={currentX} cy={currentY} r="4" fill="black"/>
+
+              {/* Target position */}
+              <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="black" strokeWidth="2"/>
+              <circle cx={targetX} cy={targetY} r="4" fill="black"/>
+            </svg>
+          </div>
+
+          {/* Distance */}
+          <div className="text-center mb-8">
+            <div className="text-4xl font-bold mb-2">{fmtDist(distance)}</div>
+            <div className="text-sm text-gray-600">Distance to the destination</div>
+          </div>
+
+          {/* Info */}
+          <div className="w-full max-w-sm text-sm space-y-1 border-t pt-4">
+            <div className="flex justify-between">
+              <span>Destination direction:</span>
+              <span className="font-mono">{bearing !== null ? `${bearing.toFixed(0)}°` : '--'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Current direction:</span>
+              <span className="font-mono">{heading !== null ? `${heading.toFixed(0)}°` : '--'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Destination location:</span>
+              <span className="font-mono text-xs">{targetLat.toFixed(5)}, {targetLon.toFixed(5)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Current location:</span>
+              <span className="font-mono text-xs">
+                {userLat !== null ? userLat.toFixed(5) : '--'}, {userLon !== null ? userLon.toFixed(5) : '--'}
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => { stopNoise(); setPhase('search'); setCompassVisible(false); }}
+            className="mt-8 text-sm text-gray-500 hover:text-black"
+          >
+            ← Back to search
+          </button>
         </div>
       )}
     </div>
