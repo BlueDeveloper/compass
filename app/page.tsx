@@ -258,6 +258,21 @@ export default function CompassPage() {
   }, []);
 
   /* ═══════════════════════════════════════════
+     INITIAL NOISE ON SEARCH SCREEN
+  ═══════════════════════════════════════════ */
+  useEffect(() => {
+    if (phase === 'search') {
+      initAudio();
+      startNoise(0.15);
+    }
+    return () => {
+      if (phase === 'search') {
+        stopNoise();
+      }
+    };
+  }, [phase, initAudio, startNoise, stopNoise]);
+
+  /* ═══════════════════════════════════════════
      ARRIVAL DETECTION & SOUND
   ═══════════════════════════════════════════ */
   const arrivedRef = useRef(false);
@@ -291,8 +306,7 @@ export default function CompassPage() {
   /* ═══════════════════════════════════════════
      SEARCH SUBMIT
   ═══════════════════════════════════════════ */
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = () => {
     setFormError('');
 
     const parts = inputCoords.trim().split(/\s+/);
@@ -308,9 +322,9 @@ export default function CompassPage() {
     if (lat < -90  || lat > 90)             { setFormError('위도: -90 ~ +90 범위'); return; }
     if (lon < -180 || lon > 180)            { setFormError('경도: -180 ~ +180 범위'); return; }
 
-    initAudio();
-    startNoise(0.38);
+    stopNoise();
     setIsShaking(true);
+    startNoise(0.38);
 
     setTimeout(() => {
       stopNoise();
@@ -386,7 +400,7 @@ export default function CompassPage() {
 
       {/* Flicker overlay */}
       <div
-        className={`flicker-overlay ${phase === 'search' || (!isAligned && phase === 'compass') ? 'active' : 'inactive'}`}
+        className="flicker-overlay active"
         style={{ '--flicker-intensity': flickerIntensity } as React.CSSProperties}
       />
 
@@ -394,23 +408,30 @@ export default function CompassPage() {
           SEARCH PHASE - 메인화면.png 스타일
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
-        <div className="min-h-screen flex flex-col p-8">
-          <div className="flex-1 flex items-start pt-12">
-            <form onSubmit={handleSearch} className="w-full max-w-md">
+        <div className="min-h-screen flex flex-col">
+          <div className="flex-1 flex items-start pt-12 px-8">
+            <div className="w-full max-w-md">
               <input
                 type="text"
                 value={inputCoords}
                 onChange={e => setInputCoords(e.target.value)}
                 placeholder="Ex: 37.5344789 126.9993445"
                 className="w-full px-4 py-3 border-2 border-gray-300 text-base focus:outline-none focus:border-gray-500"
+                onKeyPress={e => e.key === 'Enter' && handleSearch()}
               />
               {formError && (
                 <div className="mt-2 text-sm text-red-600">{formError}</div>
               )}
-            </form>
+              <button
+                onClick={handleSearch}
+                className="mt-4 w-full px-6 py-3 border-2 border-black hover:bg-black hover:text-white transition-colors text-base"
+              >
+                확인
+              </button>
+            </div>
           </div>
 
-          <div className="flex justify-center pb-12">
+          <div className="w-full bg-gray-100 py-8 flex justify-center items-center">
             <img src="/MPa_LOGO.png" alt="MPa Logo" className="h-16" />
           </div>
         </div>
