@@ -252,8 +252,8 @@ export default function CompassPage() {
   ═══════════════════════════════════════════ */
   useEffect(() => {
     const interval = setInterval(() => {
-      setFlickerIntensity(0.1 + Math.random() * 0.25);
-    }, 150);
+      setFlickerIntensity(0.2 + Math.random() * 0.5);
+    }, 80);
     return () => clearInterval(interval);
   }, []);
 
@@ -377,8 +377,8 @@ export default function CompassPage() {
       className="min-h-screen text-black overflow-hidden select-none"
       style={{
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        backgroundColor: `rgba(255, 255, 255, ${1 - flickerIntensity * 0.5})`,
-        transition: 'background-color 0.1s ease-out'
+        backgroundColor: `rgba(255, 255, 255, ${1 - flickerIntensity * 0.9})`,
+        transition: 'background-color 0.05s ease-out'
       }}
     >
       <style>{`
