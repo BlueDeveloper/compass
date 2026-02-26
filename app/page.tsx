@@ -481,32 +481,8 @@ export default function CompassPage() {
           {/* Compass circles */}
           <div className="relative mb-6" style={{ width: 280, height: 280 }}>
             <svg width="280" height="280" viewBox="0 0 300 300">
-              <defs>
-                <mask id="eclipseMask">
-                  <rect width="300" height="300" fill="white"/>
-                  <circle
-                    cx={150 + eclipseProgress * 135}
-                    cy="150"
-                    r="142"
-                    fill="black"
-                  />
-                </mask>
-              </defs>
-
               {/* Outer circle */}
               <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="2"/>
-
-              {/* Eclipse effect */}
-              {!isAligned && (
-                <circle
-                  cx="150"
-                  cy="150"
-                  r="140"
-                  fill="black"
-                  mask="url(#eclipseMask)"
-                  opacity="0.8"
-                />
-              )}
 
               {/* Inner circle */}
               <circle cx="150" cy="150" r="70" fill="none" stroke="black" strokeWidth="2"/>
