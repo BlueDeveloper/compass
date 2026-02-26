@@ -373,36 +373,20 @@ export default function CompassPage() {
      RENDER
   ═══════════════════════════════════════════ */
   return (
-    <div className="min-h-screen bg-white text-black overflow-hidden select-none" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div
+      className="min-h-screen text-black overflow-hidden select-none"
+      style={{
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        backgroundColor: `rgba(255, 255, 255, ${1 - flickerIntensity * 0.5})`,
+        transition: 'background-color 0.1s ease-out'
+      }}
+    >
       <style>{`
-        @keyframes flicker {
-          0%, 100% { opacity: 0; }
-          50% { opacity: var(--flicker-intensity, 0.15); }
-        }
-
-        .flicker-overlay {
-          position: fixed;
-          inset: 0;
-          pointer-events: none;
-          background: rgba(255, 255, 255, 0.8);
-          animation: flicker 0.2s steps(2) infinite;
-          z-index: 9999;
-        }
-
-        .flicker-overlay.active {
-          display: block;
-        }
-
-        .flicker-overlay.inactive {
-          display: none;
+        @keyframes backgroundFlicker {
+          0%, 100% { filter: brightness(1); }
+          50% { filter: brightness(${1 - flickerIntensity * 0.3}); }
         }
       `}</style>
-
-      {/* Flicker overlay */}
-      <div
-        className="flicker-overlay active"
-        style={{ '--flicker-intensity': flickerIntensity } as React.CSSProperties}
-      />
 
       {/* ══════════════════════════════════════════════
           SEARCH PHASE - 메인화면.png 스타일
@@ -410,29 +394,31 @@ export default function CompassPage() {
       {phase === 'search' && (
         <div className="min-h-screen flex flex-col">
           <div className="flex-1 flex items-start pt-12 px-8">
-            <div className="w-full max-w-md">
-              <input
-                type="text"
-                value={inputCoords}
-                onChange={e => setInputCoords(e.target.value)}
-                placeholder="Ex: 37.5344789 126.9993445"
-                className="w-full px-4 py-3 border-2 border-gray-300 text-base focus:outline-none focus:border-gray-500"
-                onKeyPress={e => e.key === 'Enter' && handleSearch()}
-              />
+            <div className="w-full max-w-2xl">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={inputCoords}
+                  onChange={e => setInputCoords(e.target.value)}
+                  placeholder="Ex: 37.5344789 126.9993445"
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 text-base focus:outline-none focus:border-gray-500"
+                  onKeyPress={e => e.key === 'Enter' && handleSearch()}
+                />
+                <button
+                  onClick={handleSearch}
+                  className="px-8 py-3 border-2 border-black hover:bg-black hover:text-white transition-colors text-base whitespace-nowrap"
+                >
+                  확인
+                </button>
+              </div>
               {formError && (
                 <div className="mt-2 text-sm text-red-600">{formError}</div>
               )}
-              <button
-                onClick={handleSearch}
-                className="mt-4 w-full px-6 py-3 border-2 border-black hover:bg-black hover:text-white transition-colors text-base"
-              >
-                확인
-              </button>
             </div>
           </div>
 
-          <div className="w-full bg-gray-100 py-8 flex justify-center items-center">
-            <img src="/MPa_LOGO.png" alt="MPa Logo" className="h-16" />
+          <div className="w-full bg-gray-100 py-8 flex justify-center items-center overflow-hidden">
+            <img src="/MPa_LOGO.png" alt="MPa Logo" className="w-full h-20 object-cover" />
           </div>
         </div>
       )}
