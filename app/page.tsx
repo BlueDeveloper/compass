@@ -393,32 +393,32 @@ export default function CompassPage() {
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
         <div className="min-h-screen flex flex-col">
-          <div className="flex-1 flex items-start pt-12 px-8">
-            <div className="w-full max-w-2xl">
+          <div className="flex-1 flex items-start pt-8 px-4">
+            <div className="w-full">
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={inputCoords}
                   onChange={e => setInputCoords(e.target.value)}
                   placeholder="Ex: 37.5344789 126.9993445"
-                  className="flex-1 px-4 py-3 border-2 border-gray-300 text-base focus:outline-none focus:border-gray-500"
+                  className="flex-1 px-3 py-2 border-2 border-gray-300 text-sm focus:outline-none focus:border-gray-500"
                   onKeyPress={e => e.key === 'Enter' && handleSearch()}
                 />
                 <button
                   onClick={handleSearch}
-                  className="px-8 py-3 border-2 border-black hover:bg-black hover:text-white transition-colors text-base whitespace-nowrap"
+                  className="px-4 py-2 border-2 border-black hover:bg-black hover:text-white transition-colors text-sm whitespace-nowrap"
                 >
                   확인
                 </button>
               </div>
               {formError && (
-                <div className="mt-2 text-sm text-red-600">{formError}</div>
+                <div className="mt-2 text-xs text-red-600">{formError}</div>
               )}
             </div>
           </div>
 
-          <div className="w-full bg-gray-100 py-8 flex justify-center items-center overflow-hidden">
-            <img src="/MPa_LOGO.png" alt="MPa Logo" className="w-full h-20 object-cover" />
+          <div className="w-full bg-gray-100 py-6 flex justify-center items-center overflow-hidden">
+            <img src="/MPa_LOGO.png" alt="MPa Logo" className="w-full h-16 object-cover" />
           </div>
         </div>
       )}
@@ -427,24 +427,24 @@ export default function CompassPage() {
           COMPASS PHASE - 메인화면2.png 스타일
       ══════════════════════════════════════════════ */}
       {phase === 'compass' && (
-        <div className="min-h-screen flex flex-col items-center justify-start p-8 pt-12">
+        <div className="min-h-screen flex flex-col items-center justify-start p-4 pt-8">
           {!permissionGranted && (
             <button
               onClick={requestPermission}
-              className="mb-8 px-6 py-3 border-2 border-black hover:bg-black hover:text-white transition-colors"
+              className="mb-6 px-5 py-2 border-2 border-black hover:bg-black hover:text-white transition-colors text-sm"
             >
               Enable Sensor
             </button>
           )}
 
           {/* Direction instruction */}
-          <div className="mb-8 text-center">
-            <p className="text-lg">{getDirectionText()}</p>
+          <div className="mb-6 text-center px-2">
+            <p className="text-base">{getDirectionText()}</p>
           </div>
 
           {/* Compass circles */}
-          <div className="relative mb-8" style={{ width: 300, height: 300 }}>
-            <svg width="300" height="300" viewBox="0 0 300 300">
+          <div className="relative mb-6" style={{ width: 280, height: 280 }}>
+            <svg width="280" height="280" viewBox="0 0 300 300">
               <defs>
                 <mask id="eclipseMask">
                   <rect width="300" height="300" fill="white"/>
@@ -484,13 +484,13 @@ export default function CompassPage() {
           </div>
 
           {/* Distance */}
-          <div className="text-center mb-8">
-            <div className="text-4xl font-bold mb-2">{fmtDist(distance)}</div>
-            <div className="text-sm text-gray-600">Distance to the destination</div>
+          <div className="text-center mb-6">
+            <div className="text-3xl font-bold mb-2">{fmtDist(distance)}</div>
+            <div className="text-xs text-gray-600">Distance to the destination</div>
           </div>
 
           {/* Info */}
-          <div className="w-full max-w-sm text-sm space-y-1 border-t pt-4">
+          <div className="w-full px-4 text-xs space-y-1 border-t pt-3">
             <div className="flex justify-between">
               <span>Destination direction:</span>
               <span className="font-mono">{bearing !== null ? `${bearing.toFixed(0)}°` : '--'}</span>
@@ -513,7 +513,7 @@ export default function CompassPage() {
 
           <button
             onClick={() => { stopNoise(); setPhase('search'); setCompassVisible(false); }}
-            className="mt-8 text-sm text-gray-500 hover:text-black"
+            className="mt-6 text-xs text-gray-500 hover:text-black"
           >
             ← Back to search
           </button>
