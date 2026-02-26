@@ -20,6 +20,7 @@ export default function CompassPage() {
   const [compassVisible, setCompassVisible] = useState(false);
   const [isShaking,      setIsShaking]      = useState(false);
   const [flickerIntensity, setFlickerIntensity] = useState(0.15);
+  const [audioStarted, setAudioStarted] = useState(false);
 
   /* ── Search Form ── */
   const [inputCoords, setInputCoords] = useState('');
@@ -260,14 +261,18 @@ export default function CompassPage() {
   /* ═══════════════════════════════════════════
      INITIAL NOISE ON SEARCH SCREEN
   ═══════════════════════════════════════════ */
-  const handleInputFocus = useCallback(() => {
-    initAudio();
-    if (!noiseSrcRef.current && phase === 'search') {
+  const handleScreenInteraction = useCallback(() => {
+    if (!audioStarted && phase === 'search') {
+      initAudio();
       startNoise(0.25);
+      setAudioStarted(true);
     }
-  }, [initAudio, startNoise, phase]);
+  }, [audioStarted, phase, initAudio, startNoise]);
 
   useEffect(() => {
+    if (phase !== 'search') {
+      setAudioStarted(false);
+    }
     return () => {
       if (phase === 'search') {
         stopNoise();
@@ -395,7 +400,7 @@ export default function CompassPage() {
           SEARCH PHASE - 메인화면.png 스타일
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col" onClick={handleScreenInteraction}>
           <div className="flex-1 flex items-start pt-8 px-4">
             <div className="w-full">
               <div className="flex gap-2">
@@ -406,8 +411,6 @@ export default function CompassPage() {
                   placeholder="Ex: 37.5344789 126.9993445"
                   className="flex-1 px-3 py-2 border-2 border-gray-300 text-sm focus:outline-none focus:border-gray-500"
                   onKeyPress={e => e.key === 'Enter' && handleSearch()}
-                  onFocus={handleInputFocus}
-                  onClick={handleInputFocus}
                 />
                 <button
                   onClick={handleSearch}
