@@ -19,10 +19,10 @@ export default function CompassPage() {
   const [phase,          setPhase]          = useState<'search' | 'compass'>('search');
   const [compassVisible, setCompassVisible] = useState(false);
   const [isShaking,      setIsShaking]      = useState(false);
+  const [flickerIntensity, setFlickerIntensity] = useState(0.15);
 
   /* ── Search Form ── */
-  const [inputLat,  setInputLat]  = useState('');
-  const [inputLon,  setInputLon]  = useState('');
+  const [inputCoords, setInputCoords] = useState('');
   const [formError, setFormError] = useState('');
 
   /* ── Target ── */
@@ -235,6 +235,52 @@ export default function CompassPage() {
   }, [userLat, userLon, heading, targetLat, targetLon]);
 
   /* ═══════════════════════════════════════════
+     ARRIVAL SOUND
+  ═══════════════════════════════════════════ */
+  const playArrivalSound = useCallback(() => {
+    if (!audioCtxRef.current) return;
+    try {
+      const ctx = audioCtxRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.3);
+
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    } catch {}
+  }, []);
+
+  /* ═══════════════════════════════════════════
+     RANDOM FLICKER INTENSITY
+  ═══════════════════════════════════════════ */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFlickerIntensity(0.1 + Math.random() * 0.25);
+    }, 150);
+    return () => clearInterval(interval);
+  }, []);
+
+  /* ═══════════════════════════════════════════
+     ARRIVAL DETECTION & SOUND
+  ═══════════════════════════════════════════ */
+  const arrivedRef = useRef(false);
+  useEffect(() => {
+    if (isArrived && !arrivedRef.current) {
+      arrivedRef.current = true;
+      playArrivalSound();
+    } else if (!isArrived) {
+      arrivedRef.current = false;
+    }
+  }, [isArrived, playArrivalSound]);
+
+  /* ═══════════════════════════════════════════
      NOISE EFFECT
   ═══════════════════════════════════════════ */
   useEffect(() => {
@@ -243,12 +289,15 @@ export default function CompassPage() {
       if (noiseSrcRef.current) setNoiseVol(0.55);
       else startNoise(0.55);
     } else if (!isAligned) {
-      if (noiseSrcRef.current) setNoiseVol(0.09);
-      else startNoise(0.09);
+      // 방향 차이에 따라 노이즈 볼륨 조절
+      const angleDifference = Math.abs(rotAngle > 180 ? 360 - rotAngle : rotAngle);
+      const noiseVol = 0.05 + (angleDifference / 180) * 0.25;
+      if (noiseSrcRef.current) setNoiseVol(noiseVol);
+      else startNoise(noiseVol);
     } else {
       stopNoise();
     }
-  }, [isAligned, isArrived, permissionGranted, phase, startNoise, stopNoise, setNoiseVol]);
+  }, [isAligned, isArrived, permissionGranted, phase, rotAngle, startNoise, stopNoise, setNoiseVol]);
 
   /* ═══════════════════════════════════════════
      SEARCH SUBMIT
@@ -256,8 +305,16 @@ export default function CompassPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    const lat = parseFloat(inputLat);
-    const lon = parseFloat(inputLon);
+
+    // 위도 경도를 공백으로 분리
+    const parts = inputCoords.trim().split(/\s+/);
+    if (parts.length !== 2) {
+      setFormError('위도와 경도를 공백으로 구분하여 입력하세요 (예: 37.5547 126.9708)');
+      return;
+    }
+
+    const lat = parseFloat(parts[0]);
+    const lon = parseFloat(parts[1]);
 
     if (isNaN(lat) || isNaN(lon))           { setFormError('유효한 좌표를 입력하세요'); return; }
     if (lat < -90  || lat > 90)             { setFormError('위도: -90 ~ +90 범위'); return; }
@@ -327,17 +384,17 @@ export default function CompassPage() {
 
         /* ─ Background flicker (misaligned) ─ */
         @keyframes bgFlicker {
-          0%,100% { opacity:0; }
-          6%   { opacity:0.20; }
-          12%  { opacity:0; }
-          22%  { opacity:0.14; }
-          30%  { opacity:0; }
-          40%  { opacity:0.25; }
-          52%  { opacity:0; }
-          60%  { opacity:0.10; }
-          72%  { opacity:0; }
-          82%  { opacity:0.18; }
-          92%  { opacity:0; }
+          0%   { opacity:0; }
+          8%   { opacity:var(--flicker-intensity, 0.15); }
+          16%  { opacity:0; }
+          24%  { opacity:calc(var(--flicker-intensity, 0.15) * 0.7); }
+          32%  { opacity:0; }
+          48%  { opacity:var(--flicker-intensity, 0.15); }
+          56%  { opacity:0; }
+          64%  { opacity:calc(var(--flicker-intensity, 0.15) * 0.5); }
+          80%  { opacity:0; }
+          88%  { opacity:calc(var(--flicker-intensity, 0.15) * 0.9); }
+          100% { opacity:0; }
         }
 
         /* ─ Background flicker (arrived) ─ */
@@ -418,9 +475,12 @@ export default function CompassPage() {
       `}</style>
 
       {/* ── Flicker overlay ── */}
-      <div className={`flicker-overlay ${
-        isArrived ? 'arrived' : (!isAligned && phase === 'compass') ? 'active' : ''
-      }`} />
+      <div
+        className={`flicker-overlay ${
+          isArrived ? 'arrived' : (!isAligned && phase === 'compass') ? 'active' : (phase === 'search' ? 'active' : '')
+        }`}
+        style={{ '--flicker-intensity': flickerIntensity } as React.CSSProperties}
+      />
 
       {/* ══════════════════════════════════════════════
           SEARCH PHASE
@@ -459,53 +519,37 @@ export default function CompassPage() {
                 TARGET_COORD
               </div>
 
-              {/* Latitude */}
-              <div className="mb-5">
-                <div className="text-[9px] tracking-[0.2em] text-green-800 mb-1.5">
-                  LAT &nbsp;/&nbsp; 위도 &nbsp;&nbsp;[ -90 ~ +90 ]
-                </div>
-                <div className="flex items-center border-b border-green-900 pb-1.5">
-                  <span className="text-green-700 mr-2 text-sm">&gt;</span>
-                  <input
-                    type="number" step="any"
-                    value={inputLat}
-                    onChange={e => setInputLat(e.target.value)}
-                    placeholder="37.55470"
-                    className="flex-1 bg-transparent text-green-400 outline-none text-sm placeholder-green-950"
-                  />
-                </div>
-              </div>
-
-              {/* Longitude */}
+              {/* Coordinates */}
               <div className="mb-7">
                 <div className="text-[9px] tracking-[0.2em] text-green-800 mb-1.5">
-                  LON &nbsp;/&nbsp; 경도 &nbsp;&nbsp;[ -180 ~ +180 ]
+                  COORDINATES &nbsp;/&nbsp; 위도 경도
                 </div>
-                <div className="flex items-center border-b border-green-900 pb-1.5">
-                  <span className="text-green-700 mr-2 text-sm">&gt;</span>
-                  <input
-                    type="number" step="any"
-                    value={inputLon}
-                    onChange={e => setInputLon(e.target.value)}
-                    placeholder="126.97080"
-                    className="flex-1 bg-transparent text-green-400 outline-none text-sm placeholder-green-950"
-                  />
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 flex items-center border-b border-green-900 pb-1.5">
+                    <span className="text-green-700 mr-2 text-sm">&gt;</span>
+                    <input
+                      type="text"
+                      value={inputCoords}
+                      onChange={e => setInputCoords(e.target.value)}
+                      placeholder="Ex: 37.5344789 126.9993445"
+                      className="flex-1 bg-transparent text-green-400 outline-none text-sm placeholder-green-950"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 border border-green-800 text-green-400 text-xs tracking-[0.15em] transition-all duration-200 hover:border-green-500 hover:bg-green-950"
+                    style={{ boxShadow: '0 0 8px #00ff4115' }}
+                  >
+                    검색
+                  </button>
                 </div>
               </div>
 
               {formError && (
-                <div className="text-red-500 text-[10px] mb-4 tracking-wide">
+                <div className="text-red-500 text-[10px] tracking-wide">
                   &gt;&gt; ERR: {formError}
                 </div>
               )}
-
-              <button
-                type="submit"
-                className="w-full border border-green-800 text-green-400 py-3 text-sm tracking-[0.22em] transition-all duration-200 hover:border-green-500 hover:bg-green-950"
-                style={{ boxShadow: '0 0 12px #00ff4118' }}
-              >
-                [ &nbsp; EXECUTE &nbsp; ]
-              </button>
             </div>
           </form>
 
@@ -513,6 +557,15 @@ export default function CompassPage() {
           <div className="mt-10 text-[9px] tracking-[0.2em] text-green-900 text-center space-y-1 z-10">
             <div>GPS_STATUS: {userLat !== null ? `LOCK_ACQUIRED ✓` : 'SEARCHING_SIGNAL...'}</div>
             <div>SYSTEM: ■■■■■■■■░░ READY</div>
+          </div>
+
+          {/* Logo */}
+          <div className="mt-12 z-10">
+            <img
+              src="/MPa_LOGO.png"
+              alt="MPa Logo"
+              className="h-12 opacity-60"
+            />
           </div>
         </div>
       )}
@@ -581,6 +634,18 @@ export default function CompassPage() {
                     <stop offset="60%"  stopColor="#00ff41" stopOpacity="0.25"/>
                     <stop offset="100%" stopColor="#00ff41" stopOpacity="0"/>
                   </radialGradient>
+
+                  {/* Eclipse effect mask */}
+                  <mask id="eclipseMask">
+                    <rect width="300" height="300" fill="white"/>
+                    {/* Moving circle for eclipse effect */}
+                    <circle
+                      cx={150 + (Math.abs(rotAngle > 180 ? 360 - rotAngle : rotAngle) / 180) * 135}
+                      cy="150"
+                      r="132"
+                      fill="black"
+                    />
+                  </mask>
                 </defs>
 
                 {/* ── 도로 시각화: 겹쳐지는 원 (그라데이션 교차선) ── */}
@@ -602,6 +667,17 @@ export default function CompassPage() {
 
                 {/* ── Outer compass housing ── */}
                 <circle cx="150" cy="150" r="132" fill="#030703" stroke="#0f1f0f" strokeWidth="2"/>
+
+                {/* Eclipse effect - black fill that covers based on alignment */}
+                <circle
+                  cx="150"
+                  cy="150"
+                  r="130"
+                  fill="black"
+                  mask="url(#eclipseMask)"
+                  opacity={0.7}
+                />
+
                 <circle cx="150" cy="150" r="130" fill="none" stroke="#00ff41" strokeWidth="0.6" strokeOpacity="0.22"/>
                 <circle cx="150" cy="150" r="127" fill="none" stroke="#00ff41" strokeWidth="0.3" strokeOpacity="0.12"/>
 
