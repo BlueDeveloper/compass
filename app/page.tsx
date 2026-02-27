@@ -380,6 +380,25 @@ export default function CompassPage() {
   const targetX = 150 + Math.sin(targetAngle) * 140;
   const targetY = 150 - Math.cos(targetAngle) * 140;
 
+  // 목표 지점 opacity 계산 (사용자 바깥쪽 원과의 거리 기반)
+  const calculateTargetOpacity = () => {
+    if (heading === null || bearing === null) return 0;
+
+    // 두 점 사이의 거리 계산
+    const dx = targetX - userOuterX;
+    const dy = targetY - userOuterY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // 최대 거리는 원의 지름 (280)
+    // 거리가 0이면 opacity 1, 거리가 멀수록 opacity 0
+    const maxDistance = 280;
+    const opacity = Math.max(0, Math.min(1, 1 - (distance / maxDistance)));
+
+    return opacity;
+  };
+
+  const targetOpacity = calculateTargetOpacity();
+
   /* ═══════════════════════════════════════════
      RENDER
   ═══════════════════════════════════════════ */
@@ -490,9 +509,9 @@ export default function CompassPage() {
               {/* 안쪽 원 위의 사용자 위치 */}
               <circle cx={userInnerX} cy={userInnerY} r="6" fill="none" stroke="black" strokeWidth="2"/>
 
-              {/* 목표 지점 (bearing 방향 고정) */}
-              <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="black" strokeWidth="2"/>
-              <circle cx={targetX} cy={targetY} r="4" fill="black"/>
+              {/* 목표 지점 (bearing 방향 고정, 사용자 원과 가까울수록 나타남) */}
+              <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="black" strokeWidth="2" opacity={targetOpacity}/>
+              <circle cx={targetX} cy={targetY} r="4" fill="black" opacity={targetOpacity}/>
             </svg>
           </div>
 
