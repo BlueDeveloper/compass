@@ -7,8 +7,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 ═══════════════════════════════════════════ */
 const DEFAULT_LAT = 37.5547;
 const DEFAULT_LON = 126.9708;
-const ARRIVAL_KM  = 0.05;   // 50m → 도착 판정
-const ALIGN_DEG   = 15;     // ±15° → 방향 맞음 판정
+const ARRIVAL_KM  = 0.05;   // 50m → arrival threshold
+const ALIGN_DEG   = 15;     // ±15° → aligned threshold
 
 /* ═══════════════════════════════════════════
    COMPONENT
@@ -39,7 +39,7 @@ export default function CompassPage() {
   /* ── Navigation ── */
   const [distance,  setDistance]  = useState<number | null>(null);
   const [bearing,   setBearing]   = useState<number | null>(null);
-  const [rotAngle,  setRotAngle]  = useState(0);   // 화살표 회전 (0 = 정면)
+  const [rotAngle,  setRotAngle]  = useState(0);   // arrow rotation (0 = front)
   const [isAligned, setIsAligned] = useState(false);
   const [isArrived, setIsArrived] = useState(false);
 
@@ -257,16 +257,16 @@ export default function CompassPage() {
       let randomRange = 0.5;
 
       if (phase === 'compass' && heading !== null && bearing !== null) {
-        // 방향 차이 계산
+        // Calculate angle difference
         const angleDiff = Math.abs(angDiff(bearing, heading));
 
-        // 0~5도: 플리커 완전 제거
+        // 0~5 degrees: remove flicker completely
         if (angleDiff <= 5) {
           baseIntensity = 0;
           randomRange = 0;
         } else {
-          // 5도 이상일 때만 플리커 적용
-          const alignmentFactor = (angleDiff - 5) / 175; // 5도 = 0, 180도 = 1
+          // Apply flicker only when 5 degrees or more
+          const alignmentFactor = (angleDiff - 5) / 175; // 5° = 0, 180° = 1
           baseIntensity = 0.05 + alignmentFactor * 0.15;
           randomRange = 0.1 + alignmentFactor * 0.4;
         }
@@ -319,19 +319,19 @@ export default function CompassPage() {
     if (!permissionGranted || phase !== 'compass') return;
 
     if (isArrived) {
-      // 도착 시 특별한 사운드
+      // Special sound on arrival
       if (noiseSrcRef.current) setNoiseVol(0.55);
       else startNoise(0.55);
     } else if (heading !== null && bearing !== null) {
-      // 방향 차이 계산
+      // Calculate angle difference
       const angleDiff = Math.abs(angDiff(bearing, heading));
 
-      // 0~5도: 노이즈 완전 제거
+      // 0~5 degrees: remove noise completely
       if (angleDiff <= 5) {
         stopNoise();
       } else {
-        // 5도 이상일 때만 노이즈 적용
-        const alignmentFactor = (angleDiff - 5) / 175; // 5도 = 0, 180도 = 1
+        // Apply noise only when 5 degrees or more
+        const alignmentFactor = (angleDiff - 5) / 175; // 5° = 0, 180° = 1
         const noiseVol = 0.05 + alignmentFactor * 0.35;
 
         if (noiseSrcRef.current) setNoiseVol(noiseVol);
@@ -350,16 +350,16 @@ export default function CompassPage() {
 
     const parts = inputCoords.trim().split(/\s+/);
     if (parts.length !== 2) {
-      setFormError('위도와 경도를 공백으로 구분하여 입력하세요');
+      setFormError('Please enter latitude and longitude separated by space');
       return;
     }
 
     const lat = parseFloat(parts[0]);
     const lon = parseFloat(parts[1]);
 
-    if (isNaN(lat) || isNaN(lon))           { setFormError('유효한 좌표를 입력하세요'); return; }
-    if (lat < -90  || lat > 90)             { setFormError('위도: -90 ~ +90 범위'); return; }
-    if (lon < -180 || lon > 180)            { setFormError('경도: -180 ~ +180 범위'); return; }
+    if (isNaN(lat) || isNaN(lon))           { setFormError('Please enter valid coordinates'); return; }
+    if (lat < -90  || lat > 90)             { setFormError('Latitude: -90 to +90 range'); return; }
+    if (lon < -180 || lon > 180)            { setFormError('Longitude: -180 to +180 range'); return; }
 
     stopNoise();
     setIsShaking(true);
@@ -397,7 +397,7 @@ export default function CompassPage() {
   /* ═══════════════════════════════════════════
      COMPASS POSITIONS
   ═══════════════════════════════════════════ */
-  // 사용자 위치 - heading 방향 (바깥쪽, 안쪽 원)
+  // User position - heading direction (outer, inner circles)
   const userHeading = heading !== null ? heading : 0;
   const userAngle = userHeading * Math.PI / 180;
   const userOuterX = 150 + Math.sin(userAngle) * 140;
@@ -405,20 +405,20 @@ export default function CompassPage() {
   const userInnerX = 150 + Math.sin(userAngle) * 70;
   const userInnerY = 150 - Math.cos(userAngle) * 70;
 
-  // 목표 지점 - bearing 방향 (바깥쪽 원)
+  // Target position - bearing direction (outer circle)
   const targetBearing = bearing !== null ? bearing : 0;
   const targetAngle = targetBearing * Math.PI / 180;
   const targetX = 150 + Math.sin(targetAngle) * 140;
   const targetY = 150 - Math.cos(targetAngle) * 140;
 
-  // Eclipse 효과 계산 (방향 차이 기반)
+  // Calculate eclipse effect (direction-based)
   const calculateEclipseEffect = () => {
     if (heading === null || bearing === null) return 0;
 
-    // heading과 bearing의 차이 계산 (0~180도)
+    // Calculate difference between heading and bearing (0~180 degrees)
     const diff = Math.abs(angDiff(bearing, heading));
 
-    // 차이가 0에 가까울수록 1에 가까운 값 (0도 = 1, 180도 = 0)
+    // The closer to 0, the closer to 1 (0° = 1, 180° = 0)
     const progress = Math.max(0, 1 - (diff / 180));
 
     return progress;
@@ -426,7 +426,7 @@ export default function CompassPage() {
 
   const eclipseProgress = calculateEclipseEffect();
 
-  // 그라데이션 방향 계산 (목표 방향에서 사용자 원으로)
+  // Calculate gradient direction (from target direction to user circle)
   const targetBearingRad = targetBearing * Math.PI / 180;
   const gradientX1 = userOuterX - Math.sin(targetBearingRad) * 6;
   const gradientY1 = userOuterY + Math.cos(targetBearingRad) * 6;
@@ -441,7 +441,7 @@ export default function CompassPage() {
       className="min-h-screen text-black overflow-hidden select-none"
       style={{
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        backgroundColor: `rgba(255, 255, 255, ${1 - flickerIntensity * 0.9})`,
+        backgroundColor: `rgb(${255 - flickerIntensity * 25}, ${255 - flickerIntensity * 25}, ${255 - flickerIntensity * 25})`,
         transition: 'background-color 0.05s ease-out'
       }}
     >
@@ -456,52 +456,45 @@ export default function CompassPage() {
       {phase === 'search' && !audioStarted && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center cursor-pointer"
-          style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
+          style={{ backgroundColor: 'rgb(255, 255, 255)' }}
           onClick={handleScreenInteraction}
         >
           <div className="text-center">
-            <p className="text-lg text-gray-800">Tap to start</p>
+            <p className="text-xl font-bold text-black">Tap to start MPa Navigation Tool</p>
           </div>
         </div>
       )}
 
       {/* ══════════════════════════════════════════════
-          SEARCH PHASE - 메인화면.png 스타일
+          SEARCH PHASE - Main screen style
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
-        <div className="min-h-screen flex flex-col">
-          <div className="flex-1 flex items-start pt-8 px-4">
-            <div className="w-full">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={inputCoords}
-                  onChange={e => setInputCoords(e.target.value)}
-                  placeholder="Ex: 37.2996 127.1123"
-                  className="flex-1 px-3 py-2 border-2 border-gray-300 text-sm focus:outline-none focus:border-gray-500"
-                  onKeyPress={e => e.key === 'Enter' && handleSearch()}
-                />
-                <button
-                  onClick={handleSearch}
-                  className="px-4 py-2 border-2 border-black hover:bg-black hover:text-white transition-colors text-sm whitespace-nowrap"
-                >
-                  확인
-                </button>
-              </div>
+        <div className="h-screen flex flex-col">
+          <div className="flex-1 flex items-start justify-center pt-12 px-6">
+            <div className="w-full max-w-md">
+              <input
+                type="text"
+                value={inputCoords}
+                onChange={e => setInputCoords(e.target.value)}
+                placeholder="37.2996 127.1123"
+                className="w-full px-4 py-3 border border-gray-400 text-sm focus:outline-none focus:border-black bg-transparent"
+                onKeyPress={e => e.key === 'Enter' && handleSearch()}
+                onBlur={handleSearch}
+              />
               {formError && (
                 <div className="mt-2 text-xs text-red-600">{formError}</div>
               )}
             </div>
           </div>
 
-          <div className="w-full bg-gray-100 py-6 flex justify-center items-center overflow-hidden">
-            <img src="/MPa_LOGO.png" alt="MPa Logo" className="w-full h-16 object-cover" />
+          <div className="w-full py-8 flex justify-center items-center">
+            <img src="/MPa_LOGO.png" alt="MPa Logo" className="h-20 object-contain" />
           </div>
         </div>
       )}
 
       {/* ══════════════════════════════════════════════
-          COMPASS PHASE - 메인화면2.png 스타일
+          COMPASS PHASE - Compass screen style
       ══════════════════════════════════════════════ */}
       {phase === 'compass' && (
         <div className="min-h-screen flex flex-col items-center justify-start p-4 pt-8">
@@ -526,7 +519,7 @@ export default function CompassPage() {
           <div className="relative mb-6" style={{ width: 280, height: 280 }}>
             <svg width="280" height="280" viewBox="0 0 300 300">
               <defs>
-                {/* 목표 방향에서 시작하는 그라데이션 */}
+                {/* Gradient starting from target direction */}
                 <linearGradient
                   id="userFillGradient"
                   x1={gradientX1}
@@ -542,26 +535,26 @@ export default function CompassPage() {
                 </linearGradient>
               </defs>
 
-              {/* 고정된 나침반 원들 */}
+              {/* Fixed compass circles */}
               {/* Outer circle */}
               <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="2"/>
 
               {/* Inner circle */}
               <circle cx="150" cy="150" r="70" fill="none" stroke="black" strokeWidth="2"/>
 
-              {/* 북쪽 방향 표시 (12시 방향 고정) */}
+              {/* North direction indicator (fixed at 12 o'clock) */}
               <circle cx="150" cy="10" r="4" fill="gray"/>
               <text x="150" y="32" textAnchor="middle" fontSize="12" fill="gray">N</text>
 
-              {/* 사용자 위치 (heading 방향에 따라 움직임) */}
-              {/* 바깥쪽 원 위의 사용자 위치 - 목표 방향에서부터 채워짐 */}
+              {/* User position (moves according to heading direction) */}
+              {/* User position on outer circle - filled from target direction */}
               <circle cx={userOuterX} cy={userOuterY} r="6" fill="url(#userFillGradient)"/>
               <circle cx={userOuterX} cy={userOuterY} r="6" fill="none" stroke="black" strokeWidth="2"/>
 
-              {/* 안쪽 원 위의 사용자 위치 */}
+              {/* User position on inner circle */}
               <circle cx={userInnerX} cy={userInnerY} r="6" fill="none" stroke="black" strokeWidth="2"/>
 
-              {/* 목표 지점 (개발용 - 임시 표시) */}
+              {/* Target point (for development - temporary display) */}
               <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="red" strokeWidth="2"/>
               <circle cx={targetX} cy={targetY} r="4" fill="red"/>
             </svg>
