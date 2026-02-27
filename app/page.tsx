@@ -464,6 +464,9 @@ export default function CompassPage() {
           {/* Direction instruction */}
           <div className="mb-6 text-center px-2">
             <p className="text-base">{getDirectionText()}</p>
+            <p className="text-xs text-gray-500 mt-2">
+              Heading: {heading !== null ? `${heading.toFixed(1)}°` : 'No sensor data'}
+            </p>
           </div>
 
           {/* Compass circles */}
