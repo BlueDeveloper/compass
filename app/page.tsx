@@ -364,12 +364,17 @@ export default function CompassPage() {
   };
 
   /* ═══════════════════════════════════════════
-     COMPASS ROTATION & POSITIONS
+     COMPASS POSITIONS
   ═══════════════════════════════════════════ */
-  // 나침반 회전 각도 (사용자의 heading에 따라 회전)
-  const compassRotation = heading !== null ? -heading : 0;
+  // 사용자 위치 - heading 방향 (바깥쪽, 안쪽 원)
+  const userHeading = heading !== null ? heading : 0;
+  const userAngle = userHeading * Math.PI / 180;
+  const userOuterX = 150 + Math.sin(userAngle) * 140;
+  const userOuterY = 150 - Math.cos(userAngle) * 140;
+  const userInnerX = 150 + Math.sin(userAngle) * 70;
+  const userInnerY = 150 - Math.cos(userAngle) * 70;
 
-  // 목표 지점은 bearing 방향에 고정 (나침반이 회전해도 위치 고정)
+  // 목표 지점 - bearing 방향 (바깥쪽 원)
   const targetBearing = bearing !== null ? bearing : 0;
   const targetAngle = targetBearing * Math.PI / 180;
   const targetX = 150 + Math.sin(targetAngle) * 140;
@@ -464,29 +469,27 @@ export default function CompassPage() {
           {/* Compass circles */}
           <div className="relative mb-6" style={{ width: 280, height: 280 }}>
             <svg width="280" height="280" viewBox="0 0 300 300">
-              {/* 회전하는 나침반 원들 */}
-              <g transform={`rotate(${compassRotation} 150 150)`}>
-                {/* Outer circle */}
-                <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="2"/>
+              {/* 고정된 나침반 원들 */}
+              {/* Outer circle */}
+              <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="2"/>
 
-                {/* Inner circle */}
-                <circle cx="150" cy="150" r="70" fill="none" stroke="black" strokeWidth="2"/>
+              {/* Inner circle */}
+              <circle cx="150" cy="150" r="70" fill="none" stroke="black" strokeWidth="2"/>
 
-                {/* 북쪽 방향 표시 (나침반 상의 북쪽) */}
-                <circle cx="150" cy="10" r="4" fill="gray"/>
-                <text x="150" y="32" textAnchor="middle" fontSize="12" fill="gray">N</text>
-              </g>
+              {/* 북쪽 방향 표시 (12시 방향 고정) */}
+              <circle cx="150" cy="10" r="4" fill="gray"/>
+              <text x="150" y="32" textAnchor="middle" fontSize="12" fill="gray">N</text>
 
-              {/* 고정된 사용자 위치 (12시 방향, 항상 위쪽) */}
+              {/* 사용자 위치 (heading 방향에 따라 움직임) */}
               {/* 바깥쪽 원 위의 사용자 위치 */}
-              <circle cx="150" cy="10" r="8" fill="none" stroke="black" strokeWidth="2"/>
-              <circle cx="150" cy="10" r="4" fill="black"/>
+              <circle cx={userOuterX} cy={userOuterY} r="8" fill="none" stroke="black" strokeWidth="2"/>
+              <circle cx={userOuterX} cy={userOuterY} r="4" fill="black"/>
 
               {/* 안쪽 원 위의 사용자 위치 */}
-              <circle cx="150" cy="80" r="8" fill="none" stroke="black" strokeWidth="2"/>
-              <circle cx="150" cy="80" r="4" fill="black"/>
+              <circle cx={userInnerX} cy={userInnerY} r="8" fill="none" stroke="black" strokeWidth="2"/>
+              <circle cx={userInnerX} cy={userInnerY} r="4" fill="black"/>
 
-              {/* 고정된 목표 지점 (회전하지 않음) */}
+              {/* 목표 지점 (bearing 방향 고정) */}
               <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="red" strokeWidth="2"/>
               <circle cx={targetX} cy={targetY} r="4" fill="red"/>
             </svg>
