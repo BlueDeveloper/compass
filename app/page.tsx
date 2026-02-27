@@ -19,7 +19,7 @@ export default function CompassPage() {
   const [phase,          setPhase]          = useState<'search' | 'compass'>('search');
   const [compassVisible, setCompassVisible] = useState(false);
   const [isShaking,      setIsShaking]      = useState(false);
-  const [flickerIntensity, setFlickerIntensity] = useState(0.15);
+  const [flickerIntensity, setFlickerIntensity] = useState(0);
   const [audioStarted, setAudioStarted] = useState(false);
 
   /* ── Search Form ── */
@@ -450,15 +450,17 @@ export default function CompassPage() {
         backgroundColor: '#ffffff'
       }}
     >
-      {/* Flicker overlay */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          backgroundColor: `rgba(0, 0, 0, ${flickerIntensity * 0.8})`,
-          transition: 'background-color 0.05s ease-out',
-          zIndex: 9999
-        }}
-      />
+      {/* Flicker overlay - only show when audio is started */}
+      {audioStarted && (
+        <div
+          className="fixed inset-0 pointer-events-none"
+          style={{
+            backgroundColor: `rgba(0, 0, 0, ${flickerIntensity * 0.8})`,
+            transition: 'background-color 0.05s ease-out',
+            zIndex: 9999
+          }}
+        />
+      )}
       <style>{`
         @keyframes backgroundFlicker {
           0%, 100% { filter: brightness(1); }
