@@ -249,25 +249,26 @@ export default function CompassPage() {
   }, []);
 
   /* ═══════════════════════════════════════════
-     DISTANCE-BASED FLICKER INTENSITY
+     DIRECTION-BASED FLICKER INTENSITY
   ═══════════════════════════════════════════ */
   useEffect(() => {
     const interval = setInterval(() => {
-      // 거리에 따라 플리커 강도 조절
       let baseIntensity = 0.2;
       let randomRange = 0.5;
 
-      if (distance !== null && phase === 'compass') {
-        // 거리가 가까울수록 플리커 약함 (0km = 최소, 5km 이상 = 최대)
-        const distanceFactor = Math.min(1, distance / 5);
-        baseIntensity = 0.05 + distanceFactor * 0.15;
-        randomRange = 0.1 + distanceFactor * 0.4;
+      if (phase === 'compass' && heading !== null && bearing !== null) {
+        // 방향이 일치할수록 플리커 약함
+        const angleDiff = Math.abs(angDiff(bearing, heading));
+        const alignmentFactor = angleDiff / 180; // 0도 = 0, 180도 = 1
+
+        baseIntensity = 0.05 + alignmentFactor * 0.15;
+        randomRange = 0.1 + alignmentFactor * 0.4;
       }
 
       setFlickerIntensity(baseIntensity + Math.random() * randomRange);
     }, 80);
     return () => clearInterval(interval);
-  }, [distance, phase]);
+  }, [heading, bearing, phase]);
 
   /* ═══════════════════════════════════════════
      INITIAL NOISE ON SEARCH SCREEN
@@ -305,7 +306,7 @@ export default function CompassPage() {
   }, [isArrived, playArrivalSound]);
 
   /* ═══════════════════════════════════════════
-     DISTANCE-BASED NOISE EFFECT
+     DIRECTION-BASED NOISE EFFECT
   ═══════════════════════════════════════════ */
   useEffect(() => {
     if (!permissionGranted || phase !== 'compass') return;
@@ -314,17 +315,18 @@ export default function CompassPage() {
       // 도착 시 특별한 사운드
       if (noiseSrcRef.current) setNoiseVol(0.55);
       else startNoise(0.55);
-    } else if (distance !== null) {
-      // 거리에 따라 노이즈 볼륨 조절 (가까울수록 약함)
-      const distanceFactor = Math.min(1, distance / 5);
-      const noiseVol = 0.05 + distanceFactor * 0.35;
+    } else if (heading !== null && bearing !== null) {
+      // 방향 차이에 따라 노이즈 볼륨 조절 (일치할수록 약함)
+      const angleDiff = Math.abs(angDiff(bearing, heading));
+      const alignmentFactor = angleDiff / 180; // 0도 = 0, 180도 = 1
+      const noiseVol = 0.05 + alignmentFactor * 0.35;
 
       if (noiseSrcRef.current) setNoiseVol(noiseVol);
       else startNoise(noiseVol);
     } else {
       stopNoise();
     }
-  }, [distance, isArrived, permissionGranted, phase, startNoise, stopNoise, setNoiseVol]);
+  }, [heading, bearing, isArrived, permissionGranted, phase, startNoise, stopNoise, setNoiseVol]);
 
   /* ═══════════════════════════════════════════
      SEARCH SUBMIT
