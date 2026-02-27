@@ -23,7 +23,7 @@ export default function CompassPage() {
   const [audioStarted, setAudioStarted] = useState(false);
 
   /* ── Search Form ── */
-  const [inputCoords, setInputCoords] = useState('');
+  const [inputCoords, setInputCoords] = useState('37.2996 127.1123');
   const [formError, setFormError] = useState('');
 
   /* ── Target ── */
@@ -468,14 +468,18 @@ export default function CompassPage() {
           SEARCH PHASE - Main screen style
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
-        <div className="h-screen flex flex-col">
-          <div className="flex-1 flex items-start justify-center pt-12 px-6">
-            <div className="w-full max-w-md">
+        <div className="h-screen flex flex-col items-center justify-center px-6">
+          <div className="w-full max-w-md space-y-8">
+            <div className="flex justify-center">
+              <img src="/MPa_LOGO.png" alt="MPa Logo" className="h-16 object-contain" />
+            </div>
+
+            <div>
               <input
                 type="text"
                 value={inputCoords}
                 onChange={e => setInputCoords(e.target.value)}
-                placeholder="37.2996 127.1123"
+                placeholder=""
                 className="w-full px-4 py-3 border border-gray-400 text-sm focus:outline-none focus:border-black bg-transparent"
                 onKeyPress={e => e.key === 'Enter' && handleSearch()}
                 onBlur={handleSearch}
@@ -484,10 +488,6 @@ export default function CompassPage() {
                 <div className="mt-2 text-xs text-red-600">{formError}</div>
               )}
             </div>
-          </div>
-
-          <div className="w-full py-8 flex justify-center items-center">
-            <img src="/MPa_LOGO.png" alt="MPa Logo" className="h-20 object-contain" />
           </div>
         </div>
       )}
