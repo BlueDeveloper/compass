@@ -441,8 +441,7 @@ export default function CompassPage() {
       className="min-h-screen text-black overflow-hidden select-none"
       style={{
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        backgroundColor: `rgb(${255 - flickerIntensity * 25}, ${255 - flickerIntensity * 25}, ${255 - flickerIntensity * 25})`,
-        transition: 'background-color 0.05s ease-out'
+        backgroundColor: '#ffffff'
       }}
     >
       <style>{`
@@ -460,7 +459,7 @@ export default function CompassPage() {
           onClick={handleScreenInteraction}
         >
           <div className="text-center">
-            <p className="text-xl font-bold text-black">Tap to start MPa Navigation Tool</p>
+            <p className="text-xl font-bold text-black">Tap to start MPa Navigation</p>
           </div>
         </div>
       )}
