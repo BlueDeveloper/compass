@@ -503,8 +503,8 @@ export default function CompassPage() {
 
           <div className="flex-grow"></div>
 
-          <div className="flex justify-center pb-6">
-            <img src="/MPa_LOGO.png" alt="MPa Logo" className="h-16 object-contain" />
+          <div className="flex justify-center items-center pb-6 px-4">
+            <img src="/MPa_LOGO.png" alt="MPa Logo" className="w-full max-h-32 object-contain" />
           </div>
         </div>
       )}
