@@ -485,16 +485,14 @@ export default function CompassPage() {
 
               {/* 사용자 위치 (heading 방향에 따라 움직임) */}
               {/* 바깥쪽 원 위의 사용자 위치 */}
-              <circle cx={userOuterX} cy={userOuterY} r="8" fill="none" stroke="black" strokeWidth="2"/>
-              <circle cx={userOuterX} cy={userOuterY} r="4" fill="black"/>
+              <circle cx={userOuterX} cy={userOuterY} r="6" fill="none" stroke="black" strokeWidth="2"/>
 
               {/* 안쪽 원 위의 사용자 위치 */}
-              <circle cx={userInnerX} cy={userInnerY} r="8" fill="none" stroke="black" strokeWidth="2"/>
-              <circle cx={userInnerX} cy={userInnerY} r="4" fill="black"/>
+              <circle cx={userInnerX} cy={userInnerY} r="6" fill="none" stroke="black" strokeWidth="2"/>
 
               {/* 목표 지점 (bearing 방향 고정) */}
-              <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="red" strokeWidth="2"/>
-              <circle cx={targetX} cy={targetY} r="4" fill="red"/>
+              <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="black" strokeWidth="2"/>
+              <circle cx={targetX} cy={targetY} r="4" fill="black"/>
             </svg>
           </div>
 
