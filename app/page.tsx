@@ -446,7 +446,7 @@ export default function CompassPage() {
                   type="text"
                   value={inputCoords}
                   onChange={e => setInputCoords(e.target.value)}
-                  placeholder="Ex: 37.5344789 126.9993445"
+                  placeholder="Ex: 37.2996 127.1123"
                   className="flex-1 px-3 py-2 border-2 border-gray-300 text-sm focus:outline-none focus:border-gray-500"
                   onKeyPress={e => e.key === 'Enter' && handleSearch()}
                 />
