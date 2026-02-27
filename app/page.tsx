@@ -468,26 +468,26 @@ export default function CompassPage() {
           SEARCH PHASE - Main screen style
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
-        <div className="h-screen flex flex-col items-center justify-center px-6">
-          <div className="w-full max-w-md space-y-8">
-            <div className="flex justify-center">
-              <img src="/MPa_LOGO.png" alt="MPa Logo" className="h-16 object-contain" />
-            </div>
+        <div className="h-screen flex flex-col px-6">
+          <div className="pt-4">
+            <input
+              type="text"
+              value={inputCoords}
+              onChange={e => setInputCoords(e.target.value)}
+              placeholder=""
+              className="w-full px-4 py-3 border border-black text-sm focus:outline-none focus:border-black bg-transparent"
+              onKeyPress={e => e.key === 'Enter' && handleSearch()}
+              onBlur={handleSearch}
+            />
+            {formError && (
+              <div className="mt-2 text-xs text-red-600">{formError}</div>
+            )}
+          </div>
 
-            <div>
-              <input
-                type="text"
-                value={inputCoords}
-                onChange={e => setInputCoords(e.target.value)}
-                placeholder=""
-                className="w-full px-4 py-3 border border-gray-400 text-sm focus:outline-none focus:border-black bg-transparent"
-                onKeyPress={e => e.key === 'Enter' && handleSearch()}
-                onBlur={handleSearch}
-              />
-              {formError && (
-                <div className="mt-2 text-xs text-red-600">{formError}</div>
-              )}
-            </div>
+          <div className="flex-grow"></div>
+
+          <div className="pb-8 flex justify-center">
+            <img src="/MPa_LOGO.png" alt="MPa Logo" className="h-16 object-contain" />
           </div>
         </div>
       )}
