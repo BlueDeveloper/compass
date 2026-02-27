@@ -379,18 +379,16 @@ export default function CompassPage() {
   };
 
   /* ═══════════════════════════════════════════
-     COMPASS BUBBLE POSITIONS
+     COMPASS ROTATION & POSITIONS
   ═══════════════════════════════════════════ */
-  const targetAngle = rotAngle * Math.PI / 180;
+  // 나침반 회전 각도 (사용자의 heading에 따라 회전)
+  const compassRotation = heading !== null ? -heading : 0;
+
+  // 목표 지점은 bearing 방향에 고정 (나침반이 회전해도 위치 고정)
+  const targetBearing = bearing !== null ? bearing : 0;
+  const targetAngle = targetBearing * Math.PI / 180;
   const targetX = 150 + Math.sin(targetAngle) * 140;
   const targetY = 150 - Math.cos(targetAngle) * 140;
-
-  const currentAngle = 0;
-  const currentX = 150 + Math.sin(currentAngle) * 70;
-  const currentY = 150 - Math.cos(currentAngle) * 70;
-
-  // Eclipse effect
-  const eclipseProgress = Math.abs(rotAngle > 180 ? 360 - rotAngle : rotAngle) / 180;
 
   /* ═══════════════════════════════════════════
      RENDER
@@ -481,19 +479,22 @@ export default function CompassPage() {
           {/* Compass circles */}
           <div className="relative mb-6" style={{ width: 280, height: 280 }}>
             <svg width="280" height="280" viewBox="0 0 300 300">
-              {/* Outer circle */}
-              <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="2"/>
+              {/* 회전하는 나침반 원들 */}
+              <g transform={`rotate(${compassRotation} 150 150)`}>
+                {/* Outer circle */}
+                <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="2"/>
 
-              {/* Inner circle */}
-              <circle cx="150" cy="150" r="70" fill="none" stroke="black" strokeWidth="2"/>
+                {/* Inner circle */}
+                <circle cx="150" cy="150" r="70" fill="none" stroke="black" strokeWidth="2"/>
 
-              {/* Current position (center) */}
-              <circle cx={currentX} cy={currentY} r="8" fill="none" stroke="black" strokeWidth="2"/>
-              <circle cx={currentX} cy={currentY} r="4" fill="black"/>
+                {/* 북쪽 방향 표시 (12시 방향) */}
+                <circle cx="150" cy="10" r="6" fill="black"/>
+                <text x="150" y="35" textAnchor="middle" fontSize="14" fontWeight="bold">N</text>
+              </g>
 
-              {/* Target position */}
-              <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="black" strokeWidth="2"/>
-              <circle cx={targetX} cy={targetY} r="4" fill="black"/>
+              {/* 고정된 목표 지점 (회전하지 않음) */}
+              <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="red" strokeWidth="2"/>
+              <circle cx={targetX} cy={targetY} r="4" fill="red"/>
             </svg>
           </div>
 
