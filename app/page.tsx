@@ -270,21 +270,6 @@ export default function CompassPage() {
   }, [audioStarted, phase, initAudio, startNoise]);
 
   useEffect(() => {
-    if (phase === 'search' && !audioStarted) {
-      // 페이지 로드 시 자동 재생 시도
-      const tryAutoplay = async () => {
-        try {
-          initAudio();
-          startNoise(0.25);
-          setAudioStarted(true);
-        } catch (err) {
-          // 자동 재생 실패 시 오버레이가 표시됨
-          console.log('Autoplay blocked, waiting for user interaction');
-        }
-      };
-      tryAutoplay();
-    }
-
     if (phase !== 'search') {
       setAudioStarted(false);
     }
@@ -293,7 +278,7 @@ export default function CompassPage() {
         stopNoise();
       }
     };
-  }, [phase, audioStarted, initAudio, startNoise, stopNoise]);
+  }, [phase, stopNoise]);
 
   /* ═══════════════════════════════════════════
      ARRIVAL DETECTION & SOUND
@@ -487,10 +472,19 @@ export default function CompassPage() {
                 {/* Inner circle */}
                 <circle cx="150" cy="150" r="70" fill="none" stroke="black" strokeWidth="2"/>
 
-                {/* 북쪽 방향 표시 (12시 방향) */}
-                <circle cx="150" cy="10" r="6" fill="black"/>
-                <text x="150" y="35" textAnchor="middle" fontSize="14" fontWeight="bold">N</text>
+                {/* 북쪽 방향 표시 (나침반 상의 북쪽) */}
+                <circle cx="150" cy="10" r="4" fill="gray"/>
+                <text x="150" y="32" textAnchor="middle" fontSize="12" fill="gray">N</text>
               </g>
+
+              {/* 고정된 사용자 위치 (12시 방향, 항상 위쪽) */}
+              {/* 바깥쪽 원 위의 사용자 위치 */}
+              <circle cx="150" cy="10" r="8" fill="none" stroke="black" strokeWidth="2"/>
+              <circle cx="150" cy="10" r="4" fill="black"/>
+
+              {/* 안쪽 원 위의 사용자 위치 */}
+              <circle cx="150" cy="80" r="8" fill="none" stroke="black" strokeWidth="2"/>
+              <circle cx="150" cy="80" r="4" fill="black"/>
 
               {/* 고정된 목표 지점 (회전하지 않음) */}
               <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="red" strokeWidth="2"/>
