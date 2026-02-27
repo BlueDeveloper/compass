@@ -249,7 +249,7 @@ export default function CompassPage() {
      AUDIO-BASED FLICKER INTENSITY
   ═══════════════════════════════════════════ */
   useEffect(() => {
-    if (!analyserRef.current) return;
+    if (!audioStarted || !analyserRef.current) return;
 
     const analyser = analyserRef.current;
     const dataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -267,10 +267,10 @@ export default function CompassPage() {
       // Normalize to 0-1 range (0-255 -> 0-1)
       const normalizedIntensity = average / 255;
 
-      // Strong flicker effect: only trigger when intensity is high (threshold: 0.3)
-      if (normalizedIntensity > 0.3) {
+      // Strong flicker effect: only trigger when intensity is high (threshold: 0.15)
+      if (normalizedIntensity > 0.15) {
         // Scale to strong flicker range (0.5 to 1.0 for dramatic effect)
-        const flickerStrength = 0.5 + (normalizedIntensity - 0.3) * 0.7;
+        const flickerStrength = 0.5 + (normalizedIntensity - 0.15) * 0.588;
         setFlickerIntensity(flickerStrength);
       } else {
         // No flicker when audio is quiet
@@ -280,7 +280,7 @@ export default function CompassPage() {
 
     const interval = setInterval(updateFlicker, 50);
     return () => clearInterval(interval);
-  }, []);
+  }, [audioStarted]);
 
   /* ═══════════════════════════════════════════
      INITIAL AUDIO ON SEARCH SCREEN
@@ -444,13 +444,21 @@ export default function CompassPage() {
   ═══════════════════════════════════════════ */
   return (
     <div
-      className="min-h-screen text-black overflow-hidden select-none"
+      className="min-h-screen text-black overflow-hidden select-none relative"
       style={{
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        backgroundColor: `rgb(${255 - flickerIntensity * 200}, ${255 - flickerIntensity * 200}, ${255 - flickerIntensity * 200})`,
-        transition: 'background-color 0.05s ease-out'
+        backgroundColor: '#ffffff'
       }}
     >
+      {/* Flicker overlay */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          backgroundColor: `rgba(0, 0, 0, ${flickerIntensity * 0.8})`,
+          transition: 'background-color 0.05s ease-out',
+          zIndex: 9999
+        }}
+      />
       <style>{`
         @keyframes backgroundFlicker {
           0%, 100% { filter: brightness(1); }
