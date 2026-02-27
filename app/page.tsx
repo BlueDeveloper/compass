@@ -475,7 +475,7 @@ export default function CompassPage() {
           SEARCH PHASE - Main screen style
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
-        <div className="h-screen flex flex-col px-6">
+        <div className="h-screen flex flex-col px-6" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 100px)' }}>
           <div className="pt-4">
             <input
               type="text"
@@ -489,6 +489,12 @@ export default function CompassPage() {
             {formError && (
               <div className="mt-2 text-xs text-red-600">{formError}</div>
             )}
+          </div>
+
+          <div className="flex-grow"></div>
+
+          <div className="flex justify-center pb-6">
+            <img src="/MPa_LOGO.png" alt="MPa Logo" className="h-16 object-contain" />
           </div>
         </div>
       )}
