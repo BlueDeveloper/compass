@@ -257,12 +257,19 @@ export default function CompassPage() {
       let randomRange = 0.5;
 
       if (phase === 'compass' && heading !== null && bearing !== null) {
-        // 방향이 일치할수록 플리커 약함
+        // 방향 차이 계산
         const angleDiff = Math.abs(angDiff(bearing, heading));
-        const alignmentFactor = angleDiff / 180; // 0도 = 0, 180도 = 1
 
-        baseIntensity = 0.05 + alignmentFactor * 0.15;
-        randomRange = 0.1 + alignmentFactor * 0.4;
+        // 0~5도: 플리커 완전 제거
+        if (angleDiff <= 5) {
+          baseIntensity = 0;
+          randomRange = 0;
+        } else {
+          // 5도 이상일 때만 플리커 적용
+          const alignmentFactor = (angleDiff - 5) / 175; // 5도 = 0, 180도 = 1
+          baseIntensity = 0.05 + alignmentFactor * 0.15;
+          randomRange = 0.1 + alignmentFactor * 0.4;
+        }
       }
 
       setFlickerIntensity(baseIntensity + Math.random() * randomRange);
@@ -316,13 +323,20 @@ export default function CompassPage() {
       if (noiseSrcRef.current) setNoiseVol(0.55);
       else startNoise(0.55);
     } else if (heading !== null && bearing !== null) {
-      // 방향 차이에 따라 노이즈 볼륨 조절 (일치할수록 약함)
+      // 방향 차이 계산
       const angleDiff = Math.abs(angDiff(bearing, heading));
-      const alignmentFactor = angleDiff / 180; // 0도 = 0, 180도 = 1
-      const noiseVol = 0.05 + alignmentFactor * 0.35;
 
-      if (noiseSrcRef.current) setNoiseVol(noiseVol);
-      else startNoise(noiseVol);
+      // 0~5도: 노이즈 완전 제거
+      if (angleDiff <= 5) {
+        stopNoise();
+      } else {
+        // 5도 이상일 때만 노이즈 적용
+        const alignmentFactor = (angleDiff - 5) / 175; // 5도 = 0, 180도 = 1
+        const noiseVol = 0.05 + alignmentFactor * 0.35;
+
+        if (noiseSrcRef.current) setNoiseVol(noiseVol);
+        else startNoise(noiseVol);
+      }
     } else {
       stopNoise();
     }
