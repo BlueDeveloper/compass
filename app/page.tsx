@@ -249,14 +249,25 @@ export default function CompassPage() {
   }, []);
 
   /* ═══════════════════════════════════════════
-     RANDOM FLICKER INTENSITY
+     DISTANCE-BASED FLICKER INTENSITY
   ═══════════════════════════════════════════ */
   useEffect(() => {
     const interval = setInterval(() => {
-      setFlickerIntensity(0.2 + Math.random() * 0.5);
+      // 거리에 따라 플리커 강도 조절
+      let baseIntensity = 0.2;
+      let randomRange = 0.5;
+
+      if (distance !== null && phase === 'compass') {
+        // 거리가 가까울수록 플리커 약함 (0km = 최소, 5km 이상 = 최대)
+        const distanceFactor = Math.min(1, distance / 5);
+        baseIntensity = 0.05 + distanceFactor * 0.15;
+        randomRange = 0.1 + distanceFactor * 0.4;
+      }
+
+      setFlickerIntensity(baseIntensity + Math.random() * randomRange);
     }, 80);
     return () => clearInterval(interval);
-  }, []);
+  }, [distance, phase]);
 
   /* ═══════════════════════════════════════════
      INITIAL NOISE ON SEARCH SCREEN
@@ -294,22 +305,26 @@ export default function CompassPage() {
   }, [isArrived, playArrivalSound]);
 
   /* ═══════════════════════════════════════════
-     NOISE EFFECT
+     DISTANCE-BASED NOISE EFFECT
   ═══════════════════════════════════════════ */
   useEffect(() => {
     if (!permissionGranted || phase !== 'compass') return;
+
     if (isArrived) {
+      // 도착 시 특별한 사운드
       if (noiseSrcRef.current) setNoiseVol(0.55);
       else startNoise(0.55);
-    } else if (!isAligned) {
-      const angleDifference = Math.abs(rotAngle > 180 ? 360 - rotAngle : rotAngle);
-      const noiseVol = 0.05 + (angleDifference / 180) * 0.25;
+    } else if (distance !== null) {
+      // 거리에 따라 노이즈 볼륨 조절 (가까울수록 약함)
+      const distanceFactor = Math.min(1, distance / 5);
+      const noiseVol = 0.05 + distanceFactor * 0.35;
+
       if (noiseSrcRef.current) setNoiseVol(noiseVol);
       else startNoise(noiseVol);
     } else {
       stopNoise();
     }
-  }, [isAligned, isArrived, permissionGranted, phase, rotAngle, startNoise, stopNoise, setNoiseVol]);
+  }, [distance, isArrived, permissionGranted, phase, startNoise, stopNoise, setNoiseVol]);
 
   /* ═══════════════════════════════════════════
      SEARCH SUBMIT
@@ -529,6 +544,10 @@ export default function CompassPage() {
 
               {/* 안쪽 원 위의 사용자 위치 */}
               <circle cx={userInnerX} cy={userInnerY} r="6" fill="none" stroke="black" strokeWidth="2"/>
+
+              {/* 목표 지점 (개발용 - 임시 표시) */}
+              <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="red" strokeWidth="2"/>
+              <circle cx={targetX} cy={targetY} r="4" fill="red"/>
             </svg>
           </div>
 
