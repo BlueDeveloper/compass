@@ -395,6 +395,13 @@ export default function CompassPage() {
 
   const eclipseProgress = calculateEclipseEffect();
 
+  // 그라데이션 방향 계산 (목표 방향에서 사용자 원으로)
+  const targetBearingRad = targetBearing * Math.PI / 180;
+  const gradientX1 = userOuterX - Math.sin(targetBearingRad) * 6;
+  const gradientY1 = userOuterY + Math.cos(targetBearingRad) * 6;
+  const gradientX2 = userOuterX + Math.sin(targetBearingRad) * 6;
+  const gradientY2 = userOuterY - Math.cos(targetBearingRad) * 6;
+
   /* ═══════════════════════════════════════════
      RENDER
   ═══════════════════════════════════════════ */
@@ -487,6 +494,23 @@ export default function CompassPage() {
           {/* Compass circles */}
           <div className="relative mb-6" style={{ width: 280, height: 280 }}>
             <svg width="280" height="280" viewBox="0 0 300 300">
+              <defs>
+                {/* 목표 방향에서 시작하는 그라데이션 */}
+                <linearGradient
+                  id="userFillGradient"
+                  x1={gradientX1}
+                  y1={gradientY1}
+                  x2={gradientX2}
+                  y2={gradientY2}
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stopColor="black" stopOpacity="1" />
+                  <stop offset={`${eclipseProgress * 100}%`} stopColor="black" stopOpacity="1" />
+                  <stop offset={`${eclipseProgress * 100}%`} stopColor="black" stopOpacity="0" />
+                  <stop offset="100%" stopColor="black" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+
               {/* 고정된 나침반 원들 */}
               {/* Outer circle */}
               <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="2"/>
@@ -499,9 +523,9 @@ export default function CompassPage() {
               <text x="150" y="32" textAnchor="middle" fontSize="12" fill="gray">N</text>
 
               {/* 사용자 위치 (heading 방향에 따라 움직임) */}
-              {/* 바깥쪽 원 위의 사용자 위치 - 방향 일치할수록 채워짐 */}
+              {/* 바깥쪽 원 위의 사용자 위치 - 목표 방향에서부터 채워짐 */}
+              <circle cx={userOuterX} cy={userOuterY} r="6" fill="url(#userFillGradient)"/>
               <circle cx={userOuterX} cy={userOuterY} r="6" fill="none" stroke="black" strokeWidth="2"/>
-              <circle cx={userOuterX} cy={userOuterY} r="6" fill="black" opacity={eclipseProgress * 0.9}/>
 
               {/* 안쪽 원 위의 사용자 위치 */}
               <circle cx={userInnerX} cy={userInnerY} r="6" fill="none" stroke="black" strokeWidth="2"/>
