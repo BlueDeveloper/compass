@@ -380,24 +380,20 @@ export default function CompassPage() {
   const targetX = 150 + Math.sin(targetAngle) * 140;
   const targetY = 150 - Math.cos(targetAngle) * 140;
 
-  // 목표 지점 opacity 계산 (사용자 바깥쪽 원과의 거리 기반)
-  const calculateTargetOpacity = () => {
+  // Eclipse 효과 계산 (방향 차이 기반)
+  const calculateEclipseEffect = () => {
     if (heading === null || bearing === null) return 0;
 
-    // 두 점 사이의 거리 계산
-    const dx = targetX - userOuterX;
-    const dy = targetY - userOuterY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    // heading과 bearing의 차이 계산 (0~180도)
+    const diff = Math.abs(angDiff(bearing, heading));
 
-    // 최대 거리는 원의 지름 (280)
-    // 거리가 0이면 opacity 1, 거리가 멀수록 opacity 0
-    const maxDistance = 280;
-    const opacity = Math.max(0, Math.min(1, 1 - (distance / maxDistance)));
+    // 차이가 0에 가까울수록 1에 가까운 값 (0도 = 1, 180도 = 0)
+    const progress = Math.max(0, 1 - (diff / 180));
 
-    return opacity;
+    return progress;
   };
 
-  const targetOpacity = calculateTargetOpacity();
+  const eclipseProgress = calculateEclipseEffect();
 
   /* ═══════════════════════════════════════════
      RENDER
@@ -491,9 +487,32 @@ export default function CompassPage() {
           {/* Compass circles */}
           <div className="relative mb-6" style={{ width: 280, height: 280 }}>
             <svg width="280" height="280" viewBox="0 0 300 300">
+              <defs>
+                <mask id="eclipseMask">
+                  <rect width="300" height="300" fill="white"/>
+                  {/* Eclipse 효과: 방향이 일치할수록 원이 채워짐 */}
+                  <circle
+                    cx={150 + (1 - eclipseProgress) * 140}
+                    cy="150"
+                    r="142"
+                    fill="black"
+                  />
+                </mask>
+              </defs>
+
               {/* 고정된 나침반 원들 */}
               {/* Outer circle */}
               <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="2"/>
+
+              {/* Eclipse fill effect - 방향 일치 시 어두워짐 */}
+              <circle
+                cx="150"
+                cy="150"
+                r="140"
+                fill="black"
+                mask="url(#eclipseMask)"
+                opacity={0.8 * eclipseProgress}
+              />
 
               {/* Inner circle */}
               <circle cx="150" cy="150" r="70" fill="none" stroke="black" strokeWidth="2"/>
@@ -508,10 +527,6 @@ export default function CompassPage() {
 
               {/* 안쪽 원 위의 사용자 위치 */}
               <circle cx={userInnerX} cy={userInnerY} r="6" fill="none" stroke="black" strokeWidth="2"/>
-
-              {/* 목표 지점 (bearing 방향 고정, 사용자 원과 가까울수록 나타남) */}
-              <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="black" strokeWidth="2" opacity={targetOpacity}/>
-              <circle cx={targetX} cy={targetY} r="4" fill="black" opacity={targetOpacity}/>
             </svg>
           </div>
 
