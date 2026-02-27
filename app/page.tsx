@@ -487,32 +487,9 @@ export default function CompassPage() {
           {/* Compass circles */}
           <div className="relative mb-6" style={{ width: 280, height: 280 }}>
             <svg width="280" height="280" viewBox="0 0 300 300">
-              <defs>
-                <mask id="eclipseMask">
-                  <rect width="300" height="300" fill="white"/>
-                  {/* Eclipse 효과: 방향이 일치할수록 원이 채워짐 */}
-                  <circle
-                    cx={150 + (1 - eclipseProgress) * 140}
-                    cy="150"
-                    r="142"
-                    fill="black"
-                  />
-                </mask>
-              </defs>
-
               {/* 고정된 나침반 원들 */}
               {/* Outer circle */}
               <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="2"/>
-
-              {/* Eclipse fill effect - 방향 일치 시 어두워짐 */}
-              <circle
-                cx="150"
-                cy="150"
-                r="140"
-                fill="black"
-                mask="url(#eclipseMask)"
-                opacity={0.8 * eclipseProgress}
-              />
 
               {/* Inner circle */}
               <circle cx="150" cy="150" r="70" fill="none" stroke="black" strokeWidth="2"/>
@@ -522,8 +499,9 @@ export default function CompassPage() {
               <text x="150" y="32" textAnchor="middle" fontSize="12" fill="gray">N</text>
 
               {/* 사용자 위치 (heading 방향에 따라 움직임) */}
-              {/* 바깥쪽 원 위의 사용자 위치 */}
+              {/* 바깥쪽 원 위의 사용자 위치 - 방향 일치할수록 채워짐 */}
               <circle cx={userOuterX} cy={userOuterY} r="6" fill="none" stroke="black" strokeWidth="2"/>
+              <circle cx={userOuterX} cy={userOuterY} r="6" fill="black" opacity={eclipseProgress * 0.9}/>
 
               {/* 안쪽 원 위의 사용자 위치 */}
               <circle cx={userInnerX} cy={userInnerY} r="6" fill="none" stroke="black" strokeWidth="2"/>
