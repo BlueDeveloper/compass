@@ -294,12 +294,12 @@ export default function CompassPage() {
   }, [audioStarted, phase, initAudio, startAudioFile]);
 
   useEffect(() => {
-    if (phase !== 'search') {
-      setAudioStarted(false);
-    }
+    // Keep audioStarted true when transitioning from search to compass
+    // Only stop audio when going back to search from compass
     return () => {
       if (phase === 'search') {
         stopAudioFile();
+        setAudioStarted(false);
       }
     };
   }, [phase, stopAudioFile]);
@@ -322,6 +322,12 @@ export default function CompassPage() {
   ═══════════════════════════════════════════ */
   useEffect(() => {
     if (!permissionGranted || phase !== 'compass') return;
+
+    // Ensure audio is started in compass phase
+    if (!audioStarted) {
+      initAudio();
+      setAudioStarted(true);
+    }
 
     if (isArrived) {
       // Special sound on arrival
@@ -349,7 +355,7 @@ export default function CompassPage() {
         setAudioVol(0.5);
       }
     }
-  }, [heading, bearing, isArrived, permissionGranted, phase, startAudioFile, setAudioVol]);
+  }, [heading, bearing, isArrived, permissionGranted, phase, startAudioFile, setAudioVol, audioStarted, initAudio]);
 
   /* ═══════════════════════════════════════════
      SEARCH SUBMIT
@@ -408,8 +414,8 @@ export default function CompassPage() {
   const userAngle = userHeading * Math.PI / 180;
   const userOuterX = 150 + Math.sin(userAngle) * 140;
   const userOuterY = 150 - Math.cos(userAngle) * 140;
-  const userInnerX = 150 + Math.sin(userAngle) * 70;
-  const userInnerY = 170 - Math.cos(userAngle) * 70;
+  const userInnerX = 150 + Math.sin(userAngle) * 50;
+  const userInnerY = 150 - Math.cos(userAngle) * 50;
 
 
   // Target position - bearing direction (outer circle)
@@ -435,10 +441,10 @@ export default function CompassPage() {
 
   // Calculate gradient direction (from target direction to user circle)
   const targetBearingRad = targetBearing * Math.PI / 180;
-  const gradientX1 = userOuterX - Math.sin(targetBearingRad) * 6;
-  const gradientY1 = userOuterY + Math.cos(targetBearingRad) * 6;
-  const gradientX2 = userOuterX + Math.sin(targetBearingRad) * 6;
-  const gradientY2 = userOuterY - Math.cos(targetBearingRad) * 6;
+  const gradientX1 = userOuterX - Math.sin(targetBearingRad) * 20;
+  const gradientY1 = userOuterY + Math.cos(targetBearingRad) * 20;
+  const gradientX2 = userOuterX + Math.sin(targetBearingRad) * 20;
+  const gradientY2 = userOuterY - Math.cos(targetBearingRad) * 20;
 
   /* ═══════════════════════════════════════════
      RENDER
@@ -609,7 +615,7 @@ export default function CompassPage() {
             </div>
 
             <button
-              onClick={() => { stopAudioFile(); setPhase('search'); setCompassVisible(false); }}
+              onClick={() => { stopAudioFile(); setAudioStarted(false); setPhase('search'); setCompassVisible(false); }}
               className="text-xs text-gray-500 hover:text-black w-full text-center"
               style={{ marginTop: 'var(--spacing-unit)' }}
             >
