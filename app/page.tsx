@@ -439,12 +439,12 @@ export default function CompassPage() {
 
   const eclipseProgress = calculateEclipseEffect();
 
-  // Calculate gradient direction (from target direction to user circle)
+  // Calculate gradient direction (from target direction to opposite)
   const targetBearingRad = targetBearing * Math.PI / 180;
-  const gradientX1 = userOuterX - Math.sin(targetBearingRad) * 20;
-  const gradientY1 = userOuterY + Math.cos(targetBearingRad) * 20;
-  const gradientX2 = userOuterX + Math.sin(targetBearingRad) * 20;
-  const gradientY2 = userOuterY - Math.cos(targetBearingRad) * 20;
+  const gradientX1 = userOuterX + Math.sin(targetBearingRad) * 20;
+  const gradientY1 = userOuterY - Math.cos(targetBearingRad) * 20;
+  const gradientX2 = userOuterX - Math.sin(targetBearingRad) * 20;
+  const gradientY2 = userOuterY + Math.cos(targetBearingRad) * 20;
 
   /* ═══════════════════════════════════════════
      RENDER
