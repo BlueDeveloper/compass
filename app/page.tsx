@@ -485,7 +485,7 @@ export default function CompassPage() {
           SEARCH PHASE - Main screen style
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
-        <div className="h-screen flex flex-col px-6" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), -10px)' }}>
+        <div className="h-screen flex flex-col responsive-container" style={{ paddingLeft: 'var(--container-padding)', paddingRight: 'var(--container-padding)', paddingBottom: 'max(env(safe-area-inset-bottom), -10px)' }}>
           <div className="pt-4">
             <input
               type="text"
@@ -503,8 +503,8 @@ export default function CompassPage() {
 
           <div className="flex-grow"></div>
 
-          <div className="flex justify-center items-center -mx-6">
-            <img src="/MPa_LOGO2.png" alt="MPa Logo" className="w-full h-40 object-fill" />
+          <div className="flex justify-center items-center" style={{ marginLeft: 'calc(-4 * var(--container-padding))', marginRight: 'calc(-2 * var(--container-padding))' }}>
+            <img src="/MPa_LOGO2.png" alt="MPa Logo" className="w-full responsive-logo object-fill" />
           </div>
         </div>
       )}
@@ -513,27 +513,29 @@ export default function CompassPage() {
           COMPASS PHASE - Compass screen style
       ══════════════════════════════════════════════ */}
       {phase === 'compass' && (
-        <div className="min-h-screen flex flex-col items-center justify-start p-4 pt-8">
-          {!permissionGranted && (
-            <button
-              onClick={requestPermission}
-              className="mb-6 px-5 py-2 border-2 border-black hover:bg-black hover:text-white transition-colors text-sm"
-            >
-              Enable Sensor
-            </button>
-          )}
+        <div className="h-screen flex flex-col items-center justify-between responsive-container" style={{ overflow: 'hidden', padding: 'var(--container-padding)' }}>
+          <div>
+            {!permissionGranted && (
+              <button
+                onClick={requestPermission}
+                className="mb-3 px-5 py-2 border-2 border-black hover:bg-black hover:text-white transition-colors text-sm"
+              >
+                Enable Sensor
+              </button>
+            )}
 
-          {/* Direction instruction */}
-          <div className="mb-6 text-center px-2">
-            <p className="text-base">{getDirectionText()}</p>
-            <p className="text-xs text-gray-500 mt-2">
-              Heading: {heading !== null ? `${heading.toFixed(1)}°` : 'No sensor data'}
-            </p>
+            {/* Direction instruction */}
+            <div className="text-center px-2" style={{ marginBottom: 'var(--spacing-unit)' }}>
+              <p style={{ fontSize: 'var(--font-size-direction)' }}>{getDirectionText()}</p>
+              <p className="text-xs text-gray-500" style={{ marginTop: 'calc(var(--spacing-unit) * 0.5)' }}>
+                Heading: {heading !== null ? `${heading.toFixed(1)}°` : 'No sensor data'}
+              </p>
+            </div>
           </div>
 
           {/* Compass circles */}
-          <div className="relative mb-6" style={{ width: 280, height: 280 }}>
-            <svg width="280" height="280" viewBox="0 0 300 300">
+          <div className="relative responsive-compass" style={{ width: 'var(--compass-size)', height: 'var(--compass-size)' }}>
+            <svg width="100%" height="100%" viewBox="0 0 300 300">
               <defs>
                 {/* Gradient starting from target direction */}
                 <linearGradient
@@ -576,40 +578,43 @@ export default function CompassPage() {
             </svg>
           </div>
 
-          {/* Distance */}
-          <div className="text-center mb-6">
-            <div className="text-3xl font-bold mb-2">{fmtDist(distance)}</div>
-            <div className="text-xs text-gray-600">Distance to the destination</div>
-          </div>
+          <div className="w-full">
+            {/* Distance */}
+            <div className="text-center" style={{ marginBottom: 'var(--spacing-unit)' }}>
+              <div className="font-bold" style={{ fontSize: 'var(--font-size-distance)', marginBottom: 'calc(var(--spacing-unit) * 0.5)' }}>{fmtDist(distance)}</div>
+              <div className="text-xs text-gray-600">Distance to the destination</div>
+            </div>
 
-          {/* Info */}
-          <div className="w-full px-4 text-xs space-y-1 border-t pt-3">
-            <div className="flex justify-between">
-              <span>Destination direction:</span>
-              <span className="font-mono">{bearing !== null ? `${bearing.toFixed(0)}°` : '--'}</span>
+            {/* Info */}
+            <div className="w-full text-xs space-y-1 border-t" style={{ paddingLeft: 'var(--container-padding)', paddingRight: 'var(--container-padding)', paddingTop: 'calc(var(--spacing-unit) * 0.75)' }}>
+              <div className="flex justify-between">
+                <span>Destination direction:</span>
+                <span className="font-mono">{bearing !== null ? `${bearing.toFixed(0)}°` : '--'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Current direction:</span>
+                <span className="font-mono">{heading !== null ? `${heading.toFixed(0)}°` : '--'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Destination location:</span>
+                <span className="font-mono text-xs">{targetLat.toFixed(5)}, {targetLon.toFixed(5)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Current location:</span>
+                <span className="font-mono text-xs">
+                  {userLat !== null ? userLat.toFixed(5) : '--'}, {userLon !== null ? userLon.toFixed(5) : '--'}
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span>Current direction:</span>
-              <span className="font-mono">{heading !== null ? `${heading.toFixed(0)}°` : '--'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Destination location:</span>
-              <span className="font-mono text-xs">{targetLat.toFixed(5)}, {targetLon.toFixed(5)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Current location:</span>
-              <span className="font-mono text-xs">
-                {userLat !== null ? userLat.toFixed(5) : '--'}, {userLon !== null ? userLon.toFixed(5) : '--'}
-              </span>
-            </div>
-          </div>
 
-          <button
-            onClick={() => { stopAudioFile(); setPhase('search'); setCompassVisible(false); }}
-            className="mt-6 text-xs text-gray-500 hover:text-black"
-          >
-            ← Back to search
-          </button>
+            <button
+              onClick={() => { stopAudioFile(); setPhase('search'); setCompassVisible(false); }}
+              className="text-xs text-gray-500 hover:text-black w-full text-center"
+              style={{ marginTop: 'var(--spacing-unit)' }}
+            >
+              ← Back to search
+            </button>
+          </div>
         </div>
       )}
     </div>

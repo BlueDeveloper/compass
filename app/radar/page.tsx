@@ -221,8 +221,8 @@ export default function RadarPage() {
   };
 
   return (
-      <main className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-700 flex flex-col items-center justify-center p-4">
-        <div className="max-w-md w-full">
+      <main className="h-screen bg-gradient-to-br from-slate-900 to-slate-700 flex flex-col items-center justify-center responsive-container" style={{ padding: 'var(--container-padding)', overflow: 'hidden' }}>
+        <div className="max-w-md w-full" style={{ maxHeight: '100%', overflow: 'auto' }}>
           {/* 헤더 */}
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-white mb-2">레이더 모드</h1>
@@ -251,7 +251,7 @@ export default function RadarPage() {
             ) : (
                 <div className="relative flex flex-col items-center">
                   {/* 레이더 디스플레이 */}
-                  <div className="relative w-64 h-64 mb-6">
+                  <div className="relative responsive-compass mb-6" style={{ width: 'var(--compass-size)', height: 'var(--compass-size)' }}>
                     <svg viewBox="-150 -150 300 300" className="w-full h-full">
                       {/* 레이더 배경 원들 */}
                       <circle cx="0" cy="0" r="120" fill="none" stroke="#334155" strokeWidth="2" />
