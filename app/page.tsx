@@ -337,9 +337,9 @@ export default function CompassPage() {
       // Calculate angle difference
       const angleDiff = Math.abs(angDiff(bearing, heading));
 
-      // 0~5 degrees: reduce audio significantly
+      // 0~5 degrees: stop audio and flicker completely
       if (angleDiff <= 5) {
-        setAudioVol(0.1);
+        stopAudioFile();
       } else {
         // Apply audio based on alignment
         const alignmentFactor = (angleDiff - 5) / 175; // 5° = 0, 180° = 1
