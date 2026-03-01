@@ -573,7 +573,7 @@ export default function CompassPage() {
 
               {/* User position (moves according to heading direction) */}
               {/* User position on outer circle - filled from target direction */}
-              <circle cx={userOuterX} cy={userOuterY} r="6" fill="url(#userFillGradient)"/>
+              <circle cx={userOuterX} cy={userOuterY} r="20" fill="url(#userFillGradient)"/>
               <circle cx={userOuterX} cy={userOuterY} r="20" fill="none" stroke="black" strokeWidth="2"/>
 
               {/* User position on inner circle */}
