@@ -485,7 +485,7 @@ export default function CompassPage() {
           SEARCH PHASE - Main screen style
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
-        <div className="h-screen flex flex-col px-6" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 70px)' }}>
+        <div className="h-screen flex flex-col px-6" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), -10px)' }}>
           <div className="pt-4">
             <input
               type="text"
