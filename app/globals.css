@@ -18,7 +18,7 @@
 /* Small mobile (< 375px) */
 @media (max-width: 374px) {
   :root {
-    --compass-size: 180px;
+    --compass-size: 300px;
     --spacing-unit: 0.4rem;
     --font-size-distance: 1.25rem;
     --font-size-direction: 0.75rem;

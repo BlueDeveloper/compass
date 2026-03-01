@@ -409,7 +409,8 @@ export default function CompassPage() {
   const userOuterX = 150 + Math.sin(userAngle) * 140;
   const userOuterY = 150 - Math.cos(userAngle) * 140;
   const userInnerX = 150 + Math.sin(userAngle) * 70;
-  const userInnerY = 150 - Math.cos(userAngle) * 70;
+  const userInnerY = 170 - Math.cos(userAngle) * 70;
+
 
   // Target position - bearing direction (outer circle)
   const targetBearing = bearing !== null ? bearing : 0;
@@ -535,7 +536,7 @@ export default function CompassPage() {
 
           {/* Compass circles */}
           <div className="relative responsive-compass" style={{ width: 'var(--compass-size)', height: 'var(--compass-size)' }}>
-            <svg width="100%" height="100%" viewBox="0 0 300 300">
+            <svg width="100%" height="100%" viewBox="-30 -30 360 360">
               <defs>
                 {/* Gradient starting from target direction */}
                 <linearGradient
@@ -558,7 +559,7 @@ export default function CompassPage() {
               <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="2"/>
 
               {/* Inner circle */}
-              <circle cx="150" cy="150" r="70" fill="none" stroke="black" strokeWidth="2"/>
+              <circle cx="150" cy="150" r="50" fill="none" stroke="black" strokeWidth="2"/>
 
               {/* North direction indicator (fixed at 12 o'clock) */}
               <circle cx="150" cy="10" r="4" fill="gray"/>
@@ -567,10 +568,10 @@ export default function CompassPage() {
               {/* User position (moves according to heading direction) */}
               {/* User position on outer circle - filled from target direction */}
               <circle cx={userOuterX} cy={userOuterY} r="6" fill="url(#userFillGradient)"/>
-              <circle cx={userOuterX} cy={userOuterY} r="6" fill="none" stroke="black" strokeWidth="2"/>
+              <circle cx={userOuterX} cy={userOuterY} r="20" fill="none" stroke="black" strokeWidth="2"/>
 
               {/* User position on inner circle */}
-              <circle cx={userInnerX} cy={userInnerY} r="6" fill="none" stroke="black" strokeWidth="2"/>
+              <circle cx={userInnerX} cy={userInnerY} r="10" fill="none" stroke="black" strokeWidth="2"/>
 
               {/* Target point (for development - temporary display) */}
               <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="red" strokeWidth="2"/>
