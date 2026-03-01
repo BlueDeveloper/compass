@@ -10,7 +10,7 @@
   /* Responsive compass sizes */
   --compass-size: 200px;
   --spacing-unit: 0.5rem;
-  --font-size-distance: 1.5rem;
+  --font-size-distance: 2.5rem;
   --font-size-direction: 0.875rem;
   --container-padding: 1rem;
 }
@@ -20,7 +20,7 @@
   :root {
     --compass-size: 300px;
     --spacing-unit: 0.4rem;
-    --font-size-distance: 1.25rem;
+    --font-size-distance: 2rem;
     --font-size-direction: 0.75rem;
     --container-padding: 0.75rem;
   }
@@ -31,7 +31,7 @@
   :root {
     --compass-size: 240px;
     --spacing-unit: 0.5rem;
-    --font-size-distance: 1.5rem;
+    --font-size-distance: 2.5rem;
     --font-size-direction: 0.875rem;
     --container-padding: 1rem;
   }
@@ -42,7 +42,7 @@
   :root {
     --compass-size: 320px;
     --spacing-unit: 0.75rem;
-    --font-size-distance: 2rem;
+    --font-size-distance: 3rem;
     --font-size-direction: 1rem;
     --container-padding: 2rem;
   }
@@ -53,7 +53,7 @@
   :root {
     --compass-size: 400px;
     --spacing-unit: 1rem;
-    --font-size-distance: 2.5rem;
+    --font-size-distance: 3.5rem;
     --font-size-direction: 1.125rem;
     --container-padding: 2rem;
   }
@@ -645,7 +645,7 @@ html {
   :root {
     --compass-size: 180px;
     --spacing-unit: 0.3rem;
-    --font-size-distance: 1.25rem;
+    --font-size-distance: 2rem;
     --font-size-direction: 0.75rem;
     --container-padding: 0.5rem;
   }
