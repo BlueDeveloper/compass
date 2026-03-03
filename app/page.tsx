@@ -249,40 +249,39 @@ export default function CompassPage() {
   /* ═══════════════════════════════════════════
      AUDIO-BASED FLICKER INTENSITY
   ═══════════════════════════════════════════ */
-  // FLICKER PAUSED
-  // useEffect(() => {
-  //   if (!audioStarted || !analyserRef.current) return;
+  useEffect(() => {
+    if (!audioStarted || !analyserRef.current) return;
 
-  //   const analyser = analyserRef.current;
-  //   const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    const analyser = analyserRef.current;
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-  //   const updateFlicker = () => {
-  //     analyser.getByteFrequencyData(dataArray);
+    const updateFlicker = () => {
+      analyser.getByteFrequencyData(dataArray);
 
-  //     // Calculate average amplitude across all frequencies
-  //     let sum = 0;
-  //     for (let i = 0; i < dataArray.length; i++) {
-  //       sum += dataArray[i];
-  //     }
-  //     const average = sum / dataArray.length;
+      // Calculate average amplitude across all frequencies
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        sum += dataArray[i];
+      }
+      const average = sum / dataArray.length;
 
-  //     // Normalize to 0-1 range (0-255 -> 0-1)
-  //     const normalizedIntensity = average / 255;
+      // Normalize to 0-1 range (0-255 -> 0-1)
+      const normalizedIntensity = average / 255;
 
-  //     // Strong flicker effect: only trigger when intensity is high (threshold: 0.15)
-  //     if (normalizedIntensity > 0.15) {
-  //       // Scale to strong flicker range (0.5 to 1.0 for dramatic effect)
-  //       const flickerStrength = 0.5 + (normalizedIntensity - 0.15) * 0.588;
-  //       setFlickerIntensity(flickerStrength);
-  //     } else {
-  //       // No flicker when audio is quiet
-  //       setFlickerIntensity(0);
-  //     }
-  //   };
+      // Strong flicker effect: only trigger when intensity is high (threshold: 0.15)
+      if (normalizedIntensity > 0.15) {
+        // Scale to strong flicker range (0.5 to 1.0 for dramatic effect)
+        const flickerStrength = 0.5 + (normalizedIntensity - 0.15) * 0.588;
+        setFlickerIntensity(flickerStrength);
+      } else {
+        // No flicker when audio is quiet
+        setFlickerIntensity(0);
+      }
+    };
 
-  //   const interval = setInterval(updateFlicker, 50);
-  //   return () => clearInterval(interval);
-  // }, [audioStarted]);
+    const interval = setInterval(updateFlicker, 50);
+    return () => clearInterval(interval);
+  }, [audioStarted]);
 
   /* ═══════════════════════════════════════════
      INITIAL AUDIO ON SEARCH SCREEN
