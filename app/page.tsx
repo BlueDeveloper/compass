@@ -510,7 +510,7 @@ export default function CompassPage() {
 
           <div className="flex-grow"></div>
 
-          <div className="flex justify-center items-center" style={{ marginLeft: 'calc(-4 * var(--container-padding))', marginRight: 'calc(-2 * var(--container-padding))' }}>
+          <div className="flex justify-center items-center" style={{ marginLeft: 'calc(-4 * var(--container-padding))', marginRight: 'calc(-2 * var(--container-padding))', marginBottom: '-3rem' }}>
             <img src="/MPa_LOGO2.png" alt="MPa Logo" className="w-full responsive-logo object-fill" />
           </div>
         </div>

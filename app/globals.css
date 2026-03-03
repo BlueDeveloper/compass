@@ -590,12 +590,12 @@ html {
 
 /* Responsive logo */
 .responsive-logo {
-  height: 10rem;
+  height: 13rem;
 }
 
 @media (max-width: 374px) {
   .responsive-logo {
-    height: 8rem;
+    height: 12rem;
   }
 }
 
