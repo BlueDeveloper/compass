@@ -1,0 +1,209 @@
+/* Main Container */
+.mainContainer {
+  min-height: 100vh;
+  color: black;
+  overflow: hidden;
+  user-select: none;
+  position: relative;
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: #ffffff;
+}
+
+/* Flicker Overlay */
+.flickerOverlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  transition: background-color 0.05s ease-out;
+  z-index: 9999;
+}
+
+/* Start Overlay */
+.startOverlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background-color: rgb(255, 255, 255);
+}
+
+.startOverlayContent {
+  text-align: center;
+}
+
+.startOverlayText {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: black;
+}
+
+/* Search Phase */
+.searchContainer {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+  padding-bottom: max(env(safe-area-inset-bottom), -10px);
+}
+
+.inputWrapper {
+  padding-top: 2.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.inputField {
+  width: 17.5rem;
+  padding: 0.435rem 0.75rem;
+  border: 1px solid #626262;
+  font-size: 0.75rem;
+  outline: none;
+  background-color: #e1e1e1;
+  color: #626262;
+}
+
+.errorText {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #dc2626;
+}
+
+.flexGrow {
+  flex-grow: 1;
+}
+
+.logoContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: calc(-4 * var(--container-padding));
+  margin-right: calc(-2 * var(--container-padding));
+  margin-bottom: -2rem;
+}
+
+.logoImage {
+  width: 100%;
+  object-fit: fill;
+}
+
+/* Compass Phase */
+.compassContainer {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: var(--container-padding);
+}
+
+.sensorButton {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 1.25rem;
+  border: 2px solid black;
+  font-size: 0.875rem;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sensorButton:hover {
+  background-color: black;
+  color: white;
+}
+
+.directionWrapper {
+  text-align: center;
+  padding: 0 0.5rem;
+  margin-bottom: var(--spacing-unit);
+}
+
+.directionText {
+  font-size: var(--font-size-direction);
+}
+
+.headingText {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: calc(var(--spacing-unit) * 0.5);
+}
+
+.compassWrapper {
+  position: relative;
+  width: var(--compass-size);
+  height: var(--compass-size);
+}
+
+.bottomSection {
+  width: 100%;
+}
+
+.distanceWrapper {
+  text-align: center;
+  margin-bottom: var(--spacing-unit);
+}
+
+.distanceValue {
+  font-weight: bold;
+  font-size: var(--font-size-distance);
+  margin-bottom: calc(var(--spacing-unit) * 0.5);
+}
+
+.distanceLabel {
+  font-size: 0.75rem;
+  color: #4b5563;
+}
+
+.infoSection {
+  width: 100%;
+  font-size: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+  padding-top: calc(var(--spacing-unit) * 0.75);
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.infoRow:last-child {
+  margin-bottom: 0;
+}
+
+.infoMono {
+  font-family: monospace;
+}
+
+.infoMonoSmall {
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+.backButton {
+  font-size: 0.75rem;
+  color: #6b7280;
+  width: 100%;
+  text-align: center;
+  margin-top: var(--spacing-unit);
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.backButton:hover {
+  color: black;
+}

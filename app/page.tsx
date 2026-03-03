@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import styles from './page.module.css';
 
 /* ═══════════════════════════════════════════
    CONSTANTS
@@ -248,39 +249,40 @@ export default function CompassPage() {
   /* ═══════════════════════════════════════════
      AUDIO-BASED FLICKER INTENSITY
   ═══════════════════════════════════════════ */
-  useEffect(() => {
-    if (!audioStarted || !analyserRef.current) return;
+  // FLICKER PAUSED
+  // useEffect(() => {
+  //   if (!audioStarted || !analyserRef.current) return;
 
-    const analyser = analyserRef.current;
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+  //   const analyser = analyserRef.current;
+  //   const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-    const updateFlicker = () => {
-      analyser.getByteFrequencyData(dataArray);
+  //   const updateFlicker = () => {
+  //     analyser.getByteFrequencyData(dataArray);
 
-      // Calculate average amplitude across all frequencies
-      let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        sum += dataArray[i];
-      }
-      const average = sum / dataArray.length;
+  //     // Calculate average amplitude across all frequencies
+  //     let sum = 0;
+  //     for (let i = 0; i < dataArray.length; i++) {
+  //       sum += dataArray[i];
+  //     }
+  //     const average = sum / dataArray.length;
 
-      // Normalize to 0-1 range (0-255 -> 0-1)
-      const normalizedIntensity = average / 255;
+  //     // Normalize to 0-1 range (0-255 -> 0-1)
+  //     const normalizedIntensity = average / 255;
 
-      // Strong flicker effect: only trigger when intensity is high (threshold: 0.15)
-      if (normalizedIntensity > 0.15) {
-        // Scale to strong flicker range (0.5 to 1.0 for dramatic effect)
-        const flickerStrength = 0.5 + (normalizedIntensity - 0.15) * 0.588;
-        setFlickerIntensity(flickerStrength);
-      } else {
-        // No flicker when audio is quiet
-        setFlickerIntensity(0);
-      }
-    };
+  //     // Strong flicker effect: only trigger when intensity is high (threshold: 0.15)
+  //     if (normalizedIntensity > 0.15) {
+  //       // Scale to strong flicker range (0.5 to 1.0 for dramatic effect)
+  //       const flickerStrength = 0.5 + (normalizedIntensity - 0.15) * 0.588;
+  //       setFlickerIntensity(flickerStrength);
+  //     } else {
+  //       // No flicker when audio is quiet
+  //       setFlickerIntensity(0);
+  //     }
+  //   };
 
-    const interval = setInterval(updateFlicker, 50);
-    return () => clearInterval(interval);
-  }, [audioStarted]);
+  //   const interval = setInterval(updateFlicker, 50);
+  //   return () => clearInterval(interval);
+  // }, [audioStarted]);
 
   /* ═══════════════════════════════════════════
      INITIAL AUDIO ON SEARCH SCREEN
@@ -450,21 +452,13 @@ export default function CompassPage() {
      RENDER
   ═══════════════════════════════════════════ */
   return (
-    <div
-      className="min-h-screen text-black overflow-hidden select-none relative"
-      style={{
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        backgroundColor: '#ffffff'
-      }}
-    >
+    <div className={styles.mainContainer}>
       {/* Flicker overlay - only show when audio is started */}
       {audioStarted && (
         <div
-          className="fixed inset-0 pointer-events-none"
+          className={styles.flickerOverlay}
           style={{
-            backgroundColor: `rgba(0, 0, 0, ${flickerIntensity * 0.8})`,
-            transition: 'background-color 0.05s ease-out',
-            zIndex: 9999
+            backgroundColor: `rgba(0, 0, 0, ${flickerIntensity * 0.8})`
           }}
         />
       )}
@@ -478,12 +472,11 @@ export default function CompassPage() {
       {/* Start overlay */}
       {phase === 'search' && !audioStarted && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center cursor-pointer"
-          style={{ backgroundColor: 'rgb(255, 255, 255)' }}
+          className={styles.startOverlay}
           onClick={handleScreenInteraction}
         >
-          <div className="text-center">
-            <p className="text-xl font-bold text-black">Tap to start MPa Navigation</p>
+          <div className={styles.startOverlayContent}>
+            <p className={styles.startOverlayText}>Tap to start MPa Navigation</p>
           </div>
         </div>
       )}
@@ -492,26 +485,28 @@ export default function CompassPage() {
           SEARCH PHASE - Main screen style
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
-        <div className="h-screen flex flex-col responsive-container" style={{ paddingLeft: 'var(--container-padding)', paddingRight: 'var(--container-padding)', paddingBottom: 'max(env(safe-area-inset-bottom), -10px)' }}>
-          <div className="pt-4">
-            <input
-              type="text"
-              value={inputCoords}
-              onChange={e => setInputCoords(e.target.value)}
-              placeholder=""
-              className="w-full px-4 py-3 border border-black text-sm focus:outline-none focus:border-black bg-transparent"
-              onKeyPress={e => e.key === 'Enter' && handleSearch()}
-              onBlur={handleSearch}
-            />
-            {formError && (
-              <div className="mt-2 text-xs text-red-600">{formError}</div>
-            )}
+        <div className={`${styles.searchContainer} responsive-container`}>
+          <div className={styles.inputWrapper}>
+            <div>
+              <input
+                type="text"
+                value={inputCoords}
+                onChange={e => setInputCoords(e.target.value)}
+                placeholder=""
+                className={styles.inputField}
+                onKeyPress={e => e.key === 'Enter' && handleSearch()}
+                onBlur={handleSearch}
+              />
+              {formError && (
+                <div className={styles.errorText}>{formError}</div>
+              )}
+            </div>
           </div>
 
-          <div className="flex-grow"></div>
+          <div className={styles.flexGrow}></div>
 
-          <div className="flex justify-center items-center" style={{ marginLeft: 'calc(-4 * var(--container-padding))', marginRight: 'calc(-2 * var(--container-padding))', marginBottom: '-3rem' }}>
-            <img src="/MPa_LOGO2.png" alt="MPa Logo" className="w-full responsive-logo object-fill" />
+          <div className={styles.logoContainer}>
+            <img src="/MPa_LOGO2.png" alt="MPa Logo" className={`${styles.logoImage} responsive-logo`} />
           </div>
         </div>
       )}
@@ -520,28 +515,28 @@ export default function CompassPage() {
           COMPASS PHASE - Compass screen style
       ══════════════════════════════════════════════ */}
       {phase === 'compass' && (
-        <div className="h-screen flex flex-col items-center justify-between responsive-container" style={{ overflow: 'hidden', padding: 'var(--container-padding)' }}>
+        <div className={`${styles.compassContainer} responsive-container`}>
           <div>
             {!permissionGranted && (
               <button
                 onClick={requestPermission}
-                className="mb-3 px-5 py-2 border-2 border-black hover:bg-black hover:text-white transition-colors text-sm"
+                className={styles.sensorButton}
               >
                 Enable Sensor
               </button>
             )}
 
             {/* Direction instruction */}
-            <div className="text-center px-2" style={{ marginBottom: 'var(--spacing-unit)' }}>
-              <p style={{ fontSize: 'var(--font-size-direction)' }}>{getDirectionText()}</p>
-              <p className="text-xs text-gray-500" style={{ marginTop: 'calc(var(--spacing-unit) * 0.5)' }}>
+            <div className={styles.directionWrapper}>
+              <p className={styles.directionText}>{getDirectionText()}</p>
+              <p className={styles.headingText}>
                 Heading: {heading !== null ? `${heading.toFixed(1)}°` : 'No sensor data'}
               </p>
             </div>
           </div>
 
           {/* Compass circles */}
-          <div className="relative responsive-compass" style={{ width: 'var(--compass-size)', height: 'var(--compass-size)' }}>
+          <div className={`${styles.compassWrapper} responsive-compass`}>
             <svg width="100%" height="100%" viewBox="-30 -30 360 360">
               <defs>
                 {/* Gradient starting from target direction */}
@@ -585,30 +580,30 @@ export default function CompassPage() {
             </svg>
           </div>
 
-          <div className="w-full">
+          <div className={styles.bottomSection}>
             {/* Distance */}
-            <div className="text-center" style={{ marginBottom: 'var(--spacing-unit)' }}>
-              <div className="font-bold" style={{ fontSize: 'var(--font-size-distance)', marginBottom: 'calc(var(--spacing-unit) * 0.5)' }}>{fmtDist(distance)}</div>
-              <div className="text-xs text-gray-600">Distance to the destination</div>
+            <div className={styles.distanceWrapper}>
+              <div className={styles.distanceValue}>{fmtDist(distance)}</div>
+              <div className={styles.distanceLabel}>Distance to the destination</div>
             </div>
 
             {/* Info */}
-            <div className="w-full text-xs space-y-1 border-t" style={{ paddingLeft: 'var(--container-padding)', paddingRight: 'var(--container-padding)', paddingTop: 'calc(var(--spacing-unit) * 0.75)' }}>
-              <div className="flex justify-between">
+            <div className={styles.infoSection}>
+              <div className={styles.infoRow}>
                 <span>Destination direction:</span>
-                <span className="font-mono">{bearing !== null ? `${bearing.toFixed(0)}°` : '--'}</span>
+                <span className={styles.infoMono}>{bearing !== null ? `${bearing.toFixed(0)}°` : '--'}</span>
               </div>
-              <div className="flex justify-between">
+              <div className={styles.infoRow}>
                 <span>Current direction:</span>
-                <span className="font-mono">{heading !== null ? `${heading.toFixed(0)}°` : '--'}</span>
+                <span className={styles.infoMono}>{heading !== null ? `${heading.toFixed(0)}°` : '--'}</span>
               </div>
-              <div className="flex justify-between">
+              <div className={styles.infoRow}>
                 <span>Destination location:</span>
-                <span className="font-mono text-xs">{targetLat.toFixed(5)}, {targetLon.toFixed(5)}</span>
+                <span className={styles.infoMonoSmall}>{targetLat.toFixed(5)}, {targetLon.toFixed(5)}</span>
               </div>
-              <div className="flex justify-between">
+              <div className={styles.infoRow}>
                 <span>Current location:</span>
-                <span className="font-mono text-xs">
+                <span className={styles.infoMonoSmall}>
                   {userLat !== null ? userLat.toFixed(5) : '--'}, {userLon !== null ? userLon.toFixed(5) : '--'}
                 </span>
               </div>
@@ -616,8 +611,7 @@ export default function CompassPage() {
 
             <button
               onClick={() => { stopAudioFile(); setAudioStarted(false); setPhase('search'); setCompassVisible(false); }}
-              className="text-xs text-gray-500 hover:text-black w-full text-center"
-              style={{ marginTop: 'var(--spacing-unit)' }}
+              className={styles.backButton}
             >
               ← Back to search
             </button>
