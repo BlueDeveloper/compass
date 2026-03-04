@@ -17,7 +17,7 @@ const ALIGN_DEG   = 15;     // ±15° → aligned threshold
 export default function CompassPage() {
 
   /* ── UI Phase ── */
-  const [phase,          setPhase]          = useState<'search' | 'compass'>('compass');
+  const [phase,          setPhase]          = useState<'search' | 'compass'>('search');
   const [compassVisible, setCompassVisible] = useState(false);
   const [isShaking,      setIsShaking]      = useState(false);
   /* ── Search Form ── */
@@ -87,9 +87,6 @@ export default function CompassPage() {
       setPermissionGranted(true);
     }
   }, []);
-
-  /* Auto-request permission on mount (compass starts immediately) */
-  useEffect(() => { requestPermission(); }, [requestPermission]);
 
   useEffect(() => {
     if (!permissionGranted) return;
@@ -225,11 +222,10 @@ export default function CompassPage() {
   const userInnerY = 150 - Math.cos(userAngle) * 50;
 
 
-  // 가상 목표 방향: 3시(90°) 하드코딩 (테스트용)
-  const TEST_BEARING = 90;
-  const testTargetAngle = TEST_BEARING * Math.PI / 180;
-  const testTargetX = 150 + Math.sin(testTargetAngle) * 140;
-  const testTargetY = 150 - Math.cos(testTargetAngle) * 140;
+  // 목표 방향 마커 위치 (실제 bearing 기반)
+  const targetAngle = (bearing !== null ? bearing : 0) * Math.PI / 180;
+  const targetMarkerX = 150 + Math.sin(targetAngle) * 140;
+  const targetMarkerY = 150 - Math.cos(targetAngle) * 140;
 
   /* ═══════════════════════════════════════════
      RENDER
@@ -290,8 +286,10 @@ export default function CompassPage() {
                 {/* Outer ring */}
                 <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="1.5"/>
 
-                {/* 가상 목표 (3시) - 사용자 원과 겹친 부분만 표시 */}
-                <circle cx={testTargetX} cy={testTargetY} r="22" fill="black" clipPath="url(#userCircleClip)"/>
+                {/* 목표 마커 - 사용자 원과 겹친 부분만 표시 */}
+                {bearing !== null && (
+                  <circle cx={targetMarkerX} cy={targetMarkerY} r="22" fill="black" clipPath="url(#userCircleClip)"/>
+                )}
 
                 {/* 사용자 외부 원 - 테두리만 */}
                 <circle cx={userOuterX} cy={userOuterY} r="22" fill="none" stroke="black" strokeWidth="2"/>
@@ -306,7 +304,7 @@ export default function CompassPage() {
 
             {/* Distance */}
             <div className={styles.distanceWrapper}>
-              <div className={styles.distanceValue}>1.23km</div>
+              <div className={styles.distanceValue}>{fmtDist(distance)}</div>
               <div className={styles.distanceLabel}>Distance to the destination</div>
             </div>
           </div>
