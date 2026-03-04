@@ -23,6 +23,11 @@
    [모든 아이폰 동일 간격]
      safe-area 위/아래의 추가 여백을 고정값으로 통일
 ═══════════════════════════════════════════ */
+/*
+  v2: 로고(위) + 인풋(아래) 묶음, 세로 중앙 배치
+  - justify-content: center → 그룹을 화면 정중앙에
+  - safe-area padding → 노치/홈바/툴바를 고려한 실제 중앙
+*/
 .searchContainer {
   position: fixed;
   top: 0;
@@ -31,29 +36,36 @@
   bottom: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* 인풋 상단, 로고 하단 */
+  justify-content: center;
   align-items: center;
   background-color: #ffffff;
 
   /*
-    상단: 노치/DynamicIsland/상태바 + 고정 여백 1.5rem
-    → 모든 기종에서 상태바 아래 1.5rem 동일
+    safe-area를 padding으로 처리해야 진짜 "보이는 영역의 중앙"
+    padding-top:   노치/DynamicIsland 높이만큼 위를 밀어올림
+    padding-bottom: 홈바 + Safari 툴바만큼 아래를 밀어올림
+    → 두 값이 같아지면 그룹이 시각적 정중앙에 위치
   */
-  padding-top: calc(env(safe-area-inset-top, 20px) + 1.5rem);
-
-  /*
-    하단: 홈인디케이터(safe-area) + Safari툴바(≈49px) + 고정여백 1rem
-    → 모든 기종에서 툴바 위 1rem 동일
-    iPhone SE(no home bar): 0 + 49 + 16 = 65px
-    iPhone X+(home bar≈34px): 34 + 49 + 16 = 99px
-  */
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 49px + 1rem);
+  padding-top: env(safe-area-inset-top, 20px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 49px);
 }
 
-/* 인풋 래퍼: 상단 고정 */
-.inputWrapper {
+/*
+  로고 + 인풋을 묶는 그룹
+  - 87% 너비 = 양쪽 6.5% 여백 (인풋·로고 왼끝/오른끝 일치)
+  - gap: 로고와 인풋 사이 고정 간격
+*/
+.searchGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   width: 87%;
   max-width: 380px;
+  gap: 1.25rem;
+}
+
+.inputWrapper {
+  width: 100%;
 }
 
 .inputField {
@@ -78,35 +90,28 @@
 
 /*
   MPa_LOGO.png 콘텐츠 좌표 (sharp trim 분석):
-    원본:     661 × 321
-    콘텐츠:   x=97, y=111, w=505, h=96
-    → width:  661/505  = 130.89%
-    → left:  -97/505   = -19.21% (container 너비 기준)
-    → top:   -111/96   = -115.63% (container 높이 기준)
-    → aspect-ratio: 505 / 96
+    원본: 661×321 / 콘텐츠: x=97, y=111, w=505, h=96
+    width: 661/505=130.89% / left: -97/505=-19.21%
+    top: -111/96=-115.63% / aspect-ratio: 505/96
 */
 .logoContainer {
-  width: 87%;
-  max-width: 380px;
+  width: 100%;
   overflow: hidden;
   position: relative;
-  aspect-ratio: 505 / 96; /* 콘텐츠 비율로 높이 자동 확정 */
+  aspect-ratio: 505 / 96;
 }
 
 .logoImage {
   position: absolute;
-  width: 130.89%;   /* 원본 전체 / 콘텐츠 너비 */
-  left: -19.21%;    /* 좌측 여백 제거 */
-  top: -115.63%;    /* 상단 여백 제거 */
+  width: 130.89%;
+  left: -19.21%;
+  top: -115.63%;
   height: auto;
 }
 
-/* ── 가로 모드 / 아주 짧은 화면 ── */
+/* ── 가로 모드 / 짧은 화면 ── */
 @media (max-height: 500px) {
-  .searchContainer {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 49px + 0.25rem);
-  }
+  .searchGroup { gap: 0.75rem; }
 }
 
 /* ═══════════════════════════════════════════

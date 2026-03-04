@@ -260,22 +260,24 @@ export default function CompassPage() {
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
         <div className={styles.searchContainer}>
-          <div className={styles.inputWrapper}>
-            <input
-              type="text"
-              value={inputCoords}
-              onChange={e => setInputCoords(e.target.value)}
-              placeholder=""
-              className={styles.inputField}
-              onKeyPress={e => e.key === 'Enter' && handleSearch()}
-              onBlur={handleSearch}
-            />
-            {formError && (
-              <div className={styles.errorText}>{formError}</div>
-            )}
-          </div>
-          <div className={styles.logoContainer}>
-            <img src="/MPa_LOGO.png" alt="MPa Logo" className={styles.logoImage} />
+          <div className={styles.searchGroup}>
+            <div className={styles.logoContainer}>
+              <img src="/MPa_LOGO.png" alt="MPa Logo" className={styles.logoImage} />
+            </div>
+            <div className={styles.inputWrapper}>
+              <input
+                type="text"
+                value={inputCoords}
+                onChange={e => setInputCoords(e.target.value)}
+                placeholder=""
+                className={styles.inputField}
+                onKeyPress={e => e.key === 'Enter' && handleSearch()}
+                onBlur={handleSearch}
+              />
+              {formError && (
+                <div className={styles.errorText}>{formError}</div>
+              )}
+            </div>
           </div>
         </div>
       )}
