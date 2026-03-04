@@ -20,9 +20,6 @@ export default function CompassPage() {
   const [phase,          setPhase]          = useState<'search' | 'compass'>('search');
   const [compassVisible, setCompassVisible] = useState(false);
   const [isShaking,      setIsShaking]      = useState(false);
-  const [flickerIntensity, setFlickerIntensity] = useState(0);
-  const [audioStarted, setAudioStarted] = useState(false);
-
   /* ── Search Form ── */
   const [inputCoords, setInputCoords] = useState('37.2996 127.1123');
   const [formError, setFormError] = useState('');
@@ -45,70 +42,9 @@ export default function CompassPage() {
   const [isArrived, setIsArrived] = useState(false);
 
   /* ── Refs ── */
-  const audioCtxRef   = useRef<AudioContext | null>(null);
-  const audioElementRef = useRef<HTMLAudioElement | null>(null);
-  const audioSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
-  const analyserRef   = useRef<AnalyserNode | null>(null);
-  const gainRef       = useRef<GainNode | null>(null);
   const lastHRef      = useRef<number | null>(null);
   const cntRef        = useRef(0);
   const absSensorRef  = useRef<any>(null);
-
-  /* ═══════════════════════════════════════════
-     AUDIO
-  ═══════════════════════════════════════════ */
-  const initAudio = useCallback(() => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    if (audioCtxRef.current.state === 'suspended') {
-      audioCtxRef.current.resume();
-    }
-
-    // Setup audio file with analyser
-    if (!audioElementRef.current) {
-      const audio = new Audio('/fluorescent.mp3');
-      audio.loop = true;
-      audio.volume = 0.5;
-      audioElementRef.current = audio;
-
-      const ctx = audioCtxRef.current;
-      const source = ctx.createMediaElementSource(audio);
-      const analyser = ctx.createAnalyser();
-      const gain = ctx.createGain();
-
-      analyser.fftSize = 512;
-      analyser.smoothingTimeConstant = 0.5;
-
-      source.connect(analyser);
-      analyser.connect(gain);
-      gain.connect(ctx.destination);
-
-      audioSourceRef.current = source;
-      analyserRef.current = analyser;
-      gainRef.current = gain;
-    }
-  }, []);
-
-  const startAudioFile = useCallback(() => {
-    if (audioElementRef.current && audioCtxRef.current) {
-      audioCtxRef.current.resume();
-      audioElementRef.current.play().catch(() => {});
-    }
-  }, []);
-
-  const stopAudioFile = useCallback(() => {
-    if (audioElementRef.current) {
-      audioElementRef.current.pause();
-      audioElementRef.current.currentTime = 0;
-    }
-  }, []);
-
-  const setAudioVol = useCallback((vol: number) => {
-    if (gainRef.current && audioCtxRef.current) {
-      gainRef.current.gain.setTargetAtTime(vol, audioCtxRef.current.currentTime, 0.08);
-    }
-  }, []);
 
   /* ═══════════════════════════════════════════
      GEOLOCATION
@@ -144,14 +80,13 @@ export default function CompassPage() {
   };
 
   const requestPermission = useCallback(async () => {
-    initAudio();
     if (typeof (DeviceOrientationEvent as any)?.requestPermission === 'function') {
       const r = await (DeviceOrientationEvent as any).requestPermission();
       if (r === 'granted') setPermissionGranted(true);
     } else {
       setPermissionGranted(true);
     }
-  }, [initAudio]);
+  }, []);
 
   useEffect(() => {
     if (!permissionGranted) return;
@@ -225,138 +160,6 @@ export default function CompassPage() {
     setIsAligned(Math.abs(angDiff(b, heading)) <= ALIGN_DEG);
     setIsArrived(d < ARRIVAL_KM);
   }, [userLat, userLon, heading, targetLat, targetLon]);
-
-  /* ═══════════════════════════════════════════
-     ARRIVAL SOUND
-  ═══════════════════════════════════════════ */
-  const playArrivalSound = useCallback(() => {
-    if (!audioCtxRef.current) return;
-    try {
-      const ctx = audioCtxRef.current;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.frequency.setValueAtTime(800, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.3);
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.3);
-    } catch {}
-  }, []);
-
-  /* ═══════════════════════════════════════════
-     AUDIO-BASED FLICKER INTENSITY
-  ═══════════════════════════════════════════ */
-  useEffect(() => {
-    if (!audioStarted || !analyserRef.current) return;
-
-    const analyser = analyserRef.current;
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-    const updateFlicker = () => {
-      analyser.getByteFrequencyData(dataArray);
-
-      // Calculate average amplitude across all frequencies
-      let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        sum += dataArray[i];
-      }
-      const average = sum / dataArray.length;
-
-      // Normalize to 0-1 range (0-255 -> 0-1)
-      const normalizedIntensity = average / 255;
-
-      // Strong flicker effect: only trigger when intensity is high (threshold: 0.15)
-      if (normalizedIntensity > 0.15) {
-        // Scale to strong flicker range (0.5 to 1.0 for dramatic effect)
-        const flickerStrength = 0.5 + (normalizedIntensity - 0.15) * 0.588;
-        setFlickerIntensity(flickerStrength);
-      } else {
-        // No flicker when audio is quiet
-        setFlickerIntensity(0);
-      }
-    };
-
-    const interval = setInterval(updateFlicker, 50);
-    return () => clearInterval(interval);
-  }, [audioStarted]);
-
-  /* ═══════════════════════════════════════════
-     INITIAL AUDIO ON SEARCH SCREEN
-  ═══════════════════════════════════════════ */
-  const handleScreenInteraction = useCallback(() => {
-    if (!audioStarted && phase === 'search') {
-      initAudio();
-      startAudioFile();
-      setAudioStarted(true);
-    }
-  }, [audioStarted, phase, initAudio, startAudioFile]);
-
-  useEffect(() => {
-    // Keep audioStarted true when transitioning from search to compass
-    // Only stop audio when going back to search from compass
-    return () => {
-      if (phase === 'search') {
-        stopAudioFile();
-        setAudioStarted(false);
-      }
-    };
-  }, [phase, stopAudioFile]);
-
-  /* ═══════════════════════════════════════════
-     ARRIVAL DETECTION & SOUND
-  ═══════════════════════════════════════════ */
-  const arrivedRef = useRef(false);
-  useEffect(() => {
-    if (isArrived && !arrivedRef.current) {
-      arrivedRef.current = true;
-      playArrivalSound();
-    } else if (!isArrived) {
-      arrivedRef.current = false;
-    }
-  }, [isArrived, playArrivalSound]);
-
-  /* ═══════════════════════════════════════════
-     DIRECTION-BASED AUDIO EFFECT
-  ═══════════════════════════════════════════ */
-  useEffect(() => {
-    if (!permissionGranted || phase !== 'compass') return;
-
-    // Ensure audio is started in compass phase
-    if (!audioStarted) {
-      initAudio();
-      setAudioStarted(true);
-    }
-
-    if (isArrived) {
-      // Special sound on arrival
-      if (audioElementRef.current) setAudioVol(0.8);
-      else startAudioFile();
-    } else if (heading !== null && bearing !== null) {
-      // Calculate angle difference
-      const angleDiff = Math.abs(angDiff(bearing, heading));
-
-      // 0~5 degrees: stop audio and flicker completely
-      if (angleDiff <= 5) {
-        stopAudioFile();
-      } else {
-        // Apply audio based on alignment
-        const alignmentFactor = (angleDiff - 5) / 175; // 5° = 0, 180° = 1
-        const audioVol = 0.2 + alignmentFactor * 0.6;
-
-        if (audioElementRef.current && audioElementRef.current.paused) {
-          startAudioFile();
-        }
-        setAudioVol(audioVol);
-      }
-    } else {
-      if (audioElementRef.current && !audioElementRef.current.paused) {
-        setAudioVol(0.5);
-      }
-    }
-  }, [heading, bearing, isArrived, permissionGranted, phase, startAudioFile, setAudioVol, audioStarted, initAudio]);
 
   /* ═══════════════════════════════════════════
      SEARCH SUBMIT
@@ -452,34 +255,6 @@ export default function CompassPage() {
   ═══════════════════════════════════════════ */
   return (
     <div className={styles.mainContainer}>
-      {/* Flicker overlay - only show when audio is started */}
-      {audioStarted && (
-        <div
-          className={styles.flickerOverlay}
-          style={{
-            backgroundColor: `rgba(0, 0, 0, ${flickerIntensity * 0.8})`
-          }}
-        />
-      )}
-      <style>{`
-        @keyframes backgroundFlicker {
-          0%, 100% { filter: brightness(1); }
-          50% { filter: brightness(${1 - flickerIntensity * 0.3}); }
-        }
-      `}</style>
-
-      {/* Start overlay */}
-      {phase === 'search' && !audioStarted && (
-        <div
-          className={styles.startOverlay}
-          onClick={handleScreenInteraction}
-        >
-          <div className={styles.startOverlayContent}>
-            <p className={styles.startOverlayText}>Tap to start MPa Navigation</p>
-          </div>
-        </div>
-      )}
-
       {/* ══════════════════════════════════════════════
           SEARCH PHASE - Main screen style
       ══════════════════════════════════════════════ */}
@@ -609,7 +384,7 @@ export default function CompassPage() {
             </div>
 
             <button
-              onClick={() => { stopAudioFile(); setAudioStarted(false); setPhase('search'); setCompassVisible(false); }}
+              onClick={() => { setPhase('search'); setCompassVisible(false); }}
               className={styles.backButton}
             >
               ← Back to search
