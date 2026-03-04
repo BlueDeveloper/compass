@@ -259,28 +259,23 @@ export default function CompassPage() {
           SEARCH PHASE - Main screen style
       ══════════════════════════════════════════════ */}
       {phase === 'search' && (
-        <div className={`${styles.searchContainer} responsive-container`}>
+        <div className={styles.searchContainer}>
           <div className={styles.inputWrapper}>
-            <div>
-              <input
-                type="text"
-                value={inputCoords}
-                onChange={e => setInputCoords(e.target.value)}
-                placeholder=""
-                className={styles.inputField}
-                onKeyPress={e => e.key === 'Enter' && handleSearch()}
-                onBlur={handleSearch}
-              />
-              {formError && (
-                <div className={styles.errorText}>{formError}</div>
-              )}
-            </div>
+            <input
+              type="text"
+              value={inputCoords}
+              onChange={e => setInputCoords(e.target.value)}
+              placeholder=""
+              className={styles.inputField}
+              onKeyPress={e => e.key === 'Enter' && handleSearch()}
+              onBlur={handleSearch}
+            />
+            {formError && (
+              <div className={styles.errorText}>{formError}</div>
+            )}
           </div>
-
-          <div className={styles.flexGrow}></div>
-
           <div className={styles.logoContainer}>
-            <img src="/MPa_LOGO2.png" alt="MPa Logo" className={`${styles.logoImage} responsive-logo`} />
+            <img src="/MPa_LOGO.png" alt="MPa Logo" className={styles.logoImage} />
           </div>
         </div>
       )}

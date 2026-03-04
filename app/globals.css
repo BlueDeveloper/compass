@@ -1,571 +1,161 @@
 /* Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Geist+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap');
 
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS  (base = iPhone SE 1st gen, 320px)
+═══════════════════════════════════════════ */
 :root {
   --background: #000000;
   --foreground: #00ff41;
   --font-geist-sans: 'Geist Sans', system-ui, -apple-system, sans-serif;
   --font-geist-mono: 'Geist Mono', 'Courier New', monospace;
 
-  /* Responsive compass sizes */
-  --compass-size: 200px;
-  --spacing-unit: 0.5rem;
-  --font-size-distance: 2.5rem;
-  --font-size-direction: 0.875rem;
-  --container-padding: 1rem;
+  /* Compass screen */
+  --compass-size:        200px;
+  --spacing-unit:        0.5rem;
+  --font-size-distance:  2rem;
+  --font-size-direction: 0.75rem;
+  --container-padding:   0.75rem;
 }
 
-/* Small mobile (< 375px) */
-@media (max-width: 374px) {
+/* ── iPhone SE 2/3 gen · 6/7/8 · X · XS · 11 Pro · 12/13 mini (375px) ── */
+@media (min-width: 375px) {
   :root {
-    --compass-size: 300px;
-    --spacing-unit: 0.4rem;
-    --font-size-distance: 2rem;
-    --font-size-direction: 0.75rem;
-    --container-padding: 0.75rem;
-  }
-}
-
-/* Standard mobile (375px - 767px) */
-@media (min-width: 375px) and (max-width: 767px) {
-  :root {
-    --compass-size: 240px;
-    --spacing-unit: 0.5rem;
-    --font-size-distance: 2.5rem;
+    --compass-size:        240px;
+    --spacing-unit:        0.5rem;
+    --font-size-distance:  2.5rem;
     --font-size-direction: 0.875rem;
-    --container-padding: 1rem;
+    --container-padding:   1rem;
   }
 }
 
-/* Tablet (768px - 1023px) */
-@media (min-width: 768px) and (max-width: 1023px) {
+/* ── iPhone 12/13/14 · 15 · 16 (390px) ── */
+@media (min-width: 390px) {
   :root {
-    --compass-size: 320px;
-    --spacing-unit: 0.75rem;
-    --font-size-distance: 3rem;
-    --font-size-direction: 1rem;
-    --container-padding: 2rem;
+    --compass-size:        250px;
+    --font-size-distance:  2.625rem;
   }
 }
 
-/* Desktop (>= 1024px) */
+/* ── iPhone 14 Pro · 15 Pro · 16 Pro (393px) ── */
+@media (min-width: 393px) {
+  :root {
+    --compass-size:        255px;
+  }
+}
+
+/* ── iPhone XR · 11 · 14 Plus (414px) ── */
+@media (min-width: 414px) {
+  :root {
+    --compass-size:        270px;
+    --font-size-distance:  2.75rem;
+    --container-padding:   1.125rem;
+  }
+}
+
+/* ── iPhone 12/13/14 Pro Max · 15 Plus · 15 Pro Max (428-430px) ── */
+@media (min-width: 428px) {
+  :root {
+    --compass-size:        280px;
+    --font-size-distance:  3rem;
+    --container-padding:   1.25rem;
+  }
+}
+
+/* ── iPhone 16 Pro Max (440px) ── */
+@media (min-width: 440px) {
+  :root {
+    --compass-size:        290px;
+    --font-size-distance:  3rem;
+  }
+}
+
+/* ── Tablet (768px+) ── */
+@media (min-width: 768px) {
+  :root {
+    --compass-size:        320px;
+    --spacing-unit:        0.75rem;
+    --font-size-distance:  3rem;
+    --font-size-direction: 1rem;
+    --container-padding:   2rem;
+  }
+}
+
+/* ── Desktop (1024px+) ── */
 @media (min-width: 1024px) {
   :root {
-    --compass-size: 400px;
-    --spacing-unit: 1rem;
-    --font-size-distance: 3.5rem;
+    --compass-size:        400px;
+    --spacing-unit:        1rem;
+    --font-size-distance:  3.5rem;
     --font-size-direction: 1.125rem;
-    --container-padding: 2rem;
+    --container-padding:   2rem;
   }
 }
 
+/* ── Landscape / short screens (e.g. iPhone SE landscape) ── */
+@media (orientation: landscape) and (max-height: 500px) {
+  :root {
+    --compass-size:        150px;
+    --spacing-unit:        0.3rem;
+    --font-size-distance:  1.75rem;
+    --font-size-direction: 0.75rem;
+    --container-padding:   0.5rem;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════ */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* ═══════════════════════════════════════════
+   BODY
+   Safari compatibility:
+   - position:fixed + overflow:hidden → prevents iOS rubber-band scroll
+   - env(safe-area-inset-*) → accounts for notch / Dynamic Island
+   - 100dvh → Safari 15.4+, 100vh → fallback
+═══════════════════════════════════════════ */
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  background: #ffffff;
+  color: #000000;
   font-family: var(--font-geist-mono);
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
+  /* Prevent pull-to-refresh on iOS Safari */
   position: fixed;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  /* Prevent pull-to-refresh and overscroll */
-  overscroll-behavior: none;
-  touch-action: pan-x pan-y;
-}
-
-/* Utility Classes */
-.min-h-screen {
-  min-height: 100vh; /* fallback */
-  min-height: 100dvh;
-}
-
-.h-screen {
-  height: 100vh; /* fallback */
-  height: 100dvh;
-  overflow: hidden;
-}
-
-.w-full {
-  width: 100%;
-}
-
-.max-w-md {
-  max-width: 28rem;
-}
-
-.h-40 {
-  height: 10rem;
-}
-
-.w-16 {
-  width: 4rem;
-}
-
-.h-16 {
-  height: 4rem;
-}
-
-.w-8 {
-  width: 2rem;
-}
-
-.h-8 {
-  height: 2rem;
-}
-
-.w-64 {
-  width: 16rem;
-}
-
-.h-64 {
-  height: 16rem;
-}
-
-/* Text Colors */
-.text-black {
-  color: #000000;
-}
-
-.text-white {
-  color: #ffffff;
-}
-
-.text-gray-300 {
-  color: #d1d5db;
-}
-
-.text-gray-400 {
-  color: #9ca3af;
-}
-
-.text-gray-500 {
-  color: #6b7280;
-}
-
-.text-gray-600 {
-  color: #4b5563;
-}
-
-.text-gray-800 {
-  color: #1f2937;
-}
-
-.text-red-600 {
-  color: #dc2626;
-}
-
-.text-blue-400 {
-  color: #60a5fa;
-}
-
-/* Background Colors */
-.bg-transparent {
-  background-color: transparent;
-}
-
-.bg-white {
-  background-color: #ffffff;
-}
-
-.bg-slate-700 {
-  background-color: #334155;
-}
-
-.bg-slate-800 {
-  background-color: #1e293b;
-}
-
-.bg-blue-500 {
-  background-color: #3b82f6;
-}
-
-.bg-blue-600 {
-  background-color: #2563eb;
-}
-
-/* Gradients */
-.bg-gradient-to-br {
-  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
-}
-
-.from-slate-900 {
-  --tw-gradient-from: #0f172a;
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(15, 23, 42, 0));
-}
-
-.to-slate-700 {
-  --tw-gradient-to: #334155;
-}
-
-/* Flex */
-.flex {
-  display: flex;
-}
-
-.flex-col {
-  flex-direction: column;
-}
-
-.flex-grow {
-  flex-grow: 1;
-}
-
-.items-center {
-  align-items: center;
-}
-
-.items-start {
-  align-items: flex-start;
-}
-
-.justify-center {
-  justify-content: center;
-}
-
-.justify-between {
-  justify-content: space-between;
-}
-
-.justify-start {
-  justify-content: flex-start;
-}
-
-/* Grid */
-.grid {
-  display: grid;
-}
-
-.grid-cols-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-/* Gap */
-.gap-2 {
-  gap: 0.5rem;
-}
-
-.gap-4 {
-  gap: 1rem;
-}
-
-/* Spacing */
-.px-2 {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-}
-
-.p-2 {
-  padding: 0.5rem;
-}
-
-.p-4 {
-  padding: 1rem;
-}
-
-.p-8 {
-  padding: 2rem;
-}
-
-.px-4 {
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-
-.px-5 {
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
-}
-
-.px-6 {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-}
-
-.px-8 {
-  padding-left: 2rem;
-  padding-right: 2rem;
-}
-
-.py-2 {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-}
-
-.py-3 {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-}
-
-.py-12 {
-  padding-top: 3rem;
-  padding-bottom: 3rem;
-}
-
-.pt-2 {
-  padding-top: 0.5rem;
-}
-
-.pt-3 {
-  padding-top: 0.75rem;
-}
-
-.pt-4 {
-  padding-top: 1rem;
-}
-
-.pt-8 {
-  padding-top: 2rem;
-}
-
-.mt-1 {
-  margin-top: 0.25rem;
-}
-
-.mt-2 {
-  margin-top: 0.5rem;
-}
-
-.mt-3 {
-  margin-top: 0.75rem;
-}
-
-.mt-6 {
-  margin-top: 1.5rem;
-}
-
-.mb-1 {
-  margin-bottom: 0.25rem;
-}
-
-.mb-2 {
-  margin-bottom: 0.5rem;
-}
-
-.mb-3 {
-  margin-bottom: 0.75rem;
-}
-
-.mb-4 {
-  margin-bottom: 1rem;
-}
-
-.mb-6 {
-  margin-bottom: 1.5rem;
-}
-
-.-mx-6 {
-  margin-left: -4.5rem;
-  margin-right: -2.5rem;
-}
-
-/* Borders */
-.border {
-  border-width: 1px;
-}
-
-.border-2 {
-  border-width: 2px;
-}
-
-.border-t {
-  border-top-width: 1px;
-}
-
-.border-black {
-  border-color: #000000;
-}
-
-.rounded-lg {
-  border-radius: 0.5rem;
-}
-
-.rounded-full {
-  border-radius: 9999px;
-}
-
-.rounded-3xl {
-  border-radius: 1.5rem;
-}
-
-/* Shadows */
-.shadow-2xl {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
-
-/* Typography */
-.text-xs {
-  font-size: 0.75rem;
-  line-height: 1rem;
-}
-
-.text-sm {
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-}
-
-.text-base {
-  font-size: 1rem;
-  line-height: 1.5rem;
-}
-
-.text-xl {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-}
-
-.text-2xl {
-  font-size: 1.5rem;
-  line-height: 2rem;
-}
-
-.text-3xl {
-  font-size: 1.875rem;
-  line-height: 2.25rem;
-}
-
-.font-bold {
-  font-weight: 700;
-}
-
-.font-semibold {
-  font-weight: 600;
-}
-
-.font-mono {
-  font-family: var(--font-geist-mono);
-}
-
-.text-center {
-  text-align: center;
-}
-
-/* Position */
-.relative {
-  position: relative;
-}
-
-.fixed {
-  position: fixed;
-}
-
-.block {
-  display: block;
-}
-
-.inset-0 {
   top: 0;
+  left: 0;
   right: 0;
   bottom: 0;
-  left: 0;
+  /*
+    No safe-area padding here.
+    Each fixed-positioned container manages its own
+    env(safe-area-inset-*) to avoid double-application.
+  */
 }
 
-/* Z-index */
-.z-50 {
-  z-index: 50;
+/* ── iOS Safari: prevent rubber-band on html ── */
+@supports (-webkit-touch-callout: none) {
+  body {
+    /* iOS Safari-specific rubber band prevention */
+    overscroll-behavior: none;
+  }
 }
 
-/* Overflow */
-.overflow-hidden {
-  overflow: hidden;
-}
-
-/* Touch scroll prevention for app-like experience */
-html {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  /* Prevent iOS Safari rubber band scroll */
-  overscroll-behavior: none;
-  /* Support for notch/safe area */
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-}
-
-/* Pointer Events */
-.pointer-events-none {
-  pointer-events: none;
-}
-
-/* Cursor */
-.cursor-pointer {
-  cursor: pointer;
-}
-
-/* Select */
-.select-none {
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-/* Object Fit */
-.object-fill {
-  object-fit: fill;
-}
-
-/* Space */
-.space-y-1 > * + * {
-  margin-top: 0.25rem;
-}
-
-/* Transitions */
-.transition-colors {
-  transition-property: color, background-color, border-color;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-/* Hover States */
-.hover\:bg-black:hover {
-  background-color: #000000;
-}
-
-.hover\:bg-gray-100:hover {
-  background-color: #f3f4f6;
-}
-
-.hover\:bg-slate-600:hover {
-  background-color: #475569;
-}
-
-.hover\:bg-blue-700:hover {
-  background-color: #1d4ed8;
-}
-
-.hover\:text-white:hover {
-  color: #ffffff;
-}
-
-.hover\:text-black:hover {
-  color: #000000;
-}
-
-/* Focus States */
-.focus\:outline-none:focus {
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-}
-
-.focus\:border-black:focus {
-  border-color: #000000;
-}
-
-/* Component-specific styles */
-.antialiased {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Responsive container */
+/* ── Responsive container (compass phase) ── */
 .responsive-container {
   max-width: 100%;
   margin: 0 auto;
@@ -583,81 +173,23 @@ html {
   }
 }
 
-/* Responsive compass */
+/* ── Responsive compass ── */
 .responsive-compass {
   flex-shrink: 0;
 }
 
-/* Responsive logo */
-.responsive-logo {
-  height: 13rem;
-}
-
-@media (max-width: 374px) {
-  .responsive-logo {
-    height: 8rem;
-  }
-}
-
-@media (min-width: 768px) {
-  .responsive-logo {
-    height: 9rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .responsive-logo {
-    height: 10rem;
-    max-width: 600px;
-  }
-}
-
-/* Browser-specific optimizations */
-
-/* Samsung Internet */
-@supports (-webkit-appearance: none) and (not (-moz-appearance: none)) {
-  .responsive-compass {
-    /* Samsung Internet specific adjustments if needed */
-  }
-}
-
-/* iOS Safari */
-@supports (-webkit-touch-callout: none) {
-  body {
-    /* iOS Safari rubber band prevention */
-    position: fixed;
-    overflow: hidden;
-  }
-}
-
-/* Chrome/Edge on Android */
-@media screen and (max-width: 767px) {
-  @supports (-webkit-appearance: none) {
-    .h-screen {
-      /* Chrome Android address bar compensation */
-      min-height: -webkit-fill-available;
-    }
-  }
-}
-
-/* Landscape mode optimization */
-@media (orientation: landscape) and (max-height: 600px) {
-  :root {
-    --compass-size: 180px;
-    --spacing-unit: 0.3rem;
-    --font-size-distance: 2rem;
-    --font-size-direction: 0.75rem;
-    --container-padding: 0.5rem;
-  }
-
-  .responsive-container {
-    padding-top: 0.5rem !important;
-  }
-}
-
-/* High DPI screens */
+/* ── High DPI ── */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
   .responsive-compass svg {
     shape-rendering: geometricPrecision;
+  }
+}
+
+/* ── Chrome Android address bar compensation ── */
+@media screen and (max-width: 767px) {
+  @supports (-webkit-appearance: none) {
+    .h-screen {
+      min-height: -webkit-fill-available;
+    }
   }
 }
