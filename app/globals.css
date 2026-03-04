@@ -590,24 +590,24 @@ html {
 
 /* Responsive logo */
 .responsive-logo {
-  height: 11rem;
+  height: 9rem;
 }
 
 @media (max-width: 374px) {
   .responsive-logo {
-    height: 10rem;
+    height: 8rem;
   }
 }
 
 @media (min-width: 768px) {
   .responsive-logo {
-    height: 11rem;
+    height: 9rem;
   }
 }
 
 @media (min-width: 1024px) {
   .responsive-logo {
-    height: 12rem;
+    height: 10rem;
     max-width: 600px;
   }
 }
