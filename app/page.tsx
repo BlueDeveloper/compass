@@ -33,6 +33,7 @@ export default function CompassPage() {
   const [userLon,          setUserLon]          = useState<number | null>(null);
   const [heading,          setHeading]          = useState<number | null>(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [geoError,         setGeoError]         = useState<string | null>(null);
 
   /* ── Navigation ── */
   const [distance,  setDistance]  = useState<number | null>(null);
@@ -48,13 +49,38 @@ export default function CompassPage() {
 
   /* ═══════════════════════════════════════════
      GEOLOCATION
+     iOS Safari: 첫 GPS fix가 느려 timeout 발생 → 30s + maximumAge 허용
+     실패 시 저정밀도로 재시도 (네트워크 위치)
   ═══════════════════════════════════════════ */
   useEffect(() => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      setGeoError('위치 서비스를 지원하지 않는 브라우저입니다.');
+      return;
+    }
+
+    const onSuccess = (pos: GeolocationPosition) => {
+      setGeoError(null);
+      setUserLat(pos.coords.latitude);
+      setUserLon(pos.coords.longitude);
+    };
+
+    const onError = (err: GeolocationPositionError) => {
+      if (err.code === err.PERMISSION_DENIED) {
+        setGeoError('위치 권한이 거부되었습니다. 설정에서 허용해주세요.');
+      } else if (err.code === err.TIMEOUT) {
+        // iOS GPS timeout → 저정밀도로 재시도
+        navigator.geolocation.getCurrentPosition(onSuccess, () => {
+          setGeoError('위치를 가져올 수 없습니다. 잠시 후 다시 시도해주세요.');
+        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+      } else {
+        setGeoError('위치를 가져올 수 없습니다.');
+      }
+    };
+
     const id = navigator.geolocation.watchPosition(
-      pos => { setUserLat(pos.coords.latitude); setUserLon(pos.coords.longitude); },
-      err  => console.error(err),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      onSuccess,
+      onError,
+      { enableHighAccuracy: true, timeout: 30000, maximumAge: 5000 }
     );
     return () => navigator.geolocation.clearWatch(id);
   }, []);
@@ -329,6 +355,11 @@ export default function CompassPage() {
                 {userLat !== null ? userLat.toFixed(5) : '--'}, {userLon !== null ? userLon.toFixed(5) : '--'}
               </span>
             </div>
+            {geoError && (
+              <div className={styles.infoRow} style={{ color: '#dc2626', marginTop: '0.25rem' }}>
+                <span>{geoError}</span>
+              </div>
+            )}
           </div>
         </div>
       )}
