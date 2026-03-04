@@ -10,6 +10,7 @@ const DEFAULT_LAT = 37.5547;
 const DEFAULT_LON = 126.9708;
 const ARRIVAL_KM  = 0.05;   // 50m → arrival threshold
 const ALIGN_DEG   = 15;     // ±15° → aligned threshold
+const FILL_MAX_KM = 1;      // 1km 이내부터 근접원 채우기 시작
 
 /* ═══════════════════════════════════════════
    COMPONENT
@@ -46,16 +47,18 @@ export default function CompassPage() {
   const lastHRef      = useRef<number | null>(null);
   const cntRef        = useRef(0);
   const absSensorRef  = useRef<any>(null);
+  const geoWatchRef   = useRef<number | null>(null);
 
   /* ═══════════════════════════════════════════
      GEOLOCATION
-     iOS Safari: 첫 GPS fix가 느려 timeout 발생 → 30s + maximumAge 허용
-     실패 시 저정밀도로 재시도 (네트워크 위치)
   ═══════════════════════════════════════════ */
-  useEffect(() => {
+  const startGeo = useCallback(() => {
     if (!navigator.geolocation) {
       setGeoError('위치 서비스를 지원하지 않는 브라우저입니다.');
       return;
+    }
+    if (geoWatchRef.current !== null) {
+      navigator.geolocation.clearWatch(geoWatchRef.current);
     }
 
     const onSuccess = (pos: GeolocationPosition) => {
@@ -66,24 +69,29 @@ export default function CompassPage() {
 
     const onError = (err: GeolocationPositionError) => {
       if (err.code === err.PERMISSION_DENIED) {
-        setGeoError('위치 권한이 거부되었습니다. 설정에서 허용해주세요.');
+        setGeoError('위치 권한 거부됨\niOS: 설정 > 개인정보 > 위치서비스 > Safari');
       } else if (err.code === err.TIMEOUT) {
-        // iOS GPS timeout → 저정밀도로 재시도
         navigator.geolocation.getCurrentPosition(onSuccess, () => {
-          setGeoError('위치를 가져올 수 없습니다. 잠시 후 다시 시도해주세요.');
-        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+          setGeoError('위치 수신 실패. 아래 버튼을 눌러 재시도하세요.');
+        }, { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 });
       } else {
         setGeoError('위치를 가져올 수 없습니다.');
       }
     };
 
-    const id = navigator.geolocation.watchPosition(
+    geoWatchRef.current = navigator.geolocation.watchPosition(
       onSuccess,
       onError,
       { enableHighAccuracy: true, timeout: 30000, maximumAge: 5000 }
     );
-    return () => navigator.geolocation.clearWatch(id);
   }, []);
+
+  useEffect(() => {
+    startGeo();
+    return () => {
+      if (geoWatchRef.current !== null) navigator.geolocation.clearWatch(geoWatchRef.current);
+    };
+  }, [startGeo]);
 
   /* ═══════════════════════════════════════════
      HEADING SENSOR
@@ -248,6 +256,9 @@ export default function CompassPage() {
   const userInnerY = 150 - Math.cos(userAngle) * 50;
 
 
+  // 근접원 fill progress (왼→오, 1km 이내부터)
+  const fillProgress = distance !== null ? Math.max(0, Math.min(1, 1 - distance / FILL_MAX_KM)) : 0;
+
   // 목표 방향 마커 위치 (실제 bearing 기반)
   const targetAngle = (bearing !== null ? bearing : 0) * Math.PI / 180;
   const targetMarkerX = 150 + Math.sin(targetAngle) * 140;
@@ -307,6 +318,11 @@ export default function CompassPage() {
                   <clipPath id="userCircleClip">
                     <circle cx={userOuterX} cy={userOuterY} r="22"/>
                   </clipPath>
+                  {/* 근접원: 왼→오 fill (거리 가까울수록 채워짐) */}
+                  <linearGradient id="proximityFill" x1="100" y1="150" x2="200" y2="150" gradientUnits="userSpaceOnUse">
+                    <stop offset={`${fillProgress * 100}%`} stopColor="black" stopOpacity="1"/>
+                    <stop offset={`${fillProgress * 100}%`} stopColor="black" stopOpacity="0"/>
+                  </linearGradient>
                 </defs>
 
                 {/* Outer ring */}
@@ -320,7 +336,8 @@ export default function CompassPage() {
                 {/* 사용자 외부 원 - 테두리만 */}
                 <circle cx={userOuterX} cy={userOuterY} r="22" fill="none" stroke="black" strokeWidth="2"/>
 
-                {/* Inner ring */}
+                {/* 근접원 (proximity circle) - 거리 가까울수록 왼→오 fill */}
+                <circle cx="150" cy="150" r="50" fill="url(#proximityFill)"/>
                 <circle cx="150" cy="150" r="50" fill="none" stroke="black" strokeWidth="1.5"/>
 
                 {/* 사용자 내부 마커 - 테두리만 */}
@@ -356,8 +373,11 @@ export default function CompassPage() {
               </span>
             </div>
             {geoError && (
-              <div className={styles.infoRow} style={{ color: '#dc2626', marginTop: '0.25rem' }}>
-                <span>{geoError}</span>
+              <div style={{ marginTop: '0.25rem', color: '#dc2626', fontSize: '0.75rem', whiteSpace: 'pre-line' }}>
+                {geoError}
+                <button onClick={startGeo} style={{ display: 'block', marginTop: '0.25rem', fontSize: '0.75rem', background: 'none', border: '1px solid #dc2626', color: '#dc2626', padding: '0.2rem 0.5rem', cursor: 'pointer' }}>
+                  위치 재시도
+                </button>
               </div>
             )}
           </div>
