@@ -17,7 +17,7 @@ const ALIGN_DEG   = 15;     // ±15° → aligned threshold
 export default function CompassPage() {
 
   /* ── UI Phase ── */
-  const [phase,          setPhase]          = useState<'search' | 'compass'>('search');
+  const [phase,          setPhase]          = useState<'search' | 'compass'>('compass');
   const [compassVisible, setCompassVisible] = useState(false);
   const [isShaking,      setIsShaking]      = useState(false);
   /* ── Search Form ── */
@@ -87,6 +87,9 @@ export default function CompassPage() {
       setPermissionGranted(true);
     }
   }, []);
+
+  /* Auto-request permission on mount (compass starts immediately) */
+  useEffect(() => { requestPermission(); }, [requestPermission]);
 
   useEffect(() => {
     if (!permissionGranted) return;
@@ -222,33 +225,11 @@ export default function CompassPage() {
   const userInnerY = 150 - Math.cos(userAngle) * 50;
 
 
-  // Target position - bearing direction (outer circle)
-  const targetBearing = bearing !== null ? bearing : 0;
-  const targetAngle = targetBearing * Math.PI / 180;
-  const targetX = 150 + Math.sin(targetAngle) * 140;
-  const targetY = 150 - Math.cos(targetAngle) * 140;
-
-  // Calculate eclipse effect (direction-based)
-  const calculateEclipseEffect = () => {
-    if (heading === null || bearing === null) return 0;
-
-    // Calculate difference between heading and bearing (0~180 degrees)
-    const diff = Math.abs(angDiff(bearing, heading));
-
-    // The closer to 0, the closer to 1 (0° = 1, 180° = 0)
-    const progress = Math.max(0, 1 - (diff / 180));
-
-    return progress;
-  };
-
-  const eclipseProgress = calculateEclipseEffect();
-
-  // Calculate gradient direction (from target direction to opposite)
-  const targetBearingRad = targetBearing * Math.PI / 180;
-  const gradientX1 = userOuterX + Math.sin(targetBearingRad) * 20;
-  const gradientY1 = userOuterY - Math.cos(targetBearingRad) * 20;
-  const gradientX2 = userOuterX - Math.sin(targetBearingRad) * 20;
-  const gradientY2 = userOuterY + Math.cos(targetBearingRad) * 20;
+  // 가상 목표 방향: 3시(90°) 하드코딩 (테스트용)
+  const TEST_BEARING = 90;
+  const testTargetAngle = TEST_BEARING * Math.PI / 180;
+  const testTargetX = 150 + Math.sin(testTargetAngle) * 140;
+  const testTargetY = 150 - Math.cos(testTargetAngle) * 140;
 
   /* ═══════════════════════════════════════════
      RENDER
@@ -287,105 +268,69 @@ export default function CompassPage() {
       ══════════════════════════════════════════════ */}
       {phase === 'compass' && (
         <div className={`${styles.compassContainer} responsive-container`}>
-          <div>
-            {!permissionGranted && (
-              <button
-                onClick={requestPermission}
-                className={styles.sensorButton}
-              >
-                Enable Sensor
-              </button>
-            )}
+          {/* Direction instruction */}
+          <div className={styles.directionWrapper}>
+            <p className={styles.directionText}>{getDirectionText()}</p>
+            <p className={styles.headingText}>
+              Heading: {heading !== null ? `${heading.toFixed(1)}°` : 'No sensor data'}
+            </p>
+          </div>
 
-            {/* Direction instruction */}
-            <div className={styles.directionWrapper}>
-              <p className={styles.directionText}>{getDirectionText()}</p>
-              <p className={styles.headingText}>
-                Heading: {heading !== null ? `${heading.toFixed(1)}°` : 'No sensor data'}
-              </p>
+          {/* Compass + Distance grouped */}
+          <div className={styles.compassGroup}>
+            <div className={`${styles.compassWrapper} responsive-compass`}>
+              <svg width="100%" height="100%" viewBox="-30 -30 360 360">
+                <defs>
+                  {/* 사용자 원 모양으로 클리핑 → 목표와 겹친 영역만 보임 */}
+                  <clipPath id="userCircleClip">
+                    <circle cx={userOuterX} cy={userOuterY} r="22"/>
+                  </clipPath>
+                </defs>
+
+                {/* Outer ring */}
+                <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="1.5"/>
+
+                {/* 가상 목표 (3시) - 사용자 원과 겹친 부분만 표시 */}
+                <circle cx={testTargetX} cy={testTargetY} r="22" fill="black" clipPath="url(#userCircleClip)"/>
+
+                {/* 사용자 외부 원 - 테두리만 */}
+                <circle cx={userOuterX} cy={userOuterY} r="22" fill="none" stroke="black" strokeWidth="2"/>
+
+                {/* Inner ring */}
+                <circle cx="150" cy="150" r="50" fill="none" stroke="black" strokeWidth="1.5"/>
+
+                {/* 사용자 내부 마커 - 테두리만 */}
+                <circle cx={userInnerX} cy={userInnerY} r="11" fill="none" stroke="black" strokeWidth="1.5"/>
+              </svg>
             </div>
-          </div>
 
-          {/* Compass circles */}
-          <div className={`${styles.compassWrapper} responsive-compass`}>
-            <svg width="100%" height="100%" viewBox="-30 -30 360 360">
-              <defs>
-                {/* Gradient starting from target direction */}
-                <linearGradient
-                  id="userFillGradient"
-                  x1={gradientX1}
-                  y1={gradientY1}
-                  x2={gradientX2}
-                  y2={gradientY2}
-                  gradientUnits="userSpaceOnUse"
-                >
-                  <stop offset="0%" stopColor="black" stopOpacity="1" />
-                  <stop offset={`${eclipseProgress * 100}%`} stopColor="black" stopOpacity="1" />
-                  <stop offset={`${eclipseProgress * 100}%`} stopColor="black" stopOpacity="0" />
-                  <stop offset="100%" stopColor="black" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-
-              {/* Fixed compass circles */}
-              {/* Outer circle */}
-              <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="2"/>
-
-              {/* Inner circle */}
-              <circle cx="150" cy="150" r="50" fill="none" stroke="black" strokeWidth="2"/>
-
-              {/* North direction indicator (fixed at 12 o'clock) */}
-              <circle cx="150" cy="10" r="4" fill="gray"/>
-              <text x="150" y="32" textAnchor="middle" fontSize="12" fill="gray">N</text>
-
-              {/* User position (moves according to heading direction) */}
-              {/* User position on outer circle - filled from target direction */}
-              <circle cx={userOuterX} cy={userOuterY} r="20" fill="url(#userFillGradient)"/>
-              <circle cx={userOuterX} cy={userOuterY} r="20" fill="none" stroke="black" strokeWidth="2"/>
-
-              {/* User position on inner circle */}
-              <circle cx={userInnerX} cy={userInnerY} r="10" fill="none" stroke="black" strokeWidth="2"/>
-
-              {/* Target point (for development - temporary display) */}
-              <circle cx={targetX} cy={targetY} r="8" fill="none" stroke="red" strokeWidth="2"/>
-              <circle cx={targetX} cy={targetY} r="4" fill="red"/>
-            </svg>
-          </div>
-
-          <div className={styles.bottomSection}>
             {/* Distance */}
             <div className={styles.distanceWrapper}>
-              <div className={styles.distanceValue}>{fmtDist(distance)}</div>
+              <div className={styles.distanceValue}>1.23km</div>
               <div className={styles.distanceLabel}>Distance to the destination</div>
             </div>
+          </div>
 
-            {/* Info */}
-            <div className={styles.infoSection}>
-              <div className={styles.infoRow}>
-                <span>Destination direction:</span>
-                <span className={styles.infoMono}>{bearing !== null ? `${bearing.toFixed(0)}°` : '--'}</span>
-              </div>
-              <div className={styles.infoRow}>
-                <span>Current direction:</span>
-                <span className={styles.infoMono}>{heading !== null ? `${heading.toFixed(0)}°` : '--'}</span>
-              </div>
-              <div className={styles.infoRow}>
-                <span>Destination location:</span>
-                <span className={styles.infoMonoSmall}>{targetLat.toFixed(5)}, {targetLon.toFixed(5)}</span>
-              </div>
-              <div className={styles.infoRow}>
-                <span>Current location:</span>
-                <span className={styles.infoMonoSmall}>
-                  {userLat !== null ? userLat.toFixed(5) : '--'}, {userLon !== null ? userLon.toFixed(5) : '--'}
-                </span>
-              </div>
+          {/* Bottom info */}
+          <div className={styles.infoSection}>
+            <div className={styles.infoRow}>
+              <span>Destination direction:</span>
+              <span className={styles.infoMono}>{bearing !== null ? `${bearing.toFixed(0)}°` : '--'}</span>
             </div>
-
-            <button
-              onClick={() => { setPhase('search'); setCompassVisible(false); }}
-              className={styles.backButton}
-            >
-              ← Back to search
-            </button>
+            <div className={styles.infoRow}>
+              <span>Current direction:</span>
+              <span className={styles.infoMono}>{heading !== null ? `${heading.toFixed(0)}°` : '--'}</span>
+            </div>
+            <div className={styles.infoRow}>
+              <span>Destination location:</span>
+              <span className={styles.infoMonoSmall}>{targetLat.toFixed(5)}, {targetLon.toFixed(5)}</span>
+            </div>
+            <div className={styles.infoRow}>
+              <span>Current location:</span>
+              <span className={styles.infoMonoSmall}>
+                {userLat !== null ? userLat.toFixed(5) : '--'}, {userLon !== null ? userLon.toFixed(5) : '--'}
+              </span>
+            </div>
           </div>
         </div>
       )}

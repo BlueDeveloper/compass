@@ -119,14 +119,14 @@
 ═══════════════════════════════════════════ */
 .compassContainer {
   height: 100vh;
-  height: 100dvh; /* Safari 15.4+ */
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   overflow: hidden;
   padding: var(--container-padding);
-  padding-top: max(var(--container-padding), env(safe-area-inset-top, 0px));
+  padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
   padding-bottom: max(var(--container-padding), env(safe-area-inset-bottom, 0px));
 }
 
@@ -146,9 +146,10 @@
 }
 
 .directionWrapper {
+  flex-shrink: 0;
   text-align: center;
   padding: 0 0.5rem;
-  margin-bottom: var(--spacing-unit);
+  margin-bottom: 2rem;
 }
 
 .directionText {
@@ -161,19 +162,22 @@
   margin-top: calc(var(--spacing-unit) * 0.5);
 }
 
-.compassWrapper {
-  position: relative;
-  width: var(--compass-size);
-  height: var(--compass-size);
+.compassGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
 }
 
-.bottomSection {
-  width: 100%;
+.compassWrapper {
+  position: relative;
+  width: min(92vw, 520px);
+  aspect-ratio: 1 / 1;
 }
 
 .distanceWrapper {
   text-align: center;
-  margin-bottom: var(--spacing-unit);
 }
 
 .distanceValue {
@@ -188,12 +192,13 @@
 }
 
 .infoSection {
+  margin-top: 10%;
+  height: 500px;
   width: 100%;
   font-size: 0.75rem;
-  border-top: 1px solid #e5e7eb;
   padding-left: var(--container-padding);
   padding-right: var(--container-padding);
-  padding-top: calc(var(--spacing-unit) * 0.75);
+  padding-top: 0.25rem;
 }
 
 .infoRow {
