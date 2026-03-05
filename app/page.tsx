@@ -386,7 +386,7 @@ export default function CompassPage() {
   const fillProgress = distance !== null ? Math.max(0, Math.min(1, 1 - distance / FILL_MAX_KM)) : 0;
 
   // 외부 링 기울기 (자이로스코프 기반 3D tilt)
-  const outerTiltX = (tiltBeta - 90) * 0.6;   // 앞/뒤 기울기
+  const outerTiltX = (tiltBeta - 90) * -0.6;  // 앞/뒤 기울기 (반전)
   const outerTiltY = tiltGamma * 0.6;           // 좌/우 기울기
 
   // 목표 방향 마커 위치 (실제 bearing 기반)
