@@ -40,6 +40,10 @@ export default function CompassPage() {
   const [audioStarted,    setAudioStarted]    = useState(false);
   const [flickerIntensity, setFlickerIntensity] = useState(0);
 
+  /* ── Tilt (gyroscope-derived) ── */
+  const [tiltBeta,  setTiltBeta]  = useState(90); // 폰 세웠을 때 ≈ 90°
+  const [tiltGamma, setTiltGamma] = useState(0);
+
   /* ── Navigation ── */
   const [distance,  setDistance]  = useState<number | null>(null);
   const [bearing,   setBearing]   = useState<number | null>(null);
@@ -273,6 +277,17 @@ export default function CompassPage() {
     };
   }, [permissionGranted]);
 
+  /* ── 기울기 (자이로스코프 beta/gamma) ── */
+  useEffect(() => {
+    if (!permissionGranted) return;
+    const handler = (e: DeviceOrientationEvent) => {
+      if (e.beta  !== null) setTiltBeta(prev  => prev  + 0.25 * (e.beta!  - prev));
+      if (e.gamma !== null) setTiltGamma(prev => prev + 0.25 * (e.gamma! - prev));
+    };
+    window.addEventListener('deviceorientation', handler, true);
+    return () => window.removeEventListener('deviceorientation', handler, true);
+  }, [permissionGranted]);
+
   /* ═══════════════════════════════════════════
      NAVIGATION MATH
   ═══════════════════════════════════════════ */
@@ -370,6 +385,10 @@ export default function CompassPage() {
   // 근접원 fill progress (왼→오, 1km 이내부터)
   const fillProgress = distance !== null ? Math.max(0, Math.min(1, 1 - distance / FILL_MAX_KM)) : 0;
 
+  // 외부 링 기울기 (자이로스코프 기반 3D tilt)
+  const outerTiltX = (tiltBeta - 90) * 0.4;   // 앞/뒤 기울기
+  const outerTiltY = tiltGamma * 0.4;           // 좌/우 기울기
+
   // 목표 방향 마커 위치 (실제 bearing 기반)
   const targetAngle = (bearing !== null ? bearing : 0) * Math.PI / 180;
   const targetMarkerX = 150 + Math.sin(targetAngle) * 140;
@@ -448,8 +467,14 @@ export default function CompassPage() {
                   </linearGradient>
                 </defs>
 
-                {/* Outer ring */}
-                <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="1.5"/>
+                {/* Outer ring - 자이로스코프 기울기에 따라 3D tilt */}
+                <g style={{
+                  transform: `perspective(500px) rotateX(${outerTiltX}deg) rotateY(${outerTiltY}deg)`,
+                  transformOrigin: '150px 150px',
+                  transformBox: 'fill-box',
+                }}>
+                  <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="1.5"/>
+                </g>
 
                 {/* 목표 마커 - 사용자 원과 겹친 부분만 표시 */}
                 {bearing !== null && (
