@@ -189,8 +189,7 @@ export default function CompassPage() {
 
   const handleTap = useCallback(() => {
     initAudio();
-    requestPermission();
-  }, [initAudio, requestPermission]);
+  }, [initAudio]);
 
   // 거리에 따라 주파수·볼륨 변화
   useEffect(() => {
@@ -355,14 +354,22 @@ export default function CompassPage() {
   ═══════════════════════════════════════════ */
   return (
     <div className={styles.mainContainer}>
+      {/* tap... 시작 오버레이 - 앱 최초 진입 시 가장 먼저 */}
+      {!audioStarted && (
+        <div className={styles.startOverlay} onClick={handleTap}>
+          <span>tap...</span>
+        </div>
+      )}
+
       {/* 플리커 오버레이 */}
       {audioStarted && (
         <div className={styles.flickerOverlay} style={{ opacity: flickerIntensity * 0.7 }} />
       )}
+
       {/* ══════════════════════════════════════════════
           SEARCH PHASE - Main screen style
       ══════════════════════════════════════════════ */}
-      {phase === 'search' && (
+      {audioStarted && phase === 'search' && (
         <div className={styles.searchContainer}>
           <div className={styles.searchGroup}>
             <div className={styles.logoContainer}>
@@ -389,13 +396,7 @@ export default function CompassPage() {
       {/* ══════════════════════════════════════════════
           COMPASS PHASE - Compass screen style
       ══════════════════════════════════════════════ */}
-      {phase === 'compass' && !audioStarted && (
-        <div className={styles.startOverlay} onClick={handleTap}>
-          <span>tap...</span>
-        </div>
-      )}
-
-      {phase === 'compass' && audioStarted && (
+      {audioStarted && phase === 'compass' && (
         <div className={`${styles.compassContainer} responsive-container`}>
           {/* Direction instruction */}
           <div className={styles.directionWrapper}>
