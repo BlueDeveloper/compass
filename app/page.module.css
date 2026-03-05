@@ -255,7 +255,7 @@
 .flickerOverlay {
   position: fixed;
   inset: 0;
-  background-color: #ffffff;
+  background-color: #000000;
   pointer-events: none;
   z-index: 50;
 }
