@@ -235,3 +235,27 @@
 .backButton:hover {
   color: black;
 }
+
+/* ── tap... 시작 오버레이 ── */
+.startOverlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  cursor: pointer;
+  z-index: 100;
+  font-size: 1.25rem;
+  letter-spacing: 0.15em;
+  color: #000;
+}
+
+/* ── 플리커 오버레이 ── */
+.flickerOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: #ffffff;
+  pointer-events: none;
+  z-index: 50;
+}

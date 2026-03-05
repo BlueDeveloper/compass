@@ -36,6 +36,10 @@ export default function CompassPage() {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [geoError,         setGeoError]         = useState<string | null>(null);
 
+  /* ── Audio / Flicker ── */
+  const [audioStarted,    setAudioStarted]    = useState(false);
+  const [flickerIntensity, setFlickerIntensity] = useState(0);
+
   /* ── Navigation ── */
   const [distance,  setDistance]  = useState<number | null>(null);
   const [bearing,   setBearing]   = useState<number | null>(null);
@@ -48,6 +52,11 @@ export default function CompassPage() {
   const cntRef        = useRef(0);
   const absSensorRef  = useRef<any>(null);
   const geoWatchRef   = useRef<number | null>(null);
+  const audioCtxRef   = useRef<AudioContext | null>(null);
+  const analyserRef   = useRef<AnalyserNode | null>(null);
+  const gainRef       = useRef<GainNode | null>(null);
+  const oscRef        = useRef<OscillatorNode | null>(null);
+  const rafRef        = useRef<number | null>(null);
 
   /* ═══════════════════════════════════════════
      GEOLOCATION
@@ -120,6 +129,83 @@ export default function CompassPage() {
     } else {
       setPermissionGranted(true);
     }
+  }, []);
+
+  /* ═══════════════════════════════════════════
+     AUDIO + FLICKER
+     - OscillatorNode: 거리 가까울수록 주파수/볼륨 상승
+     - LFO: gain을 주기적으로 변조 → 소리 펄싱
+     - AnalyserNode → rAF 루프 → flickerIntensity 업데이트
+  ═══════════════════════════════════════════ */
+  const initAudio = useCallback(() => {
+    if (audioCtxRef.current) return;
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 128;
+
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = 60;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0.08;
+
+      // LFO: gain 변조 → 소리 펄싱 → 플리커 유발
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 4;
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 0.06;
+      lfo.connect(lfoGain);
+      lfoGain.connect(gain.gain);
+
+      osc.connect(gain);
+      gain.connect(analyser);
+      analyser.connect(ctx.destination);
+
+      osc.start();
+      lfo.start();
+
+      audioCtxRef.current = ctx;
+      analyserRef.current = analyser;
+      gainRef.current     = gain;
+      oscRef.current      = osc;
+
+      // 플리커 루프: 시간영역 RMS → flickerIntensity
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const loop = () => {
+        analyser.getByteTimeDomainData(data);
+        const rms = Math.sqrt(data.reduce((s, v) => s + (v - 128) ** 2, 0) / data.length) / 128;
+        setFlickerIntensity(rms);
+        rafRef.current = requestAnimationFrame(loop);
+      };
+      rafRef.current = requestAnimationFrame(loop);
+
+      setAudioStarted(true);
+    } catch {
+      setAudioStarted(true); // 오디오 실패해도 진행
+    }
+  }, []);
+
+  const handleTap = useCallback(() => {
+    initAudio();
+    requestPermission();
+  }, [initAudio, requestPermission]);
+
+  // 거리에 따라 주파수·볼륨 변화
+  useEffect(() => {
+    if (!oscRef.current || !gainRef.current || distance === null) return;
+    const t = Math.max(0, Math.min(1, 1 - distance / FILL_MAX_KM));
+    oscRef.current.frequency.value = 50 + t * 220;  // 50Hz → 270Hz
+    gainRef.current.gain.value     = 0.04 + t * 0.14;
+  }, [distance]);
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      if (rafRef.current)      cancelAnimationFrame(rafRef.current);
+      if (audioCtxRef.current) audioCtxRef.current.close();
+    };
   }, []);
 
   useEffect(() => {
@@ -269,6 +355,10 @@ export default function CompassPage() {
   ═══════════════════════════════════════════ */
   return (
     <div className={styles.mainContainer}>
+      {/* 플리커 오버레이 */}
+      {audioStarted && (
+        <div className={styles.flickerOverlay} style={{ opacity: flickerIntensity * 0.7 }} />
+      )}
       {/* ══════════════════════════════════════════════
           SEARCH PHASE - Main screen style
       ══════════════════════════════════════════════ */}
@@ -299,7 +389,13 @@ export default function CompassPage() {
       {/* ══════════════════════════════════════════════
           COMPASS PHASE - Compass screen style
       ══════════════════════════════════════════════ */}
-      {phase === 'compass' && (
+      {phase === 'compass' && !audioStarted && (
+        <div className={styles.startOverlay} onClick={handleTap}>
+          <span>tap...</span>
+        </div>
+      )}
+
+      {phase === 'compass' && audioStarted && (
         <div className={`${styles.compassContainer} responsive-container`}>
           {/* Direction instruction */}
           <div className={styles.directionWrapper}>
