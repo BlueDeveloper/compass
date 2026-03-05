@@ -54,8 +54,7 @@ export default function CompassPage() {
   const geoWatchRef   = useRef<number | null>(null);
   const audioCtxRef   = useRef<AudioContext | null>(null);
   const analyserRef   = useRef<AnalyserNode | null>(null);
-  const gainRef       = useRef<GainNode | null>(null);
-  const oscRef        = useRef<OscillatorNode | null>(null);
+  const audioElRef    = useRef<HTMLAudioElement | null>(null);
   const rafRef        = useRef<number | null>(null);
 
   /* ═══════════════════════════════════════════
@@ -133,57 +132,51 @@ export default function CompassPage() {
 
   /* ═══════════════════════════════════════════
      AUDIO + FLICKER
-     - OscillatorNode: 거리 가까울수록 주파수/볼륨 상승
-     - LFO: gain을 주기적으로 변조 → 소리 펄싱
-     - AnalyserNode → rAF 루프 → flickerIntensity 업데이트
+     - fluorescent.mp3 재생
+     - AnalyserNode 주파수 데이터 → 랜덤 플리커
+     - 음량 클수록 플래시 빈도 증가, 항상 고대비(켜짐/꺼짐)
   ═══════════════════════════════════════════ */
   const initAudio = useCallback(() => {
     if (audioCtxRef.current) return;
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 128;
+      analyser.fftSize = 256;
 
-      const osc = ctx.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.value = 60;
-
-      const gain = ctx.createGain();
-      gain.gain.value = 0.08;
-
-      // LFO: gain 변조 → 소리 펄싱 → 플리커 유발
-      const lfo = ctx.createOscillator();
-      lfo.frequency.value = 4;
-      const lfoGain = ctx.createGain();
-      lfoGain.gain.value = 0.06;
-      lfo.connect(lfoGain);
-      lfoGain.connect(gain.gain);
-
-      osc.connect(gain);
-      gain.connect(analyser);
+      const audio = new Audio('/fluorescent.mp3');
+      audio.loop = true;
+      audio.crossOrigin = 'anonymous';
+      const source = ctx.createMediaElementSource(audio);
+      source.connect(analyser);
       analyser.connect(ctx.destination);
-
-      osc.start();
-      lfo.start();
+      audio.play();
 
       audioCtxRef.current = ctx;
       analyserRef.current = analyser;
-      gainRef.current     = gain;
-      oscRef.current      = osc;
+      audioElRef.current  = audio;
 
-      // 플리커 루프: 시간영역 RMS → flickerIntensity
+      // 플리커 루프: 주파수 평균 → 랜덤 고대비 플래시
       const data = new Uint8Array(analyser.frequencyBinCount);
       const loop = () => {
-        analyser.getByteTimeDomainData(data);
-        const rms = Math.sqrt(data.reduce((s, v) => s + (v - 128) ** 2, 0) / data.length) / 128;
-        setFlickerIntensity(rms);
+        analyser.getByteFrequencyData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) sum += data[i];
+        const avg = sum / data.length / 255;
+
+        // 음량 기반 확률로 ON/OFF 결정 → 고대비
+        const flashProb = avg * 0.55 + 0.12;
+        const intensity = Math.random() < flashProb
+          ? 0.55 + Math.random() * 0.45   // ON: 0.55~1.0
+          : 0;                             // OFF: 완전 꺼짐
+
+        setFlickerIntensity(intensity);
         rafRef.current = requestAnimationFrame(loop);
       };
       rafRef.current = requestAnimationFrame(loop);
 
       setAudioStarted(true);
     } catch {
-      setAudioStarted(true); // 오디오 실패해도 진행
+      setAudioStarted(true);
     }
   }, []);
 
@@ -191,18 +184,11 @@ export default function CompassPage() {
     initAudio();
   }, [initAudio]);
 
-  // 거리에 따라 주파수·볼륨 변화
-  useEffect(() => {
-    if (!oscRef.current || !gainRef.current || distance === null) return;
-    const t = Math.max(0, Math.min(1, 1 - distance / FILL_MAX_KM));
-    oscRef.current.frequency.value = 50 + t * 220;  // 50Hz → 270Hz
-    gainRef.current.gain.value     = 0.04 + t * 0.14;
-  }, [distance]);
-
   // cleanup
   useEffect(() => {
     return () => {
       if (rafRef.current)      cancelAnimationFrame(rafRef.current);
+      if (audioElRef.current)  { audioElRef.current.pause(); audioElRef.current = null; }
       if (audioCtxRef.current) audioCtxRef.current.close();
     };
   }, []);
