@@ -141,7 +141,8 @@ export default function CompassPage() {
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0; // 스무딩 제거 → 즉각 반응
 
       const audio = new Audio('/fluorescent.mp3');
       audio.loop = true;
@@ -155,19 +156,46 @@ export default function CompassPage() {
       analyserRef.current = analyser;
       audioElRef.current  = audio;
 
-      // 플리커 루프: 주파수 평균 → 랜덤 고대비 플래시
       const data = new Uint8Array(analyser.frequencyBinCount);
+
+      // 스터터 상태 (클로저 내 유지)
+      let stutterLeft = 0;
+      let stutterBase = 0;
+
       const loop = () => {
         analyser.getByteFrequencyData(data);
-        let sum = 0;
-        for (let i = 0; i < data.length; i++) sum += data[i];
-        const avg = sum / data.length / 255;
 
-        // 음량 기반 확률로 ON/OFF 결정 → 고대비
-        const flashProb = avg * 0.55 + 0.12;
-        const intensity = Math.random() < flashProb
-          ? 0.55 + Math.random() * 0.45   // ON: 0.55~1.0
-          : 0;                             // OFF: 완전 꺼짐
+        // peak + avg 혼합으로 신호 강도 계산
+        let peak = 0, sum = 0;
+        for (let i = 0; i < data.length; i++) {
+          if (data[i] > peak) peak = data[i];
+          sum += data[i];
+        }
+        const signal = (peak / 255) * 0.65 + (sum / data.length / 255) * 0.35;
+
+        // 공격적인 파워 커브: 약한 신호 억제, 강한 신호 폭발
+        const drama = Math.pow(signal, 0.45);
+
+        let intensity = 0;
+
+        if (stutterLeft > 0) {
+          // 스터터 중: 짝수 프레임=ON, 홀수=OFF → 빠른 점멸
+          intensity = stutterLeft % 2 === 0
+            ? stutterBase * (0.8 + Math.random() * 0.2)
+            : 0;
+          stutterLeft--;
+        } else if (drama > 0.35) {
+          // 강한 신호 → 스터터 시작 (2~8번 빠른 점멸)
+          if (Math.random() < (drama - 0.3) * 1.8) {
+            stutterLeft = Math.floor(Math.random() * 7) + 2;
+            stutterBase = Math.min(1, drama * 1.3);
+            intensity   = stutterBase;
+          } else {
+            // 단발 플래시
+            intensity = Math.min(1, drama * (1.2 + Math.random() * 0.8));
+          }
+        }
+        // drama <= 0.35 → intensity = 0 (완전 암전)
 
         setFlickerIntensity(intensity);
         rafRef.current = requestAnimationFrame(loop);
