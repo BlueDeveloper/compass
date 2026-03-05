@@ -386,8 +386,8 @@ export default function CompassPage() {
   const fillProgress = distance !== null ? Math.max(0, Math.min(1, 1 - distance / FILL_MAX_KM)) : 0;
 
   // 외부 링 기울기 (자이로스코프 기반 3D tilt)
-  const outerTiltX = (tiltBeta - 90) * 0.4;   // 앞/뒤 기울기
-  const outerTiltY = tiltGamma * 0.4;           // 좌/우 기울기
+  const outerTiltX = (tiltBeta - 90) * 0.6;   // 앞/뒤 기울기
+  const outerTiltY = tiltGamma * 0.6;           // 좌/우 기울기
 
   // 목표 방향 마커 위치 (실제 bearing 기반)
   const targetAngle = (bearing !== null ? bearing : 0) * Math.PI / 180;
@@ -453,13 +453,22 @@ export default function CompassPage() {
 
           {/* Compass + Distance grouped */}
           <div className={styles.compassGroup}>
-            <div className={`${styles.compassWrapper} responsive-compass`}>
+            <div className={`${styles.compassWrapper} responsive-compass`} style={{
+              transform: `perspective(600px) rotateX(${outerTiltX}deg) rotateY(${outerTiltY}deg)`,
+              filter: `drop-shadow(0px ${3 + Math.abs(outerTiltX) * 0.2}px ${6 + Math.abs(outerTiltX) * 0.4}px rgba(0,0,0,0.22))`,
+            }}>
               <svg width="100%" height="100%" viewBox="-30 -30 360 360">
                 <defs>
                   {/* 사용자 원 모양으로 클리핑 → 목표와 겹친 영역만 보임 */}
                   <clipPath id="userCircleClip">
                     <circle cx={userOuterX} cy={userOuterY} r="22"/>
                   </clipPath>
+                  {/* 외부 링 stroke 그라디언트 — 대각선 조명으로 3D 입체감 */}
+                  <linearGradient id="ringStrokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%"   stopColor="#666"/>
+                    <stop offset="35%"  stopColor="#000"/>
+                    <stop offset="100%" stopColor="#000"/>
+                  </linearGradient>
                   {/* 근접원: 왼→오 fill (거리 가까울수록 채워짐) */}
                   <linearGradient id="proximityFill" x1="100" y1="150" x2="200" y2="150" gradientUnits="userSpaceOnUse">
                     <stop offset={`${fillProgress * 100}%`} stopColor="black" stopOpacity="1"/>
@@ -467,14 +476,12 @@ export default function CompassPage() {
                   </linearGradient>
                 </defs>
 
-                {/* Outer ring - 자이로스코프 기울기에 따라 3D tilt */}
-                <g style={{
-                  transform: `perspective(500px) rotateX(${outerTiltX}deg) rotateY(${outerTiltY}deg)`,
-                  transformOrigin: '150px 150px',
-                  transformBox: 'fill-box',
-                }}>
-                  <circle cx="150" cy="150" r="140" fill="none" stroke="black" strokeWidth="1.5"/>
-                </g>
+                {/* Outer ring — gradient stroke + highlight arc 으로 3D 입체감 */}
+                <circle cx="150" cy="150" r="140" fill="none" stroke="url(#ringStrokeGrad)" strokeWidth="3"/>
+                {/* 12시 방향 하이라이트 반사광 */}
+                <circle cx="150" cy="150" r="140" fill="none"
+                  stroke="rgba(160,160,160,0.65)" strokeWidth="1.2"
+                  strokeDasharray="95 785" strokeDashoffset="280"/>
 
                 {/* 목표 마커 - 사용자 원과 겹친 부분만 표시 */}
                 {bearing !== null && (
