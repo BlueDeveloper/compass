@@ -158,9 +158,10 @@ export default function CompassPage() {
 
       const data = new Uint8Array(analyser.frequencyBinCount);
 
-      // 스터터 상태 (클로저 내 유지)
+      // 스터터 + 감쇠 상태 (클로저 내 유지)
       let stutterLeft = 0;
       let stutterBase = 0;
+      let decayVal    = 0;
 
       const loop = () => {
         analyser.getByteFrequencyData(data);
@@ -195,7 +196,9 @@ export default function CompassPage() {
         }
         // drama <= 0.55 → intensity = 0 (완전 암전)
 
-        setFlickerIntensity(intensity);
+        // 감쇠: 새 플래시가 없어도 이전 값이 서서히 사라짐 (~300ms)
+        decayVal = Math.max(intensity, decayVal * 0.88);
+        setFlickerIntensity(decayVal);
         rafRef.current = requestAnimationFrame(loop);
       };
       rafRef.current = requestAnimationFrame(loop);
