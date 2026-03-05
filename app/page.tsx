@@ -357,7 +357,7 @@ export default function CompassPage() {
       {/* tap... 시작 오버레이 - 앱 최초 진입 시 가장 먼저 */}
       {!audioStarted && (
         <div className={styles.startOverlay} onClick={handleTap}>
-          <span>tap...</span>
+          <span>Tap to start MPa Navigation</span>
         </div>
       )}
 
