@@ -215,7 +215,8 @@ export default function CompassPage() {
 
   const handleTap = useCallback(() => {
     initAudio();
-  }, [initAudio]);
+    requestPermission(); // iOS: user gesture 컨텍스트에서 즉시 권한 요청
+  }, [initAudio, requestPermission]);
 
   // 방향 일치 시 오디오·플리커 ON/OFF
   useEffect(() => {
@@ -340,6 +341,7 @@ export default function CompassPage() {
     if (lat < -90  || lat > 90)             { setFormError('Latitude: -90 to +90 range'); return; }
     if (lon < -180 || lon > 180)            { setFormError('Longitude: -180 to +180 range'); return; }
 
+    requestPermission(); // iOS: setTimeout 밖에서 user gesture로 직접 호출
     setIsShaking(true);
 
     setTimeout(() => {
@@ -347,7 +349,6 @@ export default function CompassPage() {
       setTargetLat(lat);
       setTargetLon(lon);
       setPhase('compass');
-      requestPermission();
       setTimeout(() => setCompassVisible(true), 250);
     }, 1050);
   };
