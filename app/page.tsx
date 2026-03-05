@@ -210,6 +210,17 @@ export default function CompassPage() {
     initAudio();
   }, [initAudio]);
 
+  // 방향 일치 시 오디오·플리커 ON/OFF
+  useEffect(() => {
+    if (!audioElRef.current) return;
+    if (isAligned) {
+      audioElRef.current.pause();
+      setFlickerIntensity(0);
+    } else {
+      if (audioElRef.current.paused) audioElRef.current.play();
+    }
+  }, [isAligned]);
+
   // cleanup
   useEffect(() => {
     return () => {
