@@ -173,29 +173,27 @@ export default function CompassPage() {
         }
         const signal = (peak / 255) * 0.65 + (sum / data.length / 255) * 0.35;
 
-        // 공격적인 파워 커브: 약한 신호 억제, 강한 신호 폭발
-        const drama = Math.pow(signal, 0.45);
+        // 높은 지수: 약한 신호는 강하게 억제, 큰 신호만 반응
+        const drama = Math.pow(signal, 1.8);
 
         let intensity = 0;
 
         if (stutterLeft > 0) {
-          // 스터터 중: 짝수 프레임=ON, 홀수=OFF → 빠른 점멸
           intensity = stutterLeft % 2 === 0
-            ? stutterBase * (0.8 + Math.random() * 0.2)
+            ? stutterBase * (0.7 + Math.random() * 0.2)
             : 0;
           stutterLeft--;
-        } else if (drama > 0.35) {
-          // 강한 신호 → 스터터 시작 (2~8번 빠른 점멸)
-          if (Math.random() < (drama - 0.3) * 1.8) {
-            stutterLeft = Math.floor(Math.random() * 7) + 2;
-            stutterBase = Math.min(1, drama * 1.3);
+        } else if (drama > 0.55) {
+          // 높은 임계값: 충분히 큰 주파수에서만 반응
+          if (Math.random() < (drama - 0.5) * 0.9) {
+            stutterLeft = Math.floor(Math.random() * 3) + 1;
+            stutterBase = Math.min(0.85, drama);
             intensity   = stutterBase;
           } else {
-            // 단발 플래시
-            intensity = Math.min(1, drama * (1.2 + Math.random() * 0.8));
+            intensity = Math.min(0.75, drama * (0.7 + Math.random() * 0.3));
           }
         }
-        // drama <= 0.35 → intensity = 0 (완전 암전)
+        // drama <= 0.55 → intensity = 0 (완전 암전)
 
         setFlickerIntensity(intensity);
         rafRef.current = requestAnimationFrame(loop);
