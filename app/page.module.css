@@ -241,9 +241,8 @@
   align-items: stretch;
   gap: 1.25rem;
   animation: fadeIn 0.4s ease-out 0.15s both;
-  /* 로고 PNG 투명 영역으로 플리커가 비치지 않도록 흰 배경 고정 */
-  background: #ffffff;
-  /* 주변으로 넓게 번지는 흰 글로우 → 플리커 속에서 콘텐츠가 부각 */
+  /* 배경 없음 → 로고 사이사이 투명 영역으로 플리커 그대로 투과 (누끼 효과) */
+  /* 외곽 흰 글로우로 전체 콘텐츠 영역은 여전히 강조 */
   box-shadow: 0 0 80px 65px #ffffff;
 }
 
