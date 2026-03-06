@@ -128,8 +128,8 @@ body {
 }
 
 body {
-  background: #ffffff;
-  color: #000000;
+  background: #000000;
+  color: #ffffff;
   font-family: var(--font-geist-mono);
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;

@@ -1,261 +1,480 @@
 /* ═══════════════════════════════════════════
-   MAIN CONTAINER
+   ROOT — 전체 화면 고정, 검정 배경
 ═══════════════════════════════════════════ */
-.mainContainer {
-  min-height: 100vh;
-  color: black;
+.root {
+  position: fixed;
+  inset: 0;
+  background: #000;
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
-  position: relative;
   font-family: system-ui, -apple-system, sans-serif;
-  background-color: #ffffff;
 }
 
 /* ═══════════════════════════════════════════
-   SEARCH PHASE
-
-   [레이아웃]  인풋 → 상단 / 로고 → 하단
-   [Safari 브라우저 UI]
-     iOS Safari 바텀 툴바(뒤로/앞으로/탭 등) ≈ 49px
-     이 영역은 env(safe-area-inset-bottom)에 포함되지 않음
-     → padding-bottom = 홈바(safe-area) + 49px(툴바) + 여유
-   [모든 아이폰 동일 간격]
-     safe-area 위/아래의 추가 여백을 고정값으로 통일
+   BLACK FADE OVERLAY — intro → search 전환
 ═══════════════════════════════════════════ */
-/*
-  v2: 로고(위) + 인풋(아래) 묶음, 세로 중앙 배치
-  - justify-content: center → 그룹을 화면 정중앙에
-  - safe-area padding → 노치/홈바/툴바를 고려한 실제 중앙
-*/
-.searchContainer {
+.fadeOverlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: #ffffff;
-
-  /*
-    safe-area를 padding으로 처리해야 진짜 "보이는 영역의 중앙"
-    padding-top:   노치/DynamicIsland 높이만큼 위를 밀어올림
-    padding-bottom: 홈바 + Safari 툴바만큼 아래를 밀어올림
-    → 두 값이 같아지면 그룹이 시각적 정중앙에 위치
-  */
-  padding-top: env(safe-area-inset-top, 20px);
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 49px);
+  inset: 0;
+  background: #000;
+  z-index: 999;
+  pointer-events: none;
+  animation: fadeToBlack 0.8s ease-in forwards;
 }
 
-/*
-  로고 + 인풋을 묶는 그룹
-  - 87% 너비 = 양쪽 6.5% 여백 (인풋·로고 왼끝/오른끝 일치)
-  - gap: 로고와 인풋 사이 고정 간격
-*/
-.searchGroup {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  width: 87%;
-  max-width: 380px;
-  gap: 1.25rem;
+@keyframes fadeToBlack {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-.inputWrapper {
-  width: 100%;
-}
-
-.inputField {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #626262;
-  font-size: 1rem; /* >= 16px: iOS Safari 포커스 자동줌 방지 */
-  line-height: 1.4;
-  outline: none;
-  background-color: #e1e1e1;
-  color: #626262;
-  -webkit-appearance: none;
-  border-radius: 0;
-}
-
-.errorText {
-  margin-top: 0.375rem;
-  font-size: 0.75rem;
-  color: #dc2626;
-}
-
-/*
-  MPa_LOGO.png 콘텐츠 좌표 (sharp trim 분석):
-    원본: 661×321 / 콘텐츠: x=97, y=111, w=505, h=96
-    width: 661/505=130.89% / left: -97/505=-19.21%
-    top: -111/96=-115.63% / aspect-ratio: 505/96
-*/
-.logoContainer {
+/* ═══════════════════════════════════════════
+   LOGO (공통)
+   MPa_LOGO.png 크롭 값:
+     원본 661×321 / 콘텐츠 x=97 y=111 w=505 h=96
+     → width:130.89% / left:-19.21% / top:-115.63%
+═══════════════════════════════════════════ */
+.logoBox {
   width: 100%;
   overflow: hidden;
   position: relative;
   aspect-ratio: 505 / 96;
 }
 
-.logoImage {
+.logoImg {
   position: absolute;
   width: 130.89%;
   left: -19.21%;
   top: -115.63%;
   height: auto;
-}
-
-/* ── 가로 모드 / 짧은 화면 ── */
-@media (max-height: 500px) {
-  .searchGroup { gap: 0.75rem; }
+  /* 검정 배경에서 백색 로고로 */
+  filter: invert(1);
 }
 
 /* ═══════════════════════════════════════════
-   COMPASS PHASE
+   INTRO SCREEN
 ═══════════════════════════════════════════ */
-.compassContainer {
-  height: 100vh;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  overflow: hidden;
-  padding: var(--container-padding);
-  padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
-  padding-bottom: max(var(--container-padding), env(safe-area-inset-bottom, 0px));
-}
-
-.sensorButton {
-  margin-bottom: 0.75rem;
-  padding: 0.5rem 1.25rem;
-  border: 2px solid black;
-  font-size: 0.875rem;
-  background-color: transparent;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.sensorButton:hover {
-  background-color: black;
-  color: white;
-}
-
-.directionWrapper {
-  flex-shrink: 0;
-  text-align: center;
-  padding: 0 0.5rem;
-  margin-bottom: 2rem;
-}
-
-.directionText {
-  font-size: var(--font-size-direction);
-}
-
-.headingText {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-top: calc(var(--spacing-unit) * 0.5);
-}
-
-.compassGroup {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-  width: 100%;
-}
-
-.compassWrapper {
-  position: relative;
-  width: min(92vw, 520px);
-  aspect-ratio: 1 / 1;
-}
-
-.distanceWrapper {
-  text-align: center;
-}
-
-.distanceValue {
-  font-weight: bold;
-  font-size: var(--font-size-distance);
-  margin-bottom: calc(var(--spacing-unit) * 0.5);
-}
-
-.distanceLabel {
-  font-size: 0.75rem;
-  color: #4b5563;
-}
-
-.infoSection {
-  margin-top: 10%;
-  height: 500px;
-  width: 100%;
-  font-size: 0.75rem;
-  padding-left: var(--container-padding);
-  padding-right: var(--container-padding);
-  padding-top: 0.25rem;
-}
-
-.infoRow {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.25rem;
-}
-
-.infoRow:last-child {
-  margin-bottom: 0;
-}
-
-.infoMono {
-  font-family: monospace;
-}
-
-.infoMonoSmall {
-  font-family: monospace;
-  font-size: 0.75rem;
-}
-
-.backButton {
-  font-size: 0.75rem;
-  color: #6b7280;
-  width: 100%;
-  text-align: center;
-  margin-top: var(--spacing-unit);
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.backButton:hover {
-  color: black;
-}
-
-/* ── tap... 시작 오버레이 ── */
-.startOverlay {
+.introScreen {
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #ffffff;
-  cursor: pointer;
-  z-index: 100;
-  font-size: 1.25rem;
-  letter-spacing: 0.15em;
-  color: #000;
+  background: #000;
+  cursor: default;
+  padding-top: env(safe-area-inset-top, 20px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 49px);
 }
 
-/* ── 플리커 오버레이 ── */
-.flickerOverlay {
+.introReady {
+  cursor: pointer;
+}
+
+/*
+  콘텐츠 그룹: 로고 + 프로그레스 바
+  균일한 좌우 마진: 87% 너비 = 양쪽 6.5% 여백
+*/
+.introContent {
+  width: 87%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2rem;
+}
+
+.introBottom {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ── 프로그레스 바 트랙 ── */
+.progressTrack {
+  width: 100%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+/* ── 3초에 걸쳐 0% → 100% ── */
+.progressFill {
+  height: 100%;
+  width: 0%;
+  background: #ffffff;
+  animation: progressAnim 3s linear forwards;
+}
+
+@keyframes progressAnim {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+/* ── tap to start 레이블 ── */
+.tapLabel {
+  text-align: center;
+  font-size: 0.6875rem;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════
+   SEARCH SCREEN
+═══════════════════════════════════════════ */
+.searchScreen {
   position: fixed;
   inset: 0;
-  background-color: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding-top: env(safe-area-inset-top, 20px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 49px);
+}
+
+/* ─────────────────────────────────────────
+   TV 간섭 배경 레이어 (z-index 0~3)
+   로고·인풋은 z-index 10 — 영향 없음
+───────────────────────────────────────── */
+
+/* Layer 0: 기본 어두운 배경 + 고속 밝기 플리커 */
+.tvBg {
+  position: absolute;
+  inset: 0;
+  background: #050505;
+  animation: tvBgFlicker 0.033s steps(3) infinite;
+  z-index: 0;
+}
+
+@keyframes tvBgFlicker {
+  0%   { background-color: #030303; }
+  33%  { background-color: #080808; }
+  66%  { background-color: #020202; }
+  100% { background-color: #060606; }
+}
+
+/* Layer 1: 수평 스캔라인 (정적) */
+.tvScanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent            0px,
+    transparent            1px,
+    rgba(0, 0, 0, 0.48)   1px,
+    rgba(0, 0, 0, 0.48)   2px
+  );
   pointer-events: none;
+  z-index: 1;
+}
+
+/* Layer 2: 롤링 밝은 밴드 (빠른 속도, 주요 TV 간섭 효과) */
+.tvBand1 {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 22%;
+  background: linear-gradient(
+    to bottom,
+    transparent                    0%,
+    rgba(200, 200, 200, 0.07)     25%,
+    rgba(220, 220, 220, 0.11)     50%,
+    rgba(200, 200, 200, 0.07)     75%,
+    transparent                   100%
+  );
+  animation: tvBandRoll1 0.75s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes tvBandRoll1 {
+  0%   { top: -22%; }
+  100% { top: 100%; }
+}
+
+/* Layer 3: 두 번째 오프셋 밴드 — 비트패턴 */
+.tvBand2 {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 16%;
+  background: linear-gradient(
+    to bottom,
+    transparent                   0%,
+    rgba(180, 180, 180, 0.05)    30%,
+    rgba(200, 200, 200, 0.09)    50%,
+    rgba(180, 180, 180, 0.05)    70%,
+    transparent                  100%
+  );
+  animation: tvBandRoll2 0.95s linear infinite;
+  animation-delay: -0.4s;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes tvBandRoll2 {
+  0%   { top: -16%; }
+  100% { top: 100%; }
+}
+
+/* ── 검색 콘텐츠 (플리커 영향 없음) ── */
+.searchContent {
+  position: relative;
+  z-index: 10;
+  width: 87%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.25rem;
+  animation: fadeIn 0.4s ease-out 0.15s both;
+}
+
+.inputBox {
+  width: 100%;
+}
+
+.coordInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.625rem 0.875rem;
+  background: #666666;         /* 검색창 내부 컬러 */
+  color: #efefef;              /* 검색창 텍스트 컬러 */
+  border: none;
+  font-size: 1rem;             /* ≥16px: iOS Safari 자동줌 방지 */
+  line-height: 1.5;
+  outline: none;
+  -webkit-appearance: none;
+  border-radius: 0;
+  letter-spacing: 0.04em;
+}
+
+.coordInput::placeholder {
+  color: rgba(239, 239, 239, 0.35);
+}
+
+.errorText {
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  color: #f87171;
+}
+
+/* ═══════════════════════════════════════════
+   COMPASS SCREEN
+═══════════════════════════════════════════ */
+.compassScreen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+
+  /* 균일한 좌우 패딩 */
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  padding-top: env(safe-area-inset-top, 20px);
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
+
+/* ── 도착 플리커 오버레이 ── */
+.arrivalFlicker {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.92);
   z-index: 50;
+  pointer-events: none;
+  animation: arrivalAnim 0.55s steps(1) infinite;
+}
+
+@keyframes arrivalAnim {
+  0%   { opacity: 0; }
+  7%   { opacity: 1; }
+  14%  { opacity: 0; }
+  21%  { opacity: 0; }
+  28%  { opacity: 0.85; }
+  35%  { opacity: 0; }
+  42%  { opacity: 0; }
+  49%  { opacity: 1; }
+  56%  { opacity: 0; }
+  63%  { opacity: 0; }
+  70%  { opacity: 0.7; }
+  77%  { opacity: 0; }
+  84%  { opacity: 0; }
+  91%  { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+/* ── 최상단 로고 ── */
+.compassLogoBox {
+  width: 100%;
+  max-width: 380px;
+  flex-shrink: 0;
+  padding-top: 0.375rem;
+  padding-bottom: 0.75rem;
+}
+
+/* ── 남은거리 프로그레스 바 ── */
+.distBar {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  padding-bottom: 0.625rem;
+}
+
+.distValue {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.65);
+  font-variant-numeric: tabular-nums;
+  min-width: 3.5rem;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.distTrack {
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.distFill {
+  height: 100%;
+  background: #fff;
+  transition: width 0.6s ease-out;
+}
+
+/* ── 나침반 SVG 영역 ── */
+.compassArea {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+.compassSvgWrap {
+  width: min(88vw, 420px);
+  aspect-ratio: 1;
+  max-height: 100%;
+  max-width: 100%;
+}
+
+/* ── 사용자 헤딩 원: 방향 일치 시 번쩍임 ── */
+@keyframes alignedFlash {
+  0%   { stroke: rgba(255, 255, 255, 0.7);  stroke-width: 2; }
+  20%  { stroke: #ffffff;                   stroke-width: 4; }
+  40%  { stroke: rgba(255, 255, 255, 0.4);  stroke-width: 2; }
+  60%  { stroke: #ffffff;                   stroke-width: 4; }
+  80%  { stroke: rgba(255, 255, 255, 0.6);  stroke-width: 2; }
+  100% { stroke: rgba(255, 255, 255, 0.7);  stroke-width: 2; }
+}
+
+.userCircleAligned {
+  animation: alignedFlash 0.22s ease-in-out infinite;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 1))
+          drop-shadow(0 0 14px rgba(255, 255, 255, 0.6));
+}
+
+/* ── 하단 정보 섹션 ── */
+.infoSection {
+  width: 100%;
+  max-width: 380px;
+  flex-shrink: 0;
+  padding-top: 0.5rem;
+}
+
+/* 방위각 + 현재방향 행 */
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.625rem;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.infoLabel {
+  font-size: 0.5625rem;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.infoVal {
+  font-size: 1.375rem;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+}
+
+/* 좌표 섹션 */
+.coordsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-top: 0.5rem;
+}
+
+.coordRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.coordVal {
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: monospace;
+  letter-spacing: 0.02em;
+}
+
+/* ── 위치 오류 ── */
+.geoError {
+  margin-top: 0.5rem;
+  font-size: 0.6875rem;
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: pre-line;
+}
+
+.retryBtn {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  background: none;
+  border: 1px solid #f87171;
+  color: #f87171;
+  padding: 0.15rem 0.4rem;
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════
+   가로 모드 / 짧은 화면
+═══════════════════════════════════════════ */
+@media (max-height: 500px) {
+  .introContent    { gap: 1.25rem; }
+  .introBottom     { gap: 0.625rem; }
+  .compassLogoBox  { padding-top: 0.125rem; padding-bottom: 0.375rem; }
+  .distBar         { padding-bottom: 0.25rem; }
+  .infoVal         { font-size: 1rem; }
 }
