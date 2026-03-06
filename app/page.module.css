@@ -144,29 +144,23 @@
    로고·인풋은 z-index 10 — 영향 없음
 ───────────────────────────────────────── */
 
-/* Layer 0: 강렬한 밝기 플리커 — 흰색 ↔ 짙은 회색 고속 교번 */
+/* Layer 0: 흰 배경 + 고속 밝기 플리커 */
 .tvBg {
   position: absolute;
   inset: 0;
+  background: #fafafa;
+  animation: tvBgFlicker 0.033s steps(3) infinite;
   z-index: 0;
-  animation: tvBgFlicker 0.5s steps(10, end) infinite;
 }
 
 @keyframes tvBgFlicker {
   0%   { background-color: #ffffff; }
-  10%  { background-color: #1c1c1c; }
-  20%  { background-color: #ffffff; }
-  30%  { background-color: #2e2e2e; }
-  40%  { background-color: #ffffff; }
-  50%  { background-color: #101010; }
-  60%  { background-color: #ffffff; }
-  70%  { background-color: #252525; }
-  80%  { background-color: #ffffff; }
-  90%  { background-color: #1a1a1a; }
-  100% { background-color: #ffffff; }
+  33%  { background-color: #f3f3f3; }
+  66%  { background-color: #fefefe; }
+  100% { background-color: #f8f8f8; }
 }
 
-/* Layer 1: 굵은 수평 스캔라인 (정적) */
+/* Layer 1: 수평 스캔라인 (정적) */
 .tvScanlines {
   position: absolute;
   inset: 0;
@@ -174,63 +168,63 @@
     0deg,
     transparent           0px,
     transparent           1px,
-    rgba(0, 0, 0, 0.55)  1px,
-    rgba(0, 0, 0, 0.55)  2px
+    rgba(0, 0, 0, 0.28)  1px,
+    rgba(0, 0, 0, 0.28)  2px
   );
   pointer-events: none;
   z-index: 1;
 }
 
-/* Layer 2: 빠르고 진한 롤링 밴드 */
+/* Layer 2: 롤링 어두운 밴드 (주요 TV 간섭 효과) */
 .tvBand1 {
   position: absolute;
   left: 0;
   right: 0;
-  height: 30%;
+  height: 22%;
   background: linear-gradient(
     to bottom,
-    transparent              0%,
-    rgba(0, 0, 0, 0.55)    20%,
-    rgba(0, 0, 0, 0.78)    50%,
-    rgba(0, 0, 0, 0.55)    80%,
-    transparent             100%
+    transparent                0%,
+    rgba(0, 0, 0, 0.06)      25%,
+    rgba(0, 0, 0, 0.11)      50%,
+    rgba(0, 0, 0, 0.06)      75%,
+    transparent               100%
   );
-  animation: tvBandRoll1 0.45s linear infinite;
+  animation: tvBandRoll1 0.75s linear infinite;
   pointer-events: none;
   z-index: 2;
 }
 
 @keyframes tvBandRoll1 {
-  0%   { top: -30%; }
+  0%   { top: -22%; }
   100% { top: 100%; }
 }
 
-/* Layer 3: 두 번째 오프셋 밴드 */
+/* Layer 3: 두 번째 오프셋 밴드 — 비트패턴 */
 .tvBand2 {
   position: absolute;
   left: 0;
   right: 0;
-  height: 20%;
+  height: 16%;
   background: linear-gradient(
     to bottom,
-    transparent              0%,
-    rgba(0, 0, 0, 0.45)    30%,
-    rgba(0, 0, 0, 0.65)    50%,
-    rgba(0, 0, 0, 0.45)    70%,
-    transparent             100%
+    transparent               0%,
+    rgba(0, 0, 0, 0.04)     30%,
+    rgba(0, 0, 0, 0.08)     50%,
+    rgba(0, 0, 0, 0.04)     70%,
+    transparent              100%
   );
-  animation: tvBandRoll2 0.62s linear infinite;
-  animation-delay: -0.28s;
+  animation: tvBandRoll2 0.95s linear infinite;
+  animation-delay: -0.4s;
   pointer-events: none;
   z-index: 2;
 }
 
 @keyframes tvBandRoll2 {
-  0%   { top: -20%; }
+  0%   { top: -16%; }
   100% { top: 100%; }
 }
 
-/* ── 검색 콘텐츠 — 플리커 영향 없음, 흰 글로우로 강조 ── */
+/* ── 검색 콘텐츠 (플리커 영향 없음) ── */
 .searchContent {
   position: relative;
   z-index: 10;
@@ -241,9 +235,6 @@
   align-items: stretch;
   gap: 1.25rem;
   animation: fadeIn 0.4s ease-out 0.15s both;
-  /* 배경 없음 → 로고 사이사이 투명 영역으로 플리커 그대로 투과 (누끼 효과) */
-  /* 외곽 흰 글로우로 전체 콘텐츠 영역은 여전히 강조 */
-  box-shadow: 0 0 80px 65px #ffffff;
 }
 
 .inputBox {
