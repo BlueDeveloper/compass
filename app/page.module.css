@@ -239,6 +239,9 @@
 
 .inputBox {
   width: 100%;
+  background: #ffffff;
+  padding: 0.5rem;
+  box-sizing: border-box;
 }
 
 .coordInput {
