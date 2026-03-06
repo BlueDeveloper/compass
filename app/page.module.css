@@ -241,8 +241,10 @@
   align-items: stretch;
   gap: 1.25rem;
   animation: fadeIn 0.4s ease-out 0.15s both;
-  /* 배경이 어두워져도 콘텐츠 주변 흰 영역 유지 → 자연스럽게 강조 */
-  box-shadow: 0 0 80px 65px rgba(255, 255, 255, 1);
+  /* 로고 PNG 투명 영역으로 플리커가 비치지 않도록 흰 배경 고정 */
+  background: #ffffff;
+  /* 주변으로 넓게 번지는 흰 글로우 → 플리커 속에서 콘텐츠가 부각 */
+  box-shadow: 0 0 80px 65px #ffffff;
 }
 
 .inputBox {
