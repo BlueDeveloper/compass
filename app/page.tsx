@@ -274,9 +274,9 @@ export default function CompassPage() {
               <img src="/MPa_LOGO.png" alt="MPa Logo" className={styles.logoImg} />
             </div>
 
-            {/* 프로그레스 바 (텍스트 내부 표기) */}
+            {/* 프로그레스 바 (텍스트 내부 표기) — JS state로 너비와 숫자 동기화 */}
             <div className={styles.progressTrack}>
-              <div className={styles.progressFill} />
+              <div className={styles.progressFill} style={{ width: `${introProgress}%` }} />
               <span className={styles.progressText}>
                 {tapReady ? 'tap to start' : `${introProgress}%`}
               </span>
