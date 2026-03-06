@@ -90,11 +90,12 @@
 /* ── 프로그레스 바: 네모난 박스 ── */
 .progressTrack {
   width: 100%;
-  height: 18px;
+  height: 26px;
   background: #fff;
   border: 1px solid #000;
   box-sizing: border-box;
   overflow: hidden;
+  position: relative;
 }
 
 /* ── 3초에 걸쳐 0% → 100% ── */
@@ -110,23 +111,20 @@
   to   { width: 100%; }
 }
 
-/* ── 진행률 숫자 (0% → 100%) ── */
-.progressPct {
-  text-align: center;
-  font-size: 0.6875rem;
-  letter-spacing: 0.15em;
-  color: rgba(0, 0, 0, 0.5);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── tap to start 레이블 ── */
-.tapLabel {
-  text-align: center;
-  font-size: 0.6875rem;
-  letter-spacing: 0.3em;
-  color: rgba(0, 0, 0, 0.45);
+/* ── 바 내부 텍스트 (항상 가독 — mix-blend-mode) ── */
+.progressText {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  letter-spacing: 0.25em;
   text-transform: uppercase;
-  animation: fadeIn 0.5s ease-out forwards;
+  color: #fff;
+  mix-blend-mode: difference;   /* 채운 구간: 흰→검, 빈 구간: 흰→흰 */
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
 }
 
 @keyframes fadeIn {

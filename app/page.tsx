@@ -274,15 +274,12 @@ export default function CompassPage() {
               <img src="/MPa_LOGO.png" alt="MPa Logo" className={styles.logoImg} />
             </div>
 
-            {/* 프로그레스 바 + tap to start */}
-            <div className={styles.introBottom}>
-              <div className={styles.progressTrack}>
-                <div className={styles.progressFill} />
-              </div>
-              {tapReady
-                ? <p className={styles.tapLabel}>tap to start</p>
-                : <p className={styles.progressPct}>{introProgress}%</p>
-              }
+            {/* 프로그레스 바 (텍스트 내부 표기) */}
+            <div className={styles.progressTrack}>
+              <div className={styles.progressFill} />
+              <span className={styles.progressText}>
+                {tapReady ? 'tap to start' : `${introProgress}%`}
+              </span>
             </div>
           </div>
         </div>
