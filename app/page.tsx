@@ -21,6 +21,7 @@ export default function CompassPage() {
   const [phase,    setPhase]    = useState<'intro' | 'search' | 'compass'>('intro');
   const [tapReady, setTapReady] = useState(false);   // "tap to start" 표시
   const [isFading, setIsFading] = useState(false);   // 블랙 페이드 오버레이
+  const [introProgress, setIntroProgress] = useState(0); // 0~100
 
   /* ── Search ── */
   const [inputCoords, setInputCoords] = useState('37.2996 127.1123');
@@ -53,12 +54,21 @@ export default function CompassPage() {
   const geoWatchRef = useRef<number | null>(null);
 
   /* ═══════════════════════════════════════════
-     INTRO: 3초 후 "tap to start" 표시
+     INTRO: 3초 카운터 → 100% 도달 시 tap to start
   ═══════════════════════════════════════════ */
   useEffect(() => {
     if (phase !== 'intro') return;
-    const t = setTimeout(() => setTapReady(true), 3000);
-    return () => clearTimeout(t);
+    const start = Date.now();
+    const duration = 3000;
+    const id = setInterval(() => {
+      const pct = Math.min(100, Math.floor((Date.now() - start) / duration * 100));
+      setIntroProgress(pct);
+      if (pct >= 100) {
+        clearInterval(id);
+        setTapReady(true);
+      }
+    }, 30);
+    return () => clearInterval(id);
   }, [phase]);
 
   const handleTapStart = useCallback(() => {
@@ -269,9 +279,10 @@ export default function CompassPage() {
               <div className={styles.progressTrack}>
                 <div className={styles.progressFill} />
               </div>
-              {tapReady && (
-                <p className={styles.tapLabel}>tap to start</p>
-              )}
+              {tapReady
+                ? <p className={styles.tapLabel}>tap to start</p>
+                : <p className={styles.progressPct}>{introProgress}%</p>
+              }
             </div>
           </div>
         </div>

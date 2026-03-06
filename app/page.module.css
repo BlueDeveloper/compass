@@ -110,6 +110,15 @@
   to   { width: 100%; }
 }
 
+/* ── 진행률 숫자 (0% → 100%) ── */
+.progressPct {
+  text-align: center;
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  color: rgba(0, 0, 0, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── tap to start 레이블 ── */
 .tapLabel {
   text-align: center;
