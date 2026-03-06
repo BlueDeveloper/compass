@@ -1,10 +1,10 @@
 /* ═══════════════════════════════════════════
-   ROOT — 전체 화면 고정, 검정 배경
+   ROOT — 전체 화면 고정, 흰색 배경
 ═══════════════════════════════════════════ */
 .root {
   position: fixed;
   inset: 0;
-  background: #000;
+  background: #fff;
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
@@ -47,8 +47,6 @@
   left: -19.21%;
   top: -115.63%;
   height: auto;
-  /* 검정 배경에서 백색 로고로 */
-  filter: invert(1);
 }
 
 /* ═══════════════════════════════════════════
@@ -60,7 +58,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #000;
+  background: #fff;
   cursor: default;
   padding-top: env(safe-area-inset-top, 20px);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 49px);
@@ -89,11 +87,13 @@
   gap: 1rem;
 }
 
-/* ── 프로그레스 바 트랙 ── */
+/* ── 프로그레스 바: 네모난 박스 ── */
 .progressTrack {
   width: 100%;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.12);
+  height: 18px;
+  background: #fff;
+  border: 1px solid #000;
+  box-sizing: border-box;
   overflow: hidden;
 }
 
@@ -101,7 +101,7 @@
 .progressFill {
   height: 100%;
   width: 0%;
-  background: #ffffff;
+  background: #000;
   animation: progressAnim 3s linear forwards;
 }
 
@@ -115,7 +115,7 @@
   text-align: center;
   font-size: 0.6875rem;
   letter-spacing: 0.3em;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(0, 0, 0, 0.45);
   text-transform: uppercase;
   animation: fadeIn 0.5s ease-out forwards;
 }
@@ -144,20 +144,20 @@
    로고·인풋은 z-index 10 — 영향 없음
 ───────────────────────────────────────── */
 
-/* Layer 0: 기본 어두운 배경 + 고속 밝기 플리커 */
+/* Layer 0: 흰 배경 + 고속 밝기 플리커 */
 .tvBg {
   position: absolute;
   inset: 0;
-  background: #050505;
+  background: #fafafa;
   animation: tvBgFlicker 0.033s steps(3) infinite;
   z-index: 0;
 }
 
 @keyframes tvBgFlicker {
-  0%   { background-color: #030303; }
-  33%  { background-color: #080808; }
-  66%  { background-color: #020202; }
-  100% { background-color: #060606; }
+  0%   { background-color: #ffffff; }
+  33%  { background-color: #f3f3f3; }
+  66%  { background-color: #fefefe; }
+  100% { background-color: #f8f8f8; }
 }
 
 /* Layer 1: 수평 스캔라인 (정적) */
@@ -166,16 +166,16 @@
   inset: 0;
   background: repeating-linear-gradient(
     0deg,
-    transparent            0px,
-    transparent            1px,
-    rgba(0, 0, 0, 0.48)   1px,
-    rgba(0, 0, 0, 0.48)   2px
+    transparent           0px,
+    transparent           1px,
+    rgba(0, 0, 0, 0.28)  1px,
+    rgba(0, 0, 0, 0.28)  2px
   );
   pointer-events: none;
   z-index: 1;
 }
 
-/* Layer 2: 롤링 밝은 밴드 (빠른 속도, 주요 TV 간섭 효과) */
+/* Layer 2: 롤링 어두운 밴드 (주요 TV 간섭 효과) */
 .tvBand1 {
   position: absolute;
   left: 0;
@@ -183,11 +183,11 @@
   height: 22%;
   background: linear-gradient(
     to bottom,
-    transparent                    0%,
-    rgba(200, 200, 200, 0.07)     25%,
-    rgba(220, 220, 220, 0.11)     50%,
-    rgba(200, 200, 200, 0.07)     75%,
-    transparent                   100%
+    transparent                0%,
+    rgba(0, 0, 0, 0.06)      25%,
+    rgba(0, 0, 0, 0.11)      50%,
+    rgba(0, 0, 0, 0.06)      75%,
+    transparent               100%
   );
   animation: tvBandRoll1 0.75s linear infinite;
   pointer-events: none;
@@ -207,11 +207,11 @@
   height: 16%;
   background: linear-gradient(
     to bottom,
-    transparent                   0%,
-    rgba(180, 180, 180, 0.05)    30%,
-    rgba(200, 200, 200, 0.09)    50%,
-    rgba(180, 180, 180, 0.05)    70%,
-    transparent                  100%
+    transparent               0%,
+    rgba(0, 0, 0, 0.04)     30%,
+    rgba(0, 0, 0, 0.08)     50%,
+    rgba(0, 0, 0, 0.04)     70%,
+    transparent              100%
   );
   animation: tvBandRoll2 0.95s linear infinite;
   animation-delay: -0.4s;
@@ -263,7 +263,7 @@
 .errorText {
   margin-top: 0.375rem;
   font-size: 0.75rem;
-  color: #f87171;
+  color: #dc2626;
 }
 
 /* ═══════════════════════════════════════════
@@ -272,7 +272,7 @@
 .compassScreen {
   position: fixed;
   inset: 0;
-  background: #000;
+  background: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -289,7 +289,7 @@
 .arrivalFlicker {
   position: fixed;
   inset: 0;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(0, 0, 0, 0.88);
   z-index: 50;
   pointer-events: none;
   animation: arrivalAnim 0.55s steps(1) infinite;
@@ -322,7 +322,7 @@
   padding-bottom: 0.75rem;
 }
 
-/* ── 남은거리 프로그레스 바 ── */
+/* ── 남은거리 프로그레스 바: 네모난 박스 ── */
 .distBar {
   width: 100%;
   max-width: 380px;
@@ -335,7 +335,7 @@
 
 .distValue {
   font-size: 0.8125rem;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(0, 0, 0, 0.55);
   font-variant-numeric: tabular-nums;
   min-width: 3.5rem;
   flex-shrink: 0;
@@ -344,14 +344,16 @@
 
 .distTrack {
   flex: 1;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.12);
+  height: 16px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
   overflow: hidden;
 }
 
 .distFill {
   height: 100%;
-  background: #fff;
+  background: #000;
   transition: width 0.6s ease-out;
 }
 
@@ -375,18 +377,18 @@
 
 /* ── 사용자 헤딩 원: 방향 일치 시 번쩍임 ── */
 @keyframes alignedFlash {
-  0%   { stroke: rgba(255, 255, 255, 0.7);  stroke-width: 2; }
-  20%  { stroke: #ffffff;                   stroke-width: 4; }
-  40%  { stroke: rgba(255, 255, 255, 0.4);  stroke-width: 2; }
-  60%  { stroke: #ffffff;                   stroke-width: 4; }
-  80%  { stroke: rgba(255, 255, 255, 0.6);  stroke-width: 2; }
-  100% { stroke: rgba(255, 255, 255, 0.7);  stroke-width: 2; }
+  0%   { stroke: rgba(0, 0, 0, 0.6);  stroke-width: 2; }
+  20%  { stroke: #000000;             stroke-width: 4; }
+  40%  { stroke: rgba(0, 0, 0, 0.3);  stroke-width: 2; }
+  60%  { stroke: #000000;             stroke-width: 4; }
+  80%  { stroke: rgba(0, 0, 0, 0.5);  stroke-width: 2; }
+  100% { stroke: rgba(0, 0, 0, 0.6);  stroke-width: 2; }
 }
 
 .userCircleAligned {
   animation: alignedFlash 0.22s ease-in-out infinite;
-  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 1))
-          drop-shadow(0 0 14px rgba(255, 255, 255, 0.6));
+  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.7))
+          drop-shadow(0 0 12px rgba(0, 0, 0, 0.35));
 }
 
 /* ── 하단 정보 섹션 ── */
@@ -413,14 +415,14 @@
 
 .infoLabel {
   font-size: 0.5625rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(0, 0, 0, 0.35);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 
 .infoVal {
   font-size: 1.375rem;
-  color: #fff;
+  color: #000;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.03em;
 }
@@ -430,7 +432,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
   padding-top: 0.5rem;
 }
 
@@ -442,7 +444,7 @@
 
 .coordVal {
   font-size: 0.6875rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(0, 0, 0, 0.5);
   font-family: monospace;
   letter-spacing: 0.02em;
 }
@@ -451,7 +453,7 @@
 .geoError {
   margin-top: 0.5rem;
   font-size: 0.6875rem;
-  color: #f87171;
+  color: #dc2626;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -462,8 +464,8 @@
   flex-shrink: 0;
   font-size: 0.6875rem;
   background: none;
-  border: 1px solid #f87171;
-  color: #f87171;
+  border: 1px solid #dc2626;
+  color: #dc2626;
   padding: 0.15rem 0.4rem;
   cursor: pointer;
 }

@@ -344,17 +344,17 @@ export default function CompassPage() {
               <svg width="100%" height="100%" viewBox="-30 -30 360 360">
                 {/* 외부 링 */}
                 <circle cx="150" cy="150" r="140"
-                  fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1.5" />
+                  fill="none" stroke="rgba(0,0,0,0.18)" strokeWidth="1.5" />
                 {/* 12시 방향 하이라이트 반사광 */}
                 <circle cx="150" cy="150" r="140"
-                  fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.2"
+                  fill="none" stroke="rgba(0,0,0,0.5)" strokeWidth="1.2"
                   strokeDasharray="90 785" strokeDashoffset="280" />
 
                 {/* 목표 방향 마커 */}
                 {bearing !== null && (
                   <circle cx={tgtCircleX} cy={tgtCircleY} r="18"
-                    fill="rgba(255,255,255,0.08)"
-                    stroke="rgba(255,255,255,0.65)"
+                    fill="rgba(0,0,0,0.06)"
+                    stroke="rgba(0,0,0,0.6)"
                     strokeWidth="1.5" />
                 )}
 
@@ -364,7 +364,7 @@ export default function CompassPage() {
                   cy={userCircleY}
                   r="18"
                   fill="none"
-                  stroke="white"
+                  stroke="black"
                   strokeWidth="2"
                   className={isAligned ? styles.userCircleAligned : ''}
                 />
