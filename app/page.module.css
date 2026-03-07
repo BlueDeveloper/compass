@@ -169,7 +169,7 @@
 
 @keyframes screenBlink {
   0%   { opacity: 0;    }
-  50%  { opacity: 0.75; }
+  50%  { opacity: 0.25; }
   100% { opacity: 0;    }
 }
 
