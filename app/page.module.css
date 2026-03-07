@@ -78,7 +78,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .introBottom {
@@ -101,7 +101,8 @@
 /* ── JS state로 너비 제어 (인라인 style로 동기화) ── */
 .progressFill {
   height: 100%;
-  background: #000;
+  background: #666666;
+  color: #efefef;
 }
 
 /* ── 바 내부 텍스트 (항상 가독 — mix-blend-mode) ── */
@@ -132,8 +133,10 @@
   position: fixed;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 1.25rem;
   overflow: hidden;
   padding-top: env(safe-area-inset-top, 20px);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 49px);
@@ -224,23 +227,23 @@
   100% { top: 100%; }
 }
 
-/* ── 검색 콘텐츠 (플리커 영향 없음) ── */
-.searchContent {
+/* ── 로고 레이어 — TV 간섭 효과에 노출됨 (z-index 없음) ── */
+.searchLogoLayer {
+  width: 87%;
+  max-width: 380px;
+}
+
+/* ── 검색 인풋 레이어 — 플리커 영향 없음 (z-index 10) ── */
+.searchInputLayer {
   position: relative;
   z-index: 10;
   width: 87%;
   max-width: 380px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 1.25rem;
   animation: fadeIn 0.4s ease-out 0.15s both;
 }
 
 .inputBox {
   width: 100%;
-  background: #ffffff;
-  padding: 0.5rem;
   box-sizing: border-box;
 }
 

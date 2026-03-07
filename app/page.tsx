@@ -297,11 +297,15 @@ export default function CompassPage() {
           <div className={styles.tvBand1}     aria-hidden="true" />
           <div className={styles.tvBand2}     aria-hidden="true" />
 
-          {/* 콘텐츠 (z-index 10 — 플리커 영향 없음) */}
-          <div className={styles.searchContent}>
+          {/* 로고 — TV 간섭 효과에 노출됨 */}
+          <div className={styles.searchLogoLayer}>
             <div className={styles.logoBox}>
               <img src="/MPa_LOGO.png" alt="MPa Logo" className={styles.logoImg} />
             </div>
+          </div>
+
+          {/* 검색 인풋 — 플리커 영향 없음 (z-index 10) */}
+          <div className={styles.searchInputLayer}>
             <div className={styles.inputBox}>
               <input
                 type="text"
