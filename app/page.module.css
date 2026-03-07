@@ -162,7 +162,7 @@
   inset: 0;
   background: #000;
   opacity: 0;
-  animation: screenBlink 2s steps(1) infinite;
+  animation: screenBlink 0.5s steps(1) infinite;
   pointer-events: none;
   z-index: 0;
 }
