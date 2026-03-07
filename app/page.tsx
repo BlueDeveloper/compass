@@ -78,7 +78,7 @@ export default function CompassPage() {
     setTimeout(() => {
       setPhase('search');
       setIsFading(false);
-    }, 800);
+    }, 150);
   }, [tapReady]);
 
   /* ═══════════════════════════════════════════
@@ -302,10 +302,8 @@ export default function CompassPage() {
       {phase === 'search' && (
         <div className={styles.searchScreen}>
 
-          {/* TV 간섭 배경 레이어들 */}
-          <div className={styles.tvBg}    aria-hidden="true" />
-          <div className={styles.tvBand1} aria-hidden="true" />
-          <div className={styles.tvBand2} aria-hidden="true" />
+          {/* 화면 깜박임 레이어 */}
+          <div className={styles.tvBg} aria-hidden="true" />
 
           {/* 로고 — TV 간섭 효과에 노출됨 */}
           <div className={styles.searchLogoLayer}>
