@@ -78,7 +78,7 @@ export default function CompassPage() {
     setTimeout(() => {
       setPhase('search');
       setIsFading(false);
-    }, 150);
+    }, 60);
   }, [tapReady]);
 
   /* ═══════════════════════════════════════════
