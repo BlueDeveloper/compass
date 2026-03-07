@@ -115,6 +115,7 @@
 
 /* ── JS state로 너비 제어 (인라인 style로 동기화) ── */
 .progressFill {
+  text-align: left;
   height: 100%;
   background: #efefef;
   color: #666666;
@@ -126,7 +127,8 @@
   inset: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-left: 0.5rem;
   font-size: 0.625rem;
   letter-spacing: 0.25em;
   text-transform: uppercase;
