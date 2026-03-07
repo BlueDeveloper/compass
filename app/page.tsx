@@ -19,8 +19,9 @@ export default function CompassPage() {
 
   /* ── Phase ── */
   const [phase,    setPhase]    = useState<'intro' | 'search' | 'compass'>('intro');
-  const [tapReady, setTapReady] = useState(false);   // "tap to start" 표시
-  const [isFading, setIsFading] = useState(false);   // 블랙 페이드 오버레이
+  const [tapReady,      setTapReady]      = useState(false);   // "tap to start" 표시
+  const [isFading,      setIsFading]      = useState(false);   // 블랙 페이드 오버레이 (페이드아웃)
+  const [compassFadeIn, setCompassFadeIn] = useState(false);   // 나침반 진입 시 페이드인
   const [introProgress, setIntroProgress] = useState(0); // 0~100
 
   /* ── Search ── */
@@ -222,10 +223,18 @@ export default function CompassPage() {
     if (isNaN(lat) || isNaN(lon)) { setFormError('올바른 좌표를 입력하세요'); return; }
     if (lat < -90  || lat > 90)   { setFormError('위도: -90 ~ +90'); return; }
     if (lon < -180 || lon > 180)  { setFormError('경도: -180 ~ +180'); return; }
-    requestPermission();
-    setTargetLat(lat);
-    setTargetLon(lon);
-    setPhase('compass');
+
+    // 페이드아웃 → 화면 전환 → 페이드인
+    setIsFading(true);
+    setTimeout(() => {
+      requestPermission();
+      setTargetLat(lat);
+      setTargetLon(lon);
+      setPhase('compass');
+      setIsFading(false);
+      setCompassFadeIn(true);
+      setTimeout(() => setCompassFadeIn(false), 700);
+    }, 600);
   };
 
   /* ═══════════════════════════════════════════
@@ -257,8 +266,10 @@ export default function CompassPage() {
   return (
     <div className={styles.root}>
 
-      {/* ── 블랙 페이드 오버레이 (intro → search 전환) ── */}
-      {isFading && <div className={styles.fadeOverlay} aria-hidden="true" />}
+      {/* ── 블랙 페이드 오버레이 (페이드아웃) ── */}
+      {isFading      && <div className={styles.fadeOverlay}   aria-hidden="true" />}
+      {/* ── 블랙 페이드 오버레이 (나침반 진입 페이드인) ── */}
+      {compassFadeIn && <div className={styles.fadeOverlayIn} aria-hidden="true" />}
 
       {/* ══════════════════════════════════════
           INTRO SCREEN
@@ -337,11 +348,11 @@ export default function CompassPage() {
             </div>
           </div>
 
-          {/* 남은거리 프로그레스 바 */}
+          {/* 남은거리 프로그레스 바 — 텍스트 박스 내부 포함 */}
           <div className={styles.distBar}>
-            <span className={styles.distValue}>{fmtDist(distance)}</span>
             <div className={styles.distTrack}>
               <div className={styles.distFill} style={{ width: `${distProgress * 100}%` }} />
+              <span className={styles.distValue}>{fmtDist(distance)}</span>
             </div>
           </div>
 
@@ -362,13 +373,7 @@ export default function CompassPage() {
                   fill="none" stroke="rgba(0,0,0,0.5)" strokeWidth="1.2"
                   strokeDasharray="90 785" strokeDashoffset="280" />
 
-                {/* 목표 방향 마커 */}
-                {bearing !== null && (
-                  <circle cx={tgtCircleX} cy={tgtCircleY} r="18"
-                    fill="rgba(0,0,0,0.06)"
-                    stroke="rgba(0,0,0,0.6)"
-                    strokeWidth="1.5" />
-                )}
+                {/* 목표 방향 마커 — 숨김 */}
 
                 {/* 사용자 헤딩 원 — 방향 일치 시 번쩍임 */}
                 <circle
