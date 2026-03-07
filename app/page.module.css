@@ -101,8 +101,8 @@
 /* ── JS state로 너비 제어 (인라인 style로 동기화) ── */
 .progressFill {
   height: 100%;
-  background: #666666;
-  color: #efefef;
+  background: #efefef;
+  color: #666666;
 }
 
 /* ── 바 내부 텍스트 (항상 가독 — mix-blend-mode) ── */
@@ -147,20 +147,21 @@
    로고·인풋은 z-index 10 — 영향 없음
 ───────────────────────────────────────── */
 
-/* Layer 0: 흰 배경 + 고속 밝기 플리커 */
+/* Layer 0: 흰↔검정 번쩍이는 플리커 */
 .tvBg {
   position: absolute;
   inset: 0;
-  background: #fafafa;
-  animation: tvBgFlicker 0.033s steps(3) infinite;
+  background: #fff;
+  /* animation: tvBgFlicker 0.12s steps(4) infinite; */  /* 임시 off */
   z-index: 0;
 }
 
 @keyframes tvBgFlicker {
   0%   { background-color: #ffffff; }
-  33%  { background-color: #f3f3f3; }
-  66%  { background-color: #fefefe; }
-  100% { background-color: #f8f8f8; }
+  25%  { background-color: #000000; }
+  50%  { background-color: #f0f0f0; }
+  75%  { background-color: #000000; }
+  100% { background-color: #ffffff; }
 }
 
 /* Layer 1: 수평 스캔라인 (정적) */
@@ -192,7 +193,7 @@
     rgba(0, 0, 0, 0.06)      75%,
     transparent               100%
   );
-  animation: tvBandRoll1 0.75s linear infinite;
+  /* animation: tvBandRoll1 0.75s linear infinite; */  /* 임시 off */
   pointer-events: none;
   z-index: 2;
 }
@@ -216,8 +217,8 @@
     rgba(0, 0, 0, 0.04)     70%,
     transparent              100%
   );
-  animation: tvBandRoll2 0.95s linear infinite;
-  animation-delay: -0.4s;
+  /* animation: tvBandRoll2 0.95s linear infinite; */  /* 임시 off */
+  /* animation-delay: -0.4s; */
   pointer-events: none;
   z-index: 2;
 }
@@ -242,20 +243,27 @@
   animation: fadeIn 0.4s ease-out 0.15s both;
 }
 
+/* progressTrack 기준 — 높이·테두리 동일 */
 .inputBox {
   width: 100%;
+  height: 26px;
+  border: 1px solid #000;
   box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
 }
 
+/* progressFill 기준 — 배경·텍스트 색상 동일 */
 .coordInput {
   width: 100%;
+  height: 100%;
   box-sizing: border-box;
-  padding: 0.625rem 0.875rem;
-  background: #666666;         /* 검색창 내부 컬러 */
-  color: #efefef;              /* 검색창 텍스트 컬러 */
+  padding: 0 0.875rem;
+  background: #efefef;
+  color: #666666;
   border: none;
   font-size: 1rem;             /* ≥16px: iOS Safari 자동줌 방지 */
-  line-height: 1.5;
+  line-height: 26px;
   outline: none;
   -webkit-appearance: none;
   border-radius: 0;
@@ -263,7 +271,7 @@
 }
 
 .coordInput::placeholder {
-  color: rgba(239, 239, 239, 0.35);
+  color: rgba(102, 102, 102, 0.45);
 }
 
 .errorText {
