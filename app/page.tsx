@@ -289,7 +289,7 @@ export default function CompassPage() {
             <div className={styles.progressTrack}>
               <div className={styles.progressFill} style={{ width: `${introProgress}%` }} />
               <span className={styles.progressText}>
-                {tapReady ? 'tap to start' : `Loading ${introProgress}%`}
+                {tapReady ? 'Tap to start' : `Loading ${introProgress}%`}
               </span>
             </div>
           </div>

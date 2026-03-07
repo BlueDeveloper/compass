@@ -130,8 +130,7 @@
   justify-content: flex-start;
   padding-left: 0.5rem;
   font-size: 0.625rem;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: #fff;
   mix-blend-mode: difference;   /* 채운 구간: 흰→검, 빈 구간: 흰→흰 */
   pointer-events: none;
