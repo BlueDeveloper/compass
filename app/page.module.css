@@ -167,7 +167,7 @@
   position: absolute;
   inset: 0;
   background: #fff;
-  /* animation: tvBgFlicker 0.12s steps(4) infinite; */  /* 임시 off */
+  animation: tvBgFlicker 0.12s steps(4) infinite;
   z-index: 0;
 }
 
@@ -208,7 +208,7 @@
     rgba(0, 0, 0, 0.06)      75%,
     transparent               100%
   );
-  /* animation: tvBandRoll1 0.75s linear infinite; */  /* 임시 off */
+  animation: tvBandRoll1 0.75s linear infinite;
   pointer-events: none;
   z-index: 2;
 }
@@ -232,8 +232,8 @@
     rgba(0, 0, 0, 0.04)     70%,
     transparent              100%
   );
-  /* animation: tvBandRoll2 0.95s linear infinite; */  /* 임시 off */
-  /* animation-delay: -0.4s; */
+  animation: tvBandRoll2 0.95s linear infinite;
+  animation-delay: -0.4s;
   pointer-events: none;
   z-index: 2;
 }
