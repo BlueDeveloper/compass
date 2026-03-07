@@ -169,12 +169,7 @@
 
 @keyframes screenBlink {
   0%   { opacity: 0;    }
-  85%  { opacity: 0;    }
-  86%  { opacity: 0.75; }
-  87%  { opacity: 0;    }
-  93%  { opacity: 0;    }
-  94%  { opacity: 0.5;  }
-  95%  { opacity: 0;    }
+  50%  { opacity: 0.75; }
   100% { opacity: 0;    }
 }
 
