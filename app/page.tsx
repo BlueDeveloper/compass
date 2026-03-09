@@ -257,6 +257,11 @@ export default function CompassPage() {
   const fmtDist = (d: number | null) =>
     d === null ? '---' : `${d.toFixed(2)}km`;
 
+  const turnDeg = bearing !== null && heading !== null
+    ? Math.round(Math.abs(angDiff(bearing, heading))) : null;
+  const turnDir = bearing !== null && heading !== null
+    ? (angDiff(bearing, heading) > 0 ? 'right' : 'left') : null;
+
   /* ═══════════════════════════════════════════
      RENDER
   ═══════════════════════════════════════════ */
@@ -378,6 +383,15 @@ export default function CompassPage() {
                 />
               </svg>
             </div>
+          </div>
+
+          {/* 방향 안내 문구 */}
+          <div className={styles.directionGuide}>
+            {turnDeg !== null && (
+              isAligned
+                ? 'Direction to destination. Go straight.'
+                : `Turn ${turnDeg} degrees to the ${turnDir}...`
+            )}
           </div>
 
           {/* 하단 방위각 + 좌표 정보 */}
