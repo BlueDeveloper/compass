@@ -263,7 +263,7 @@ export default function CompassPage() {
     : 0;
 
   const fmtDist = (d: number | null) =>
-    d === null ? '---' : `${d.toFixed(2)}km`;
+    d === null ? '---' : isArrived ? '0.00km' : `${d.toFixed(2)}km`;
 
   const turnDeg = bearing !== null && heading !== null
     ? Math.round(Math.abs(angDiff(bearing, heading))) : null;
@@ -438,6 +438,11 @@ export default function CompassPage() {
               </div>
             )}
           </div>
+
+          {/* 테스트 버튼 */}
+          <button className={styles.testBtn} onClick={() => setArrivalDark(v => !v)}>
+            TEST
+          </button>
 
         </div>
       )}

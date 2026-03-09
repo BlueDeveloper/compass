@@ -252,7 +252,7 @@
   background: #000;
   z-index: 5;
   pointer-events: none;
-  animation: fadeIn 1.2s ease-out forwards;
+  animation: fadeIn 2.5s ease-out forwards;
 }
 
 /* ── 나침반 숨김 (공간 유지) ── */
@@ -454,6 +454,25 @@
   color: rgba(0, 0, 0, 0.5);
   font-family: monospace;
   letter-spacing: 0.02em;
+}
+
+/* ── 테스트 버튼 ── */
+.testBtn {
+  position: relative;
+  z-index: 20;
+  margin-top: 0.75rem;
+  font-size: 0.5rem;
+  background: none;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  color: rgba(0, 0, 0, 0.3);
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+}
+
+.arrivalDarkMode .testBtn {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.3);
 }
 
 /* ── 위치 오류 ── */
