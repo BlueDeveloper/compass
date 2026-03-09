@@ -397,7 +397,7 @@ export default function CompassPage() {
           </div>
 
           {/* 방향 안내 문구 */}
-          <div className={styles.directionGuide}>
+          <div className={`${styles.directionGuide} ${isArrived ? styles.arrivalText : ''}`}>
             {turnDeg !== null && (
               isArrived
                 ? 'Arrival.'
