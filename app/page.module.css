@@ -163,7 +163,7 @@
 
 @keyframes screenBlink {
   0%   { opacity: 0; }
-  50%  { opacity: 1; }
+  50%  { opacity: 0.7; }
   100% { opacity: 0; }
 }
 
@@ -184,8 +184,10 @@
   100% { opacity: 0;    }
 }
 
-/* ── 로고 레이어 — TV 간섭 효과에 노출됨 (z-index 없음) ── */
+/* ── 로고 레이어 — 플리커 영향 없음 (z-index 10) ── */
 .searchLogoLayer {
+  position: relative;
+  z-index: 10;
   width: 92%;
   max-width: 420px;
 }
