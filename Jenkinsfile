@@ -16,27 +16,42 @@ pipeline {
 
     stage('Build') {
       steps {
-        // node_modules: package-lock.json 기준 캐시
-        // .next/cache: Next.js 증분 빌드 캐시
-        cache(maxCacheSize: 512, caches: [
-          arbitraryFileCache(
-            path: 'node_modules',
-            cacheValidityDecidingFile: 'package-lock.json'
-          ),
-          arbitraryFileCache(
-            path: '.next/cache'
-          )
-        ]) {
-          sh '''
-            set -euo pipefail
+        sh '''
+          set -euo pipefail
 
-            # 의존성 설치 — 캐시 히트 시 네트워크 생략
+          CACHE_DIR="/var/lib/jenkins/.compass-cache"
+          LOCK_HASH=$(sha256sum package-lock.json | awk '{print $1}')
+          NM_CACHE="$CACHE_DIR/node_modules-$LOCK_HASH"
+
+          # node_modules: package-lock.json 해시 기준 캐시 복원
+          if [ -d "$NM_CACHE" ]; then
+            echo "[cache] node_modules hit — restoring"
+            cp -r "$NM_CACHE" node_modules
+          else
+            echo "[cache] node_modules miss — installing"
             npm ci --legacy-peer-deps --prefer-offline
+            mkdir -p "$CACHE_DIR"
+            cp -r node_modules "$NM_CACHE"
+            # 오래된 캐시 정리 (최신 3개만 유지)
+            ls -dt "$CACHE_DIR"/node_modules-* 2>/dev/null | tail -n +4 | xargs rm -rf || true
+          fi
 
-            # Next.js static build
-            npm run build
-          '''
-        }
+          # Next.js 빌드 캐시 복원 (.next/cache 워크스페이스 유지)
+          NEXT_CACHE="$CACHE_DIR/next-cache"
+          if [ -d "$NEXT_CACHE" ] && [ ! -d ".next/cache" ]; then
+            mkdir -p .next
+            cp -r "$NEXT_CACHE" .next/cache
+          fi
+
+          # Next.js static build
+          npm run build
+
+          # .next/cache 저장
+          if [ -d ".next/cache" ]; then
+            rm -rf "$NEXT_CACHE"
+            cp -r .next/cache "$NEXT_CACHE"
+          fi
+        '''
       }
     }
 
