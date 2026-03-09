@@ -224,17 +224,10 @@ export default function CompassPage() {
     if (lat < -90  || lat > 90)   { setFormError('위도: -90 ~ +90'); return; }
     if (lon < -180 || lon > 180)  { setFormError('경도: -180 ~ +180'); return; }
 
-    // 페이드아웃 → 화면 전환 → 페이드인
-    setIsFading(true);
-    setTimeout(() => {
-      requestPermission();
-      setTargetLat(lat);
-      setTargetLon(lon);
-      setPhase('compass');
-      setIsFading(false);
-      setCompassFadeIn(true);
-      setTimeout(() => setCompassFadeIn(false), 700);
-    }, 600);
+    requestPermission();
+    setTargetLat(lat);
+    setTargetLon(lon);
+    setPhase('compass');
   };
 
   /* ═══════════════════════════════════════════
