@@ -425,7 +425,7 @@ export default function CompassPage() {
                 ? 'Arrival.'
                 : isAligned
                   ? 'Direction to destination. Go straight.'
-                  : `Turn ${turnDir}  ${turnDeg}°`
+                  : `Turn ${turnDeg} degrees to the ${turnDir}...`
             )}
           </div>
 
@@ -433,26 +433,30 @@ export default function CompassPage() {
           <div className={styles.infoSection}>
             <div className={styles.infoGroup}>
               <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Destination direction:</span>
-                <span className={styles.infoVal}>{bearing !== null ? `${bearing.toFixed(0)}°` : '--'}</span>
+                <span className={styles.infoLabel}>Current Tilt:</span>
+                <span className={styles.infoVal}>{Math.round(tiltBeta)}°</span>
               </div>
               <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Current direction:</span>
                 <span className={styles.infoVal}>{heading !== null ? `${heading.toFixed(0)}°` : '--'}</span>
               </div>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Destination direction:</span>
+                <span className={styles.infoVal}>{bearing !== null ? `${bearing.toFixed(0)}°` : '--'}</span>
+              </div>
             </div>
 
             <div className={styles.infoGroup}>
-              <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Destination location:</span>
-                <span className={styles.infoVal}>{targetLat.toFixed(5)},&nbsp;{targetLon.toFixed(5)}</span>
-              </div>
               <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Current location:</span>
                 <span className={styles.infoVal}>
                   {userLat !== null ? userLat.toFixed(5) : '--'},&nbsp;
                   {userLon !== null ? userLon.toFixed(5) : '--'}
                 </span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Destination location:</span>
+                <span className={styles.infoVal}>{targetLat.toFixed(5)},&nbsp;{targetLon.toFixed(5)}</span>
               </div>
             </div>
 
