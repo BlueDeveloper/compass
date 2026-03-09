@@ -394,27 +394,27 @@ export default function CompassPage() {
             )}
           </div>
 
-          {/* 하단 방위각 + 좌표 정보 */}
+          {/* 하단 정보 */}
           <div className={styles.infoSection}>
-            <div className={styles.infoRow}>
-              <div className={styles.infoItem}>
-                <span className={styles.infoLabel}>목적지 방위각</span>
+            <div className={styles.infoGroup}>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Destination direction:</span>
                 <span className={styles.infoVal}>{bearing !== null ? `${bearing.toFixed(0)}°` : '--'}</span>
               </div>
-              <div className={styles.infoItem}>
-                <span className={styles.infoLabel}>현재 방향</span>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Current direction:</span>
                 <span className={styles.infoVal}>{heading !== null ? `${heading.toFixed(0)}°` : '--'}</span>
               </div>
             </div>
 
-            <div className={styles.coordsSection}>
-              <div className={styles.coordRow}>
-                <span className={styles.infoLabel}>목적지</span>
-                <span className={styles.coordVal}>{targetLat.toFixed(5)},&nbsp;{targetLon.toFixed(5)}</span>
+            <div className={styles.infoGroup}>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Destination location:</span>
+                <span className={styles.infoVal}>{targetLat.toFixed(5)},&nbsp;{targetLon.toFixed(5)}</span>
               </div>
-              <div className={styles.coordRow}>
-                <span className={styles.infoLabel}>현재 위치</span>
-                <span className={styles.coordVal}>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Current location:</span>
+                <span className={styles.infoVal}>
                   {userLat !== null ? userLat.toFixed(5) : '--'},&nbsp;
                   {userLon !== null ? userLon.toFixed(5) : '--'}
                 </span>
