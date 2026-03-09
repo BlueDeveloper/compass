@@ -365,27 +365,13 @@ export default function CompassPage() {
                 {/* 외부 링 */}
                 <circle cx="150" cy="150" r="140"
                   fill="none" stroke="rgba(0,0,0,0.18)" strokeWidth="1.5" />
-                {/* 12시 방향 하이라이트 반사광 */}
-                <circle cx="150" cy="150" r="140"
-                  fill="none" stroke="rgba(0,0,0,0.5)" strokeWidth="1.2"
-                  strokeDasharray="90 785" strokeDashoffset="280" />
 
-                {/* 목표 방향 마커 */}
-                <circle
-                  cx={tgtCircleX}
-                  cy={tgtCircleY}
-                  r="18"
-                  fill="none"
-                  stroke="black"
-                  strokeWidth="2"
-                />
-
-                {/* 사용자 헤딩 원 — 방향 일치 시 번쩍임 */}
+                {/* 사용자 헤딩 원 */}
                 <circle
                   cx={userCircleX}
                   cy={userCircleY}
                   r="18"
-                  fill="none"
+                  fill="black"
                   stroke="black"
                   strokeWidth="2"
                   className={isAligned ? styles.userCircleAligned : ''}
