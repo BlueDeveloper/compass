@@ -18,7 +18,7 @@ const FILL_MAX_KM = 1;      // 1km 이내부터 distance bar 채우기 시작
 export default function CompassPage() {
 
   /* ── Phase ── */
-  const [phase,    setPhase]    = useState<'intro' | 'search' | 'compass'>('intro');
+  const [phase,    setPhase]    = useState<'intro' | 'search' | 'compass'>('compass'); // 테스트: 나침반 직진입
   const [tapReady,      setTapReady]      = useState(false);   // "tap to start" 표시
   const [isFading,      setIsFading]      = useState(false);   // 블랙 페이드 오버레이 (페이드아웃)
   const [compassFadeIn, setCompassFadeIn] = useState(false);   // 나침반 진입 시 페이드인
@@ -115,6 +115,11 @@ export default function CompassPage() {
       setPermissionGranted(true);
     }
   }, []);
+
+  /* compass 진입 시 권한 요청 */
+  useEffect(() => {
+    if (phase === 'compass') requestPermission();
+  }, [phase, requestPermission]);
 
   /* ═══════════════════════════════════════════
      HEADING SENSOR
@@ -224,7 +229,6 @@ export default function CompassPage() {
     if (lat < -90  || lat > 90)   { setFormError('위도: -90 ~ +90'); return; }
     if (lon < -180 || lon > 180)  { setFormError('경도: -180 ~ +180'); return; }
 
-    requestPermission();
     setTargetLat(lat);
     setTargetLon(lon);
     setPhase('compass');
@@ -251,7 +255,7 @@ export default function CompassPage() {
     : 0;
 
   const fmtDist = (d: number | null) =>
-    d === null ? '---' : d < 1 ? `${(d * 1000).toFixed(0)}m` : `${d.toFixed(2)}km`;
+    d === null ? '---' : `${d.toFixed(2)}km`;
 
   /* ═══════════════════════════════════════════
      RENDER
@@ -338,11 +342,14 @@ export default function CompassPage() {
             </div>
           </div>
 
-          {/* 남은거리 프로그레스 바 — 텍스트 박스 내부 포함 */}
+          {/* 남은거리 프로그레스 바 */}
           <div className={styles.distBar}>
             <div className={styles.distTrack}>
               <div className={styles.distFill} style={{ width: `${distProgress * 100}%` }} />
-              <span className={styles.distValue}>{fmtDist(distance)}</span>
+              <div className={styles.distTextRow}>
+                <span>Distance to destination</span>
+                <span>{fmtDist(distance)}</span>
+              </div>
             </div>
           </div>
 
