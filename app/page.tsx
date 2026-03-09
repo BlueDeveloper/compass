@@ -293,7 +293,7 @@ export default function CompassPage() {
           <div className={styles.introContent}>
             {/* 로고 */}
             <div className={styles.logoBox}>
-              <img src="/MPa_LOGO.png" alt="MPa Logo" className={styles.logoImg} />
+              <img src="/MPa_LOGO.svg" alt="MPa Logo" className={styles.logoImg} />
             </div>
 
             {/* 프로그레스 바 (텍스트 내부 표기) — JS state로 너비와 숫자 동기화 */}
@@ -319,7 +319,7 @@ export default function CompassPage() {
           {/* 로고 — TV 간섭 효과에 노출됨 */}
           <div className={styles.searchLogoLayer}>
             <div className={styles.logoBox}>
-              <img src="/MPa_LOGO.png" alt="MPa Logo" className={styles.logoImg} />
+              <img src="/MPa_LOGO.svg" alt="MPa Logo" className={styles.logoImg} />
             </div>
           </div>
 
@@ -355,7 +355,7 @@ export default function CompassPage() {
           {/* 최상단 로고 */}
           <div className={styles.compassLogoBox}>
             <div className={styles.logoBox}>
-              <img src="/MPa_LOGO.png" alt="MPa Logo" className={styles.logoImg} />
+              <img src="/MPa_LOGO.svg" alt="MPa Logo" className={styles.logoImg} />
             </div>
           </div>
 

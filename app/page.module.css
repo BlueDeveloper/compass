@@ -40,23 +40,18 @@
 
 /* ═══════════════════════════════════════════
    LOGO (공통)
-   MPa_LOGO.png 크롭 값:
-     원본 661×321 / 콘텐츠 x=97 y=111 w=505 h=96
-     → width:130.89% / left:-19.21% / top:-115.63%
+   MPa_LOGO.svg — viewBox: 0 0 377.83 71.16
+   콘텐츠가 viewBox 전체를 채우므로 크롭 불필요
 ═══════════════════════════════════════════ */
 .logoBox {
   width: 100%;
-  overflow: hidden;
-  position: relative;
-  aspect-ratio: 505 / 96;
+  aspect-ratio: 377.83 / 71.16;
 }
 
 .logoImg {
-  position: absolute;
-  width: 130.89%;
-  left: -19.21%;
-  top: -115.63%;
+  width: 100%;
   height: auto;
+  display: block;
 }
 
 /* ═══════════════════════════════════════════
