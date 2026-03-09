@@ -334,7 +334,7 @@
 }
 
 .compassSvgWrap {
-  width: min(96vw, 480px);
+  width: min(96vw, 640px);
   aspect-ratio: 1;
   max-height: 100%;
   max-width: 100%;
