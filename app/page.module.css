@@ -409,6 +409,12 @@
   max-height: 100%;
 }
 
+/* ── 목표 원: 방향 일치 시 글로우 ── */
+.tgtCircleAligned {
+  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.8))
+          drop-shadow(0 0 14px rgba(0, 0, 0, 0.4));
+}
+
 /* ── 사용자 헤딩 원: 방향 일치 시 글로우 ── */
 .userCircleAligned {
   filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.9))

@@ -254,6 +254,11 @@ export default function CompassPage() {
   const tgtCircleX  = 150 + Math.sin(tgtAngle) * RING_R;
   const tgtCircleY  = 150 - Math.cos(tgtAngle) * RING_R;
 
+  /* 목표 원 투명도: 각도 차이 60° → 0, 0° → 1 */
+  const tgtOpacity = bearing !== null && heading !== null
+    ? Math.max(0, 1 - Math.abs(angDiff(bearing, heading)) / 60)
+    : 0;
+
   const outerTiltX  = (tiltBeta  - 90) * -0.6;
   const outerTiltY  =  tiltGamma       *  0.6;
 
@@ -381,6 +386,18 @@ export default function CompassPage() {
                 {/* 외부 링 */}
                 <circle cx="150" cy="150" r="140"
                   fill="none" stroke="#000" strokeWidth="1.7" />
+
+                {/* 목표 방향 원 — 각도 차이에 따라 투명도 변화 */}
+                <circle
+                  cx={tgtCircleX}
+                  cy={tgtCircleY}
+                  r="18"
+                  fill="none"
+                  stroke="black"
+                  strokeWidth="2"
+                  opacity={tgtOpacity}
+                  className={isAligned ? styles.tgtCircleAligned : ''}
+                />
 
                 {/* 사용자 헤딩 원 */}
                 <circle
