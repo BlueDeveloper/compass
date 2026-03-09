@@ -9,6 +9,7 @@
   user-select: none;
   -webkit-user-select: none;
   font-family: 'Helvetica Neue';
+  font-weight: 500;
 }
 
 /* ═══════════════════════════════════════════
@@ -423,7 +424,7 @@
   width: 100%;
   max-width: 420px;
   flex-shrink: 0;
-  padding: 0.9rem 0 0.4rem 0;
+  padding: 1.4rem 0 0.4rem 0;
 }
 
 /* ── 방향 안내 문구 ── */
