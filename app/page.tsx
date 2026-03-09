@@ -402,7 +402,6 @@ export default function CompassPage() {
                   r="18"
                   fill="black"
                   clipPath="url(#userClip)"
-                  className={isAligned ? styles.tgtCircleAligned : ''}
                 />
 
                 {/* 사용자 헤딩 원 — 속 빈 원 */}
