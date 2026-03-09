@@ -390,7 +390,7 @@ export default function CompassPage() {
             {turnDeg !== null && (
               isAligned
                 ? 'Direction to destination. Go straight.'
-                : `Turn ${turnDeg} degrees to the ${turnDir}...`
+                : `Turn ${turnDir}  ${turnDeg}°`
             )}
           </div>
 
