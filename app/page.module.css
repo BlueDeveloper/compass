@@ -353,7 +353,7 @@
   width: 100%;
   max-width: 420px;
   flex-shrink: 0;
-  padding-bottom: 0.625rem;
+  padding-bottom: 0.325rem;
 }
 
 .distTrack {
@@ -425,7 +425,7 @@
   max-width: 420px;
   flex-shrink: 0;
   padding: 0.4rem 0 0.4rem 0;
-  margin-top: 0.5rem;
+  margin-top: 0.8rem;
 }
 
 /* ── 방향 안내 문구 ── */
