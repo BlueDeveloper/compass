@@ -252,7 +252,7 @@
   background: #000;
   z-index: 5;
   pointer-events: none;
-  animation: fadeIn 2.5s ease-out forwards;
+  animation: fadeIn 2s ease-out forwards;
 }
 
 /* ── 나침반 숨김 (공간 유지, 딜레이 후 페이드아웃) ── */
