@@ -364,7 +364,7 @@ export default function CompassPage() {
               <svg width="100%" height="100%" viewBox="-20 -20 340 340">
                 {/* 외부 링 */}
                 <circle cx="150" cy="150" r="140"
-                  fill="none" stroke="rgba(0,0,0,0.18)" strokeWidth="1.5" />
+                  fill="none" stroke="rgba(0,0,0,0.18)" strokeWidth="4" />
 
                 {/* 사용자 헤딩 원 */}
                 <circle
