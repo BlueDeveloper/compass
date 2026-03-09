@@ -462,7 +462,7 @@
   justify-content: space-between;
   align-items: baseline;
   gap: 0.5rem;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .infoLabel {
