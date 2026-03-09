@@ -420,13 +420,7 @@ export default function CompassPage() {
 
           {/* 방향 안내 문구 */}
           <div className={`${styles.directionGuide} ${isArrived ? styles.arrivalText : ''}`}>
-            {turnDeg !== null && (
-              isArrived
-                ? 'Arrival.'
-                : isAligned
-                  ? 'Direction to destination. Go straight.'
-                  : `Turn ${turnDeg} degrees to the ${turnDir}...`
-            )}
+            Turn 127 degrees to the right...
           </div>
 
           {/* 하단 정보 */}
