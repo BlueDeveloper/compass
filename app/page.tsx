@@ -26,7 +26,7 @@ export default function CompassPage() {
   const [introProgress, setIntroProgress] = useState(0); // 0~100
 
   /* ── Search ── */
-  const [inputCoords, setInputCoords] = useState('37.2996 127.1123');
+  const [inputCoords, setInputCoords] = useState('37.2164659 127.0351454');
   const [formError,   setFormError]   = useState('');
 
   /* ── Target ── */
