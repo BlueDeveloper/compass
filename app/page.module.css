@@ -352,7 +352,6 @@
   width: 100%;
   max-width: 420px;
   flex-shrink: 0;
-  border-left: 3px solid #000;
   border-bottom: 1px dashed rgba(0, 0, 0, 0.25);
   padding: 0.4rem 0 0.4rem 0.5rem;
 }
@@ -400,7 +399,6 @@
 .infoVal {
   font-size: 0.625rem;
   color: #000;
-  font-family: monospace;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
   text-align: right;
