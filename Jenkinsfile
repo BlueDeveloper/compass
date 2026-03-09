@@ -1,11 +1,15 @@
 pipeline {
   agent any
 
+  options {
+    // 동일 브랜치 중복 빌드 방지
+    disableConcurrentBuilds()
+  }
+
   stages {
 
     stage('Checkout') {
       steps {
-        // Git 저장소 체크아웃
         checkout scm
       }
     }
@@ -15,14 +19,10 @@ pipeline {
         sh '''
           set -euo pipefail
 
-          # Node / npm 버전 확인
-          node -v
-          npm -v
+          # 의존성 설치 — package-lock 변경 없으면 캐시 재사용
+          npm ci --legacy-peer-deps --prefer-offline
 
-          # 의존성 설치 (CI 환경 안정성)
-          npm ci --legacy-peer-deps
-
-          # Next.js static build (out/ 생성)
+          # Next.js static build (.next/cache 워크스페이스 유지로 증분 빌드)
           npm run build
         '''
       }
@@ -34,34 +34,24 @@ pipeline {
           set -euo pipefail
 
           ########################################
-          # 1. 기존 배포 디렉토리 완전 제거
-          ########################################
-          sudo -n rm -rf /opt/compass-mvp
-
-          ########################################
-          # 2. 배포 디렉토리 재생성
+          # rsync — 변경 파일만 전송 (전체 삭제 불필요)
           ########################################
           sudo -n mkdir -p /opt/compass-mvp
+          sudo -n rsync -a --delete --checksum out/ /opt/compass-mvp/
 
           ########################################
-          # 3. 정적 빌드 결과물 복사
-          #    out/* → /opt/compass-mvp
+          # 퍼미션 — 배치 처리 (+) 로 프로세스 최소화
           ########################################
-          sudo -n cp -r out/* /opt/compass-mvp/
+          sudo -n find /opt/compass-mvp -type d -exec chmod 755 {} +
+          sudo -n find /opt/compass-mvp -type f -exec chmod 644 {} +
 
           ########################################
-          # 4. 퍼미션 정리
-          ########################################
-          sudo -n find /opt/compass-mvp -type d -exec chmod 755 {} \\;
-          sudo -n find /opt/compass-mvp -type f -exec chmod 644 {} \\;
-
-          ########################################
-          # 5. SELinux context 복구
+          # SELinux context 복구
           ########################################
           sudo -n restorecon -Rv /opt/compass-mvp || true
 
           ########################################
-          # 6. nginx reload
+          # nginx reload
           ########################################
           sudo -n systemctl reload nginx
         '''
@@ -72,8 +62,6 @@ pipeline {
       steps {
         sh '''
           set -euo pipefail
-
-          # 정적 배포 성공 여부 최소 검증
           test -f /opt/compass-mvp/index.html
         '''
       }
