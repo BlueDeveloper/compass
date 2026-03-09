@@ -6,8 +6,8 @@ import styles from './page.module.css';
 /* ═══════════════════════════════════════════
    CONSTANTS
 ═══════════════════════════════════════════ */
-const DEFAULT_LAT = 37.5547;
-const DEFAULT_LON = 126.9708;
+const DEFAULT_LAT = 37.2164659;
+const DEFAULT_LON = 127.0351454;
 const ARRIVAL_KM  = 0.1;    // 100m → arrival threshold
 const ALIGN_DEG   = 5;      // ±5° → aligned threshold
 const FILL_MAX_KM = 1;      // 1km 이내부터 distance bar 채우기 시작
@@ -366,8 +366,8 @@ export default function CompassPage() {
             </div>
           </div>
 
-          {/* 나침반 SVG — 암전 시 숨김 */}
-          {!arrivalDark && <div className={styles.compassArea}>
+          {/* 나침반 SVG — 암전 시 비표시 (공간 유지) */}
+          <div className={`${styles.compassArea} ${arrivalDark ? styles.compassHidden : ''}`}>
             <div
               className={styles.compassSvgWrap}
               style={{
@@ -391,7 +391,7 @@ export default function CompassPage() {
                 />
               </svg>
             </div>
-          </div>}
+          </div>
 
           {/* 방향 안내 문구 */}
           <div className={styles.directionGuide}>
