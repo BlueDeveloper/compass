@@ -259,8 +259,8 @@ export default function CompassPage() {
   const tgtCircleY  = 150 - Math.cos(tgtAngle) * RING_R;
 
 
-  const outerTiltX  = (tiltBeta  - 90) * -0.6;
-  const outerTiltY  =  tiltGamma       *  0.6;
+  const outerTiltX  = (tiltBeta  - 90) * -1.2;
+  const outerTiltY  =  tiltGamma       *  1.2;
 
   /* Distance progress: 0(멀리) → 1(도착) */
   const distProgress = distance !== null
@@ -380,7 +380,7 @@ export default function CompassPage() {
             <div
               className={styles.compassSvgWrap}
               style={{
-                transform: `perspective(600px) rotateX(${outerTiltX}deg) rotateY(${outerTiltY}deg)`,
+                transform: `perspective(400px) rotateX(${outerTiltX}deg) rotateY(${outerTiltY}deg)`,
               }}
             >
               <svg width="100%" height="100%" viewBox="-20 -20 340 340">
