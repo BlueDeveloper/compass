@@ -159,7 +159,7 @@
 .tvBg {
   position: absolute;
   inset: 0;
-  background: #000;
+  background: #f0f0f0;
   opacity: 0;
   animation: screenBlink 0.15s steps(1) infinite;
   pointer-events: none;
@@ -176,7 +176,7 @@
 .compassFlicker {
   position: absolute;
   inset: 0;
-  background: #000;
+  background: #f0f0f0;
   opacity: 0;
   animation: compassBlink 0.2s steps(1) infinite;
   pointer-events: none;
