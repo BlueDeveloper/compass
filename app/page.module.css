@@ -124,7 +124,7 @@
   align-items: center;
   justify-content: flex-start;
   padding-left: 0.5rem;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   letter-spacing: 0.02em;
   color: #fff;
   mix-blend-mode: difference;   /* 채운 구간: 흰→검, 빈 구간: 흰→흰 */
@@ -206,7 +206,7 @@
   background: #efefef;
   color: #666666;
   border: none;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   line-height: 34px;
   outline: none;
   -webkit-appearance: none;
@@ -314,7 +314,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 0.5rem;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   color: #fff;
   mix-blend-mode: difference;
   font-variant-numeric: tabular-nums;
