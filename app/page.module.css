@@ -206,12 +206,13 @@
   background: #efefef;
   color: #666666;
   border: none;
-  font-size: 1rem;             /* ≥16px: iOS Safari 자동줌 방지 */
+  font-size: 0.625rem;
   line-height: 26px;
   outline: none;
   -webkit-appearance: none;
   border-radius: 0;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
+  text-align: left;
 }
 
 .coordInput::placeholder {

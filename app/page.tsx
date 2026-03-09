@@ -302,8 +302,8 @@ export default function CompassPage() {
       {phase === 'search' && (
         <div className={styles.searchScreen}>
 
-          {/* 화면 깜박임 레이어 */}
-          <div className={styles.tvBg} aria-hidden="true" />
+          {/* 화면 깜박임 레이어 — 임시 비활성화 */}
+          {/* <div className={styles.tvBg} aria-hidden="true" /> */}
 
           {/* 로고 — TV 간섭 효과에 노출됨 */}
           <div className={styles.searchLogoLayer}>
