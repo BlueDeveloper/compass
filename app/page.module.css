@@ -257,8 +257,8 @@
   /* 균일한 좌우 패딩 */
   padding-left: 0.8rem;
   padding-right: 0.8rem;
-  padding-top: env(safe-area-inset-top, 20px);
-  padding-bottom: max(0.2rem, env(safe-area-inset-bottom, 0px));
+  padding-top: calc(env(safe-area-inset-top, 20px) + 2.5rem);
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
 }
 
 /* ── 도착 암전 오버레이 ── */
@@ -391,9 +391,9 @@
 
 /* ── 나침반 SVG 영역 ── */
 .compassArea {
-  flex: 1;
-  min-height: 0;
+  flex: none;
   width: 100vw;
+  height: min(68vw, 440px);
   margin-left: -1.25rem;
   margin-right: -1.25rem;
   display: flex;
