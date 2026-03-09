@@ -222,6 +222,8 @@
   color: #666666;
   border: none;
   font-size: 13px;
+  font-weight: 500;
+  font-family: 'Helvetica Neue';
   line-height: 34px;
   outline: none;
   -webkit-appearance: none;
