@@ -449,7 +449,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin-bottom: 0.3rem;
+  margin-bottom: 11px;
 }
 
 .infoGroup:last-of-type {
@@ -462,7 +462,7 @@
   justify-content: space-between;
   align-items: baseline;
   gap: 0.5rem;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .infoLabel {
