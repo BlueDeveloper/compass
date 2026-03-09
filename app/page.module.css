@@ -97,7 +97,7 @@
   width: 100%;
   height: 34px;
   background: #fff;
-  border: 1.5px solid #000;
+  border: 1.8px solid #000;
   box-sizing: border-box;
   overflow: hidden;
   position: relative;
@@ -204,7 +204,7 @@
 .inputBox {
   width: 100%;
   height: 36px;
-  border: 2px solid #000;
+  border: 1.8px solid #000;
   box-sizing: border-box;
   overflow: hidden;
   position: relative;
