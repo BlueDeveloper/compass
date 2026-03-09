@@ -255,9 +255,14 @@
   animation: fadeIn 2.5s ease-out forwards;
 }
 
-/* ── 나침반 숨김 (공간 유지) ── */
+/* ── 나침반 숨김 (공간 유지, 딜레이 후 페이드아웃) ── */
 .compassHidden {
-  visibility: hidden;
+  animation: fadeOut 1s ease-out 1.5s forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 /* ── 도착 암전 모드: 나침반 제외 모든 콘텐츠 흰색 ── */
