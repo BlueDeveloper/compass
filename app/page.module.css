@@ -245,14 +245,55 @@
   padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
 }
 
-/* ── 도착 플리커 오버레이 ── */
-.arrivalFlicker {
+/* ── 도착 암전 오버레이 ── */
+.arrivalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.88);
-  z-index: 50;
+  background: #000;
+  z-index: 5;
   pointer-events: none;
-  animation: arrivalAnim 0.55s steps(1) infinite;
+  animation: fadeIn 1.2s ease-out forwards;
+}
+
+/* ── 도착 암전 모드: 나침반 제외 모든 콘텐츠 흰색 ── */
+.arrivalDarkMode .compassLogoBox,
+.arrivalDarkMode .distBar,
+.arrivalDarkMode .directionGuide,
+.arrivalDarkMode .infoSection {
+  position: relative;
+  z-index: 10;
+}
+
+.arrivalDarkMode .logoImg {
+  filter: invert(1);
+}
+
+.arrivalDarkMode .distTrack {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.arrivalDarkMode .distFill {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.arrivalDarkMode .distTextRow {
+  color: #fff;
+  mix-blend-mode: normal;
+}
+
+.arrivalDarkMode .directionGuide {
+  color: #fff;
+}
+
+.arrivalDarkMode .infoLabel,
+.arrivalDarkMode .infoVal {
+  color: #fff;
+}
+
+.arrivalDarkMode .infoSection {
+  border-left-color: rgba(255, 255, 255, 0.5);
+  border-bottom-color: rgba(255, 255, 255, 0.15);
 }
 
 @keyframes arrivalAnim {
@@ -352,7 +393,6 @@
   width: 100%;
   max-width: 420px;
   flex-shrink: 0;
-  border-bottom: 1px dashed rgba(0, 0, 0, 0.25);
   padding: 0.4rem 0 0.4rem 0;
 }
 

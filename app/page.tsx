@@ -22,6 +22,7 @@ export default function CompassPage() {
   const [tapReady,      setTapReady]      = useState(false);   // "tap to start" 표시
   const [isFading,      setIsFading]      = useState(false);   // 블랙 페이드 오버레이 (페이드아웃)
   const [compassFadeIn, setCompassFadeIn] = useState(false);   // 나침반 진입 시 페이드인
+  const [arrivalDark,   setArrivalDark]   = useState(false);   // 도착 암전
   const [introProgress, setIntroProgress] = useState(0); // 0~100
 
   /* ── Search ── */
@@ -115,6 +116,13 @@ export default function CompassPage() {
       setPermissionGranted(true);
     }
   }, []);
+
+  /* 도착 → 3초 후 암전 */
+  useEffect(() => {
+    if (!isArrived) { setArrivalDark(false); return; }
+    const t = setTimeout(() => setArrivalDark(true), 3000);
+    return () => clearTimeout(t);
+  }, [isArrived]);
 
   /* compass 진입 시 권한 요청 */
   useEffect(() => {
@@ -335,10 +343,10 @@ export default function CompassPage() {
           COMPASS SCREEN
       ══════════════════════════════════════ */}
       {phase === 'compass' && (
-        <div className={styles.compassScreen}>
+        <div className={`${styles.compassScreen} ${arrivalDark ? styles.arrivalDarkMode : ''}`}>
 
-          {/* 도착 플리커 오버레이 */}
-          {isArrived && <div className={styles.arrivalFlicker} aria-hidden="true" />}
+          {/* 도착 암전 오버레이 */}
+          {arrivalDark && <div className={styles.arrivalOverlay} aria-hidden="true" />}
 
           {/* 최상단 로고 */}
           <div className={styles.compassLogoBox}>
@@ -358,8 +366,8 @@ export default function CompassPage() {
             </div>
           </div>
 
-          {/* 나침반 SVG */}
-          <div className={styles.compassArea}>
+          {/* 나침반 SVG — 암전 시 숨김 */}
+          {!arrivalDark && <div className={styles.compassArea}>
             <div
               className={styles.compassSvgWrap}
               style={{
@@ -383,14 +391,16 @@ export default function CompassPage() {
                 />
               </svg>
             </div>
-          </div>
+          </div>}
 
           {/* 방향 안내 문구 */}
           <div className={styles.directionGuide}>
             {turnDeg !== null && (
-              isAligned
-                ? 'Direction to destination. Go straight.'
-                : `Turn ${turnDir}  ${turnDeg}°`
+              isArrived
+                ? 'Arrival.'
+                : isAligned
+                  ? 'Direction to destination. Go straight.'
+                  : `Turn ${turnDir}  ${turnDeg}°`
             )}
           </div>
 
