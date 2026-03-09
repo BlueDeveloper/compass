@@ -156,14 +156,14 @@
   inset: 0;
   background: #d0d0d0;
   opacity: 0;
-  animation: screenBlink 0.1s steps(1) infinite;
+  animation: screenBlink 0.7s steps(1) infinite;
   pointer-events: none;
   z-index: 0;
 }
 
 @keyframes screenBlink {
   0%   { opacity: 0; }
-  50%  { opacity: 0.7; }
+  50%  { opacity: 1; }
   100% { opacity: 0; }
 }
 
