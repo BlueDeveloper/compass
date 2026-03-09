@@ -237,7 +237,7 @@ export default function CompassPage() {
   /* ═══════════════════════════════════════════
      COMPASS GEOMETRY
   ═══════════════════════════════════════════ */
-  const RING_R      = 130;
+  const RING_R      = 140;
   const userAngle   = (heading ?? 0) * Math.PI / 180;
   const userCircleX = 150 + Math.sin(userAngle) * RING_R;
   const userCircleY = 150 - Math.cos(userAngle) * RING_R;
@@ -361,7 +361,7 @@ export default function CompassPage() {
                 transform: `perspective(600px) rotateX(${outerTiltX}deg) rotateY(${outerTiltY}deg)`,
               }}
             >
-              <svg width="100%" height="100%" viewBox="-10 -10 320 320">
+              <svg width="100%" height="100%" viewBox="-20 -20 340 340">
                 {/* 외부 링 */}
                 <circle cx="150" cy="150" r="140"
                   fill="none" stroke="rgba(0,0,0,0.18)" strokeWidth="1.5" />
@@ -370,7 +370,15 @@ export default function CompassPage() {
                   fill="none" stroke="rgba(0,0,0,0.5)" strokeWidth="1.2"
                   strokeDasharray="90 785" strokeDashoffset="280" />
 
-                {/* 목표 방향 마커 — 숨김 */}
+                {/* 목표 방향 마커 */}
+                <circle
+                  cx={tgtCircleX}
+                  cy={tgtCircleY}
+                  r="18"
+                  fill="none"
+                  stroke="black"
+                  strokeWidth="2"
+                />
 
                 {/* 사용자 헤딩 원 — 방향 일치 시 번쩍임 */}
                 <circle
