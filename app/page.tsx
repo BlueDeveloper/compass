@@ -195,8 +195,8 @@ export default function CompassPage() {
     if (!permissionGranted) return;
     let lastT = 0;
     const THROTTLE = 80;
-    const LERP     = 0.08;   // 낮을수록 부드럽고 안정적
-    const DEAD     = 0.4;    // 이 각도 미만 변화는 무시
+    const LERP     = 0.12;   // 낮을수록 부드럽고 안정적
+    const DEAD     = 0.25;   // 이 각도 미만 변화는 무시
 
     const handler = (e: DeviceOrientationEvent) => {
       const now = Date.now();
@@ -273,8 +273,8 @@ export default function CompassPage() {
   const tgtCircleY  = 150 - Math.cos(tgtAngle) * RING_R;
 
 
-  const outerTiltX  = (tiltBeta  - 90) * -1.2;
-  const outerTiltY  =  tiltGamma       *  1.2;
+  const outerTiltX  = (tiltBeta  - 90) * -0.9;
+  const outerTiltY  =  tiltGamma       *  0.9;
 
   /* Distance progress: 0(멀리) → 1(도착) */
   const distProgress = distance !== null
