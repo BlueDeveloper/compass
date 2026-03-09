@@ -257,7 +257,7 @@
   padding-left: 0.8rem;
   padding-right: 0.8rem;
   padding-top: env(safe-area-inset-top, 20px);
-  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  padding-bottom: max(0.2rem, env(safe-area-inset-bottom, 0px));
 }
 
 /* ── 도착 암전 오버레이 ── */
@@ -424,7 +424,7 @@
   width: 100%;
   max-width: 420px;
   flex-shrink: 0;
-  padding: 1.4rem 0 0.4rem 0;
+  padding: 0.4rem 0 0.4rem 0;
 }
 
 /* ── 방향 안내 문구 ── */
