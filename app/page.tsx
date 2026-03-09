@@ -307,6 +307,15 @@ export default function CompassPage() {
                 {tapReady ? 'Tap to start' : `Loading ${introProgress}%`}
               </span>
             </div>
+
+            {/* ── border 테스트 박스 (1.8 ~ 2.0) ── */}
+            {([1.8, 1.85, 1.9, 1.95, 2.0] as const).map(b => (
+              <div key={b} style={{ width: '100%', height: 34, border: `${b}px solid #000`, boxSizing: 'border-box', position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <span style={{ paddingLeft: '0.6rem', fontSize: 13, lineHeight: 1, letterSpacing: '0.02em', color: '#666', fontWeight: 500 }}>
+                  Tap to start — {b}px
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}
