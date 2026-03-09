@@ -353,7 +353,7 @@
   max-width: 420px;
   flex-shrink: 0;
   border-bottom: 1px dashed rgba(0, 0, 0, 0.25);
-  padding: 0.4rem 0 0.4rem 0.5rem;
+  padding: 0.4rem 0 0.4rem 0;
 }
 
 /* ── 방향 안내 문구 ── */
