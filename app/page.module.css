@@ -418,9 +418,10 @@
 
 /* ── 사용자 헤딩 원: 방향 일치 시 글로우 ── */
 .userCircleAligned {
-  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 1))
-          drop-shadow(0 0 20px rgba(0, 0, 0, 0.8))
-          drop-shadow(0 0 35px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1))
+          drop-shadow(0 0 28px rgba(0, 0, 0, 1))
+          drop-shadow(0 0 50px rgba(0, 0, 0, 0.8))
+          drop-shadow(0 0 70px rgba(0, 0, 0, 0.5));
 }
 
 /* ── 하단 정보 섹션 ── */
