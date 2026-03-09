@@ -18,7 +18,7 @@ const FILL_MAX_KM = 1;      // 1km 이내부터 distance bar 채우기 시작
 export default function CompassPage() {
 
   /* ── Phase ── */
-  const [phase,    setPhase]    = useState<'intro' | 'search' | 'compass'>('compass'); // 테스트: 나침반 직진입
+  const [phase,    setPhase]    = useState<'intro' | 'search' | 'compass'>('intro');
   const [tapReady,      setTapReady]      = useState(false);   // "tap to start" 표시
   const [isFading,      setIsFading]      = useState(false);   // 블랙 페이드 오버레이 (페이드아웃)
   const [compassFadeIn, setCompassFadeIn] = useState(false);   // 나침반 진입 시 페이드인
