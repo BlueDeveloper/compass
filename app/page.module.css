@@ -202,11 +202,11 @@
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  padding: 0 0.875rem;
+  padding: 0 0.575rem;
   background: #efefef;
   color: #666666;
   border: none;
-  font-size: 0.725rem;
+  font-size: 0.625rem;
   line-height: 26px;
   outline: none;
   -webkit-appearance: none;
