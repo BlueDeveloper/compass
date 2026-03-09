@@ -102,7 +102,7 @@
   width: 100%;
   height: 34px;
   background: #fff;
-  border: 1px solid #000;
+  border: 2px solid #000;
   box-sizing: border-box;
   overflow: hidden;
   position: relative;
@@ -113,7 +113,7 @@
   text-align: left;
   height: 100%;
   background: #efefef;
-  color: #666666;
+  color: #efefef;
 }
 
 /* ── 바 내부 텍스트 (항상 가독 — mix-blend-mode) ── */
@@ -126,8 +126,7 @@
   padding-left: 0.5rem;
   font-size: 0.75rem;
   letter-spacing: 0.02em;
-  color: #fff;
-  mix-blend-mode: difference;   /* 채운 구간: 흰→검, 빈 구간: 흰→흰 */
+  color: #666666;
   pointer-events: none;
   font-variant-numeric: tabular-nums;
 }
@@ -207,8 +206,8 @@
 /* progressTrack 기준 — 높이·테두리 동일 */
 .inputBox {
   width: 100%;
-  height: 34px;
-  border: 1px solid #000;
+  height: 36px;
+  border: 2px solid #000;
   box-sizing: border-box;
   overflow: hidden;
   position: relative;
@@ -360,7 +359,7 @@
 
 .distTrack {
   width: 100%;
-  height: 34px;
+  height: 36px;
   background: #fff;
   border: 1px solid #000;
   box-sizing: border-box;
@@ -383,8 +382,7 @@
   justify-content: space-between;
   padding: 0 0.5rem;
   font-size: 0.75rem;
-  color: #fff;
-  mix-blend-mode: difference;
+  color: #666666;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
   pointer-events: none;
