@@ -26,7 +26,11 @@ export default function CompassPage() {
   const [introProgress, setIntroProgress] = useState(0); // 0~100
 
   /* ── Search ── */
-  const [inputCoords, setInputCoords] = useState('37.2164659 127.0351454');
+  const [inputCoords, setInputCoords] = useState(() => {
+    const lat = (Math.random() * 180 - 90).toFixed(7);
+    const lon = (Math.random() * 360 - 180).toFixed(7);
+    return `${lat} ${lon}`;
+  });
   const [formError,   setFormError]   = useState('');
 
   /* ── Target ── */
@@ -459,11 +463,6 @@ export default function CompassPage() {
               </div>
             )}
           </div>
-
-          {/* 테스트 버튼 */}
-          <button className={styles.testBtn} onClick={() => setArrivalDark(v => !v)}>
-            TEST
-          </button>
 
         </div>
       )}
