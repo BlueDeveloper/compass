@@ -154,7 +154,7 @@
 .tvBg {
   position: absolute;
   inset: 0;
-  background: #e8e8e8;
+  background: #d0d0d0;
   opacity: 0;
   animation: screenBlink 0.1s steps(1) infinite;
   pointer-events: none;
