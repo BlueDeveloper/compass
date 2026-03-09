@@ -9,7 +9,7 @@ import styles from './page.module.css';
 const DEFAULT_LAT = 37.5547;
 const DEFAULT_LON = 126.9708;
 const ARRIVAL_KM  = 0.1;    // 100m → arrival threshold
-const ALIGN_DEG   = 15;     // ±15° → aligned threshold
+const ALIGN_DEG   = 5;      // ±5° → aligned threshold
 const FILL_MAX_KM = 1;      // 1km 이내부터 distance bar 채우기 시작
 
 /* ═══════════════════════════════════════════
