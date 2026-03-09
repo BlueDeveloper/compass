@@ -193,9 +193,23 @@ export default function CompassPage() {
   /* ── Tilt (gyroscope beta/gamma) ── */
   useEffect(() => {
     if (!permissionGranted) return;
+    let lastT = 0;
+    const THROTTLE = 80;
+    const LERP     = 0.08;   // 낮을수록 부드럽고 안정적
+    const DEAD     = 0.4;    // 이 각도 미만 변화는 무시
+
     const handler = (e: DeviceOrientationEvent) => {
-      if (e.beta  !== null) setTiltBeta(p  => p  + 0.25 * (e.beta!  - p));
-      if (e.gamma !== null) setTiltGamma(p => p + 0.25 * (e.gamma! - p));
+      const now = Date.now();
+      if (now - lastT < THROTTLE) return;
+      lastT = now;
+      if (e.beta  !== null) setTiltBeta(p  => {
+        const diff = e.beta!  - p;
+        return Math.abs(diff) < DEAD ? p : p + LERP * diff;
+      });
+      if (e.gamma !== null) setTiltGamma(p => {
+        const diff = e.gamma! - p;
+        return Math.abs(diff) < DEAD ? p : p + LERP * diff;
+      });
     };
     window.addEventListener('deviceorientation', handler, true);
     return () => window.removeEventListener('deviceorientation', handler, true);
