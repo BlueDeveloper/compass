@@ -256,8 +256,8 @@
   overflow: hidden;
 
   /* 균일한 좌우 패딩 */
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
+  padding-left: 0.8rem;
+  padding-right: 0.8rem;
   padding-top: env(safe-area-inset-top, 20px);
   padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
 }
