@@ -167,9 +167,9 @@
 }
 
 @keyframes screenBlink {
-  0%   { opacity: 0;    }
-  50%  { opacity: 0.25; }
-  100% { opacity: 0;    }
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* ── 나침반 화면 약한 플리커 ── */
