@@ -232,7 +232,7 @@
   position: fixed;
   inset: 0;
   background: #fff;
-  animation: fadeIn 0.5s ease-out;
+  animation: fadeIn 1.2s ease-out;
   display: flex;
   flex-direction: column;
   align-items: center;
