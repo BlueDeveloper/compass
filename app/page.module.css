@@ -172,9 +172,9 @@
 .compassFlicker {
   position: absolute;
   inset: 0;
-  background: #f0f0f0;
+  background: #fbfbfb;
   opacity: 0;
-  animation: compassBlink 0.2s steps(1) infinite;
+  animation: compassBlink 0.08s steps(1) infinite;
   pointer-events: none;
   z-index: 0;
 }
@@ -343,7 +343,7 @@
   width: 100%;
   max-width: 420px;
   flex-shrink: 0;
-  padding-top: 1.375rem;
+  padding-top: 0.8rem;
   padding-bottom: 0.75rem;
 }
 
