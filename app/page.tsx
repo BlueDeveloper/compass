@@ -361,7 +361,7 @@ export default function CompassPage() {
                 transform: `perspective(600px) rotateX(${outerTiltX}deg) rotateY(${outerTiltY}deg)`,
               }}
             >
-              <svg width="100%" height="100%" viewBox="-30 -30 360 360">
+              <svg width="100%" height="100%" viewBox="-10 -10 320 320">
                 {/* 외부 링 */}
                 <circle cx="150" cy="150" r="140"
                   fill="none" stroke="rgba(0,0,0,0.18)" strokeWidth="1.5" />

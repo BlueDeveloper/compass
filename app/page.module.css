@@ -326,7 +326,9 @@
 .compassArea {
   flex: 1;
   min-height: 0;
-  width: 100%;
+  width: 100vw;
+  margin-left: -1.25rem;
+  margin-right: -1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -337,7 +339,6 @@
   width: min(96vw, 640px);
   aspect-ratio: 1;
   max-height: 100%;
-  max-width: 100%;
 }
 
 /* ── 사용자 헤딩 원: 방향 일치 시 번쩍임 ── */
