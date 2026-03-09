@@ -312,8 +312,8 @@ export default function CompassPage() {
       {phase === 'search' && (
         <div className={styles.searchScreen}>
 
-          {/* 화면 깜박임 레이어 — 임시 비활성화 */}
-          {/* <div className={styles.tvBg} aria-hidden="true" /> */}
+          {/* 화면 깜박임 레이어 */}
+          <div className={styles.tvBg} aria-hidden="true" />
 
           {/* 로고 — TV 간섭 효과에 노출됨 */}
           <div className={styles.searchLogoLayer}>
@@ -344,6 +344,9 @@ export default function CompassPage() {
       ══════════════════════════════════════ */}
       {phase === 'compass' && (
         <div className={`${styles.compassScreen} ${arrivalDark ? styles.arrivalDarkMode : ''}`}>
+
+          {/* 약한 플리커 — 도착 암전 전까지 유지 */}
+          {!arrivalDark && <div className={styles.compassFlicker} aria-hidden="true" />}
 
           {/* 도착 암전 오버레이 */}
           {arrivalDark && <div className={styles.arrivalOverlay} aria-hidden="true" />}

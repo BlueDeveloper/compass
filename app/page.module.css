@@ -173,6 +173,23 @@
   100% { opacity: 0;    }
 }
 
+/* ── 나침반 화면 약한 플리커 ── */
+.compassFlicker {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  animation: compassBlink 0.2s steps(1) infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes compassBlink {
+  0%   { opacity: 0;    }
+  50%  { opacity: 0.06; }
+  100% { opacity: 0;    }
+}
+
 /* ── 로고 레이어 — TV 간섭 효과에 노출됨 (z-index 없음) ── */
 .searchLogoLayer {
   width: 92%;
