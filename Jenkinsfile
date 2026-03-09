@@ -16,15 +16,27 @@ pipeline {
 
     stage('Build') {
       steps {
-        sh '''
-          set -euo pipefail
+        // node_modules: package-lock.json 기준 캐시
+        // .next/cache: Next.js 증분 빌드 캐시
+        cache(maxCacheSize: 512, caches: [
+          arbitraryFileCache(
+            path: 'node_modules',
+            cacheValidityDecidingFile: 'package-lock.json'
+          ),
+          arbitraryFileCache(
+            path: '.next/cache'
+          )
+        ]) {
+          sh '''
+            set -euo pipefail
 
-          # 의존성 설치 — package-lock 변경 없으면 캐시 재사용
-          npm ci --legacy-peer-deps --prefer-offline
+            # 의존성 설치 — 캐시 히트 시 네트워크 생략
+            npm ci --legacy-peer-deps --prefer-offline
 
-          # Next.js static build (.next/cache 워크스페이스 유지로 증분 빌드)
-          npm run build
-        '''
+            # Next.js static build
+            npm run build
+          '''
+        }
       }
     }
 
