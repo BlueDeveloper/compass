@@ -397,7 +397,14 @@ export default function CompassPage() {
                 <circle cx="150" cy="150" r="140"
                   fill="none" stroke="#000" strokeWidth="1.7" />
 
-                {/* 목표 원 — 숨김 */}
+                {/* 목표 원 — 사용자 원과 겹치는 부분만 표시 */}
+                <circle
+                  cx={tgtCircleX}
+                  cy={tgtCircleY}
+                  r="18"
+                  fill="black"
+                  clipPath="url(#userClip)"
+                />
 
                 {/* 사용자 헤딩 원 — 속 빈 원 */}
                 <circle
