@@ -250,13 +250,15 @@ export default function CompassPage() {
      COMPASS GEOMETRY
   ═══════════════════════════════════════════ */
   const RING_R      = 140;
-  const userAngle   = (heading ?? 0) * Math.PI / 180;
-  const userCircleX = 150 + Math.sin(userAngle) * RING_R;
-  const userCircleY = 150 - Math.cos(userAngle) * RING_R;
 
-  const tgtAngle    = (bearing ?? 0) * Math.PI / 180;
-  const tgtCircleX  = 150 + Math.sin(tgtAngle) * RING_R;
-  const tgtCircleY  = 150 - Math.cos(tgtAngle) * RING_R;
+  /* 사용자 원: 항상 12시(상단) 고정 */
+  const userCircleX = 150;
+  const userCircleY = 150 - RING_R;
+
+  /* 목표 원: 사용자 heading 기준 상대 방위각 */
+  const relAngle   = ((bearing ?? 0) - (heading ?? 0)) * Math.PI / 180;
+  const tgtCircleX = 150 + Math.sin(relAngle) * RING_R;
+  const tgtCircleY = 150 - Math.cos(relAngle) * RING_R;
 
 
   const outerTiltX  = (tiltBeta  - 90) * -0.9;
