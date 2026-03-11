@@ -401,7 +401,6 @@ export default function CompassPage() {
                   cy={tgtCircleY}
                   r="18"
                   fill="black"
-                  clipPath="url(#userClip)"
                 />
 
                 {/* 사용자 헤딩 원 — 속 빈 원 */}
