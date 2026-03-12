@@ -50,10 +50,6 @@ export default function CompassPage() {
   const [isAligned, setIsAligned] = useState(false);
   const [isArrived, setIsArrived] = useState(false);
 
-  /* ── Tilt (gyroscope) ── */
-  const [tiltBeta,  setTiltBeta]  = useState(90);
-  const [tiltGamma, setTiltGamma] = useState(0);
-
   /* ── Refs ── */
   const lastHRef    = useRef<number | null>(null);
   const cntRef      = useRef(0);
@@ -190,17 +186,6 @@ export default function CompassPage() {
     };
   }, [permissionGranted]);
 
-  /* ── Tilt (gyroscope beta/gamma) ── */
-  useEffect(() => {
-    if (!permissionGranted) return;
-    const handler = (e: DeviceOrientationEvent) => {
-      if (e.beta  !== null) setTiltBeta(p  => p  + 0.25 * (e.beta!  - p));
-      if (e.gamma !== null) setTiltGamma(p => p + 0.25 * (e.gamma! - p));
-    };
-    window.addEventListener('deviceorientation', handler, true);
-    return () => window.removeEventListener('deviceorientation', handler, true);
-  }, [permissionGranted]);
-
   /* ═══════════════════════════════════════════
      NAVIGATION MATH
   ═══════════════════════════════════════════ */
@@ -261,8 +246,11 @@ export default function CompassPage() {
   const tgtCircleY = 150 - Math.cos(relAngle) * RING_R;
 
 
-  const outerTiltX  = (tiltBeta  - 90) * -0.9;
-  const outerTiltY  =  tiltGamma       *  0.9;
+  /* 두 원 중심 거리 → 사용자 원 opacity (0: 숨김, 1: 완전 표시) */
+  const circleDistance = Math.sqrt(
+    (tgtCircleX - userCircleX) ** 2 + (tgtCircleY - userCircleY) ** 2
+  );
+  const userCircleOpacity = Math.max(0, Math.min(1, 1 - circleDistance / 36));
 
   /* Distance progress: 0(멀리) → 1(도착) */
   const distProgress = distance !== null
@@ -379,41 +367,29 @@ export default function CompassPage() {
 
           {/* 나침반 SVG — 암전 시 비표시 (공간 유지) */}
           <div className={`${styles.compassArea} ${arrivalDark ? styles.compassHidden : ''}`}>
-            <div
-              className={styles.compassSvgWrap}
-              style={{
-                transform: `perspective(400px) rotateX(${outerTiltX}deg) rotateY(${outerTiltY}deg)`,
-              }}
-            >
+            <div className={styles.compassSvgWrap}>
               <svg width="100%" height="100%" viewBox="-20 -20 340 340">
-                <defs>
-                  {/* 사용자 원 영역을 클립으로 정의 */}
-                  <clipPath id="userClip">
-                    <circle cx={userCircleX} cy={userCircleY} r="18" />
-                  </clipPath>
-                </defs>
-
                 {/* 외부 링 */}
                 <circle cx="150" cy="150" r="140"
                   fill="none" stroke="#000" strokeWidth="1.7" />
 
-                {/* 목표 원 — 사용자 원과 겹치는 부분만 표시 */}
+                {/* 목표 원 — 항상 표시, 속 빈 원 */}
                 <circle
                   cx={tgtCircleX}
                   cy={tgtCircleY}
                   r="18"
-                  fill="black"
-                  clipPath="url(#userClip)"
+                  fill="none"
+                  stroke="black"
+                  strokeWidth="2"
                 />
 
-                {/* 사용자 헤딩 원 — 속 빈 원 */}
+                {/* 사용자 헤딩 원 — 목표 원과 겹칠수록 드러남 */}
                 <circle
                   cx={userCircleX}
                   cy={userCircleY}
                   r="18"
-                  fill="none"
-                  stroke="black"
-                  strokeWidth="2"
+                  fill="black"
+                  opacity={userCircleOpacity}
                   className={isAligned ? styles.userCircleAligned : ''}
                 />
               </svg>
@@ -428,10 +404,6 @@ export default function CompassPage() {
           {/* 하단 정보 */}
           <div className={styles.infoSection}>
             <div className={styles.infoGroup}>
-              <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Current Tilt:</span>
-                <span className={styles.infoVal}>{Math.round(tiltBeta)}°</span>
-              </div>
               <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Current direction:</span>
                 <span className={styles.infoVal}>{heading !== null ? `${heading.toFixed(0)}°` : '--'}</span>
