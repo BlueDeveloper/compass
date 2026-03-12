@@ -374,7 +374,7 @@ export default function CompassPage() {
                 <circle cx="150" cy="150" r="140"
                   fill="none" stroke="#000" strokeWidth="1.7" />
 
-                {/* 목표 원 — 항상 표시, 속 빈 원 */}
+                {/* 목표 원 — 항상 표시, 속 빈 원 + 방향 일치 시 글로우 */}
                 <circle
                   cx={tgtCircleX}
                   cy={tgtCircleY}
@@ -382,6 +382,7 @@ export default function CompassPage() {
                   fill="none"
                   stroke="black"
                   strokeWidth="2"
+                  className={isAligned ? styles.userCircleAligned : ''}
                 />
 
                 {/* 사용자 헤딩 원 — 목표 원과 겹치는 부분만 표시 */}
@@ -391,7 +392,6 @@ export default function CompassPage() {
                   r="18"
                   fill="black"
                   clipPath="url(#tgtClip)"
-                  className={isAligned ? styles.userCircleAligned : ''}
                 />
               </svg>
             </div>
