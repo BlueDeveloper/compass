@@ -367,11 +367,14 @@ export default function CompassPage() {
                   <clipPath id="tgtClip">
                     <circle cx={tgtCircleX} cy={tgtCircleY} r="18" />
                   </clipPath>
-                  <filter id="glowFilter" x="-80%" y="-80%" width="260%" height="260%">
-                    <feGaussianBlur stdDeviation="5" result="blur" />
+                  <filter id="glowFilter" x="-150%" y="-150%" width="400%" height="400%">
+                    <feGaussianBlur stdDeviation="10" result="blur1" />
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="blur2" />
                     <feMerge>
-                      <feMergeNode in="blur" />
-                      <feMergeNode in="blur" />
+                      <feMergeNode in="blur2" />
+                      <feMergeNode in="blur2" />
+                      <feMergeNode in="blur1" />
+                      <feMergeNode in="blur1" />
                       <feMergeNode in="SourceGraphic" />
                     </feMerge>
                   </filter>
