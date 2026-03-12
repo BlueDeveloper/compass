@@ -512,6 +512,25 @@
   color: rgba(255, 255, 255, 0.3);
 }
 
+/* ── 즉시 도착 버튼 ── */
+.arrivalBtn {
+  margin-top: 0.6rem;
+  font-size: 13px;
+  font-family: 'Helvetica Neue';
+  font-weight: 500;
+  background: none;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  color: rgba(0, 0, 0, 0.35);
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+}
+
+.arrivalDarkMode .arrivalBtn {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.35);
+}
+
 /* ── 위치 오류 ── */
 .geoError {
   margin-top: 0.5rem;

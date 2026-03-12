@@ -8,9 +8,9 @@ import styles from './page.module.css';
 ═══════════════════════════════════════════ */
 const DEFAULT_LAT = 37.2164659;
 const DEFAULT_LON = 127.0351454;
-const ARRIVAL_KM  = 0.05;   // 50m → arrival threshold
-const ALIGN_DEG   = 5;      // ±5° → aligned threshold
-const FILL_MAX_KM = 1;      // 1km 이내부터 distance bar 채우기 시작
+const ARRIVAL_KM  = 0.05;
+const ALIGN_DEG   = 5;
+const FILL_MAX_KM = 1;
 
 /* ═══════════════════════════════════════════
    COMPONENT
@@ -18,12 +18,12 @@ const FILL_MAX_KM = 1;      // 1km 이내부터 distance bar 채우기 시작
 export default function CompassPage() {
 
   /* ── Phase ── */
-  const [phase,    setPhase]    = useState<'intro' | 'search' | 'compass'>('intro');
-  const [tapReady,      setTapReady]      = useState(false);   // "tap to start" 표시
-  const [isFading,      setIsFading]      = useState(false);   // 블랙 페이드 오버레이 (페이드아웃)
-  const [compassFadeIn, setCompassFadeIn] = useState(false);   // 나침반 진입 시 페이드인
-  const [arrivalDark,   setArrivalDark]   = useState(false);   // 도착 암전
-  const [introProgress, setIntroProgress] = useState(0); // 0~100
+  const [phase,         setPhase]         = useState<'intro' | 'search' | 'compass'>('intro');
+  const [tapReady,      setTapReady]      = useState(false);
+  const [isFading,      setIsFading]      = useState(false);
+  const [compassFadeIn, setCompassFadeIn] = useState(false);
+  const [arrivalDark,   setArrivalDark]   = useState(false);
+  const [introProgress, setIntroProgress] = useState(0);
 
   /* ── Search ── */
   const [inputCoords, setInputCoords] = useState(() => {
@@ -31,32 +31,63 @@ export default function CompassPage() {
     const lon = (Math.random() * 360 - 180).toFixed(7);
     return `${lat} ${lon}`;
   });
-  const [formError,   setFormError]   = useState('');
+  const [formError, setFormError] = useState('');
 
   /* ── Target ── */
   const [targetLat, setTargetLat] = useState(DEFAULT_LAT);
   const [targetLon, setTargetLon] = useState(DEFAULT_LON);
 
   /* ── Sensor ── */
-  const [userLat,          setUserLat]          = useState<number | null>(null);
-  const [userLon,          setUserLon]          = useState<number | null>(null);
-  const [heading,          setHeading]          = useState<number | null>(null);
+  const [userLat,           setUserLat]           = useState<number | null>(null);
+  const [userLon,           setUserLon]           = useState<number | null>(null);
+  const [heading,           setHeading]           = useState<number | null>(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
-  const [geoError,         setGeoError]         = useState<string | null>(null);
+  const [geoError,          setGeoError]          = useState<string | null>(null);
 
   /* ── Navigation ── */
-  const [distance, setDistance] = useState<number | null>(null);
-  const [bearing,  setBearing]  = useState<number | null>(null);
+  const [distance,  setDistance]  = useState<number | null>(null);
+  const [bearing,   setBearing]   = useState<number | null>(null);
   const [isAligned, setIsAligned] = useState(false);
   const [isArrived, setIsArrived] = useState(false);
 
+  /* ── Tilt (gyroscope) ── */
+  const [tiltBeta,  setTiltBeta]  = useState(90);
+  const [tiltGamma, setTiltGamma] = useState(0);
+
   /* ── Refs ── */
-  const lastHRef    = useRef<number | null>(null);
-  const cntRef      = useRef(0);
-  const geoWatchRef = useRef<number | null>(null);
+  const lastHRef       = useRef<number | null>(null);
+  const cntRef         = useRef(0);
+  const geoWatchRef    = useRef<number | null>(null);
+  const flickerAudioRef   = useRef<HTMLAudioElement | null>(null);
+  const compassBgAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  /* ── Audio helpers ── */
+  const getFlickerAudio = useCallback(() => {
+    if (!flickerAudioRef.current) {
+      flickerAudioRef.current = new Audio('/flicker.wav');
+      flickerAudioRef.current.loop = true;
+    }
+    return flickerAudioRef.current;
+  }, []);
+
+  const getCompassBgAudio = useCallback(() => {
+    if (!compassBgAudioRef.current) {
+      compassBgAudioRef.current = new Audio('/compass-bg.wav');
+      compassBgAudioRef.current.loop = true;
+    }
+    return compassBgAudioRef.current;
+  }, []);
+
+  /* ── Audio cleanup on unmount ── */
+  useEffect(() => {
+    return () => {
+      flickerAudioRef.current?.pause();
+      compassBgAudioRef.current?.pause();
+    };
+  }, []);
 
   /* ═══════════════════════════════════════════
-     INTRO: 3초 카운터 → 100% 도달 시 tap to start
+     INTRO
   ═══════════════════════════════════════════ */
   useEffect(() => {
     if (phase !== 'intro') return;
@@ -65,31 +96,23 @@ export default function CompassPage() {
     const id = setInterval(() => {
       const pct = Math.min(100, Math.floor((Date.now() - start) / duration * 100));
       setIntroProgress(pct);
-      if (pct >= 100) {
-        clearInterval(id);
-        setTapReady(true);
-      }
+      if (pct >= 100) { clearInterval(id); setTapReady(true); }
     }, 30);
     return () => clearInterval(id);
   }, [phase]);
 
   const handleTapStart = useCallback(() => {
     if (!tapReady) return;
+    getFlickerAudio().play().catch(() => {});
     setIsFading(true);
-    setTimeout(() => {
-      setPhase('search');
-      setIsFading(false);
-    }, 60);
-  }, [tapReady]);
+    setTimeout(() => { setPhase('search'); setIsFading(false); }, 60);
+  }, [tapReady, getFlickerAudio]);
 
   /* ═══════════════════════════════════════════
      GEOLOCATION
   ═══════════════════════════════════════════ */
   const startGeo = useCallback(() => {
-    if (!navigator.geolocation) {
-      setGeoError('위치 서비스를 지원하지 않는 브라우저입니다.');
-      return;
-    }
+    if (!navigator.geolocation) { setGeoError('위치 서비스를 지원하지 않는 브라우저입니다.'); return; }
     if (geoWatchRef.current !== null) navigator.geolocation.clearWatch(geoWatchRef.current);
     geoWatchRef.current = navigator.geolocation.watchPosition(
       p => { setGeoError(null); setUserLat(p.coords.latitude); setUserLon(p.coords.longitude); },
@@ -117,9 +140,10 @@ export default function CompassPage() {
     }
   }, []);
 
-  /* 도착 → 3초 후 암전 */
+  /* 도착 → 나침반 배경음 정지 → 3초 후 암전 */
   useEffect(() => {
     if (!isArrived) { setArrivalDark(false); return; }
+    compassBgAudioRef.current?.pause();
     const t = setTimeout(() => setArrivalDark(true), 3000);
     return () => clearTimeout(t);
   }, [isArrived]);
@@ -186,6 +210,17 @@ export default function CompassPage() {
     };
   }, [permissionGranted]);
 
+  /* ── Tilt (gyroscope beta/gamma) ── */
+  useEffect(() => {
+    if (!permissionGranted) return;
+    const handler = (e: DeviceOrientationEvent) => {
+      if (e.beta  !== null) setTiltBeta(p  => p  + 0.25 * (e.beta!  - p));
+      if (e.gamma !== null) setTiltGamma(p => p + 0.25 * (e.gamma! - p));
+    };
+    window.addEventListener('deviceorientation', handler, true);
+    return () => window.removeEventListener('deviceorientation', handler, true);
+  }, [permissionGranted]);
+
   /* ═══════════════════════════════════════════
      NAVIGATION MATH
   ═══════════════════════════════════════════ */
@@ -226,6 +261,8 @@ export default function CompassPage() {
     if (lat < -90  || lat > 90)   { setFormError('위도: -90 ~ +90'); return; }
     if (lon < -180 || lon > 180)  { setFormError('경도: -180 ~ +180'); return; }
 
+    flickerAudioRef.current?.pause();
+    getCompassBgAudio().play().catch(() => {});
     setTargetLat(lat);
     setTargetLon(lon);
     setPhase('compass');
@@ -234,7 +271,7 @@ export default function CompassPage() {
   /* ═══════════════════════════════════════════
      COMPASS GEOMETRY
   ═══════════════════════════════════════════ */
-  const RING_R      = 140;
+  const RING_R = 140;
 
   /* 사용자 원: 항상 12시(상단) 고정 */
   const userCircleX = 150;
@@ -245,8 +282,16 @@ export default function CompassPage() {
   const tgtCircleX = 150 + Math.sin(relAngle) * RING_R;
   const tgtCircleY = 150 - Math.cos(relAngle) * RING_R;
 
+  /* 내부작은십자가: 자이로스코프 위치 (수평 시 중앙) */
+  const rawCrossX = 150 + tiltGamma * 2.5;
+  const rawCrossY = 150 - (tiltBeta - 90) * 2.5;
+  const crossDx = rawCrossX - 150, crossDy = rawCrossY - 150;
+  const crossDist = Math.sqrt(crossDx * crossDx + crossDy * crossDy);
+  const crossClamp = crossDist > 115 ? 115 / crossDist : 1;
+  const smallCrossX = 150 + crossDx * crossClamp;
+  const smallCrossY = 150 + crossDy * crossClamp;
 
-  /* Distance progress: 0(멀리) → 1(도착) */
+  /* Distance progress */
   const distProgress = distance !== null
     ? Math.max(0, Math.min(1, 1 - distance / FILL_MAX_KM))
     : 0;
@@ -259,15 +304,16 @@ export default function CompassPage() {
   const turnDir = bearing !== null && heading !== null
     ? (angDiff(bearing, heading) > 0 ? 'right' : 'left') : null;
 
+  /* 꼭지점 십자가 위치 */
+  const corners = [[-5, -5], [305, -5], [-5, 305], [305, 305]] as const;
+
   /* ═══════════════════════════════════════════
      RENDER
   ═══════════════════════════════════════════ */
   return (
     <div className={styles.root}>
 
-      {/* ── 블랙 페이드 오버레이 (페이드아웃) ── */}
       {isFading      && <div className={styles.fadeOverlay}   aria-hidden="true" />}
-      {/* ── 블랙 페이드 오버레이 (나침반 진입 페이드인) ── */}
       {compassFadeIn && <div className={styles.fadeOverlayIn} aria-hidden="true" />}
 
       {/* ══════════════════════════════════════
@@ -279,19 +325,15 @@ export default function CompassPage() {
           onClick={handleTapStart}
         >
           <div className={styles.introContent}>
-            {/* 로고 */}
             <div className={styles.logoBox}>
               <img src="/MPa_LOGO.svg" alt="MPa Logo" className={styles.logoImg} />
             </div>
-
-            {/* 프로그레스 바 (텍스트 내부 표기) — JS state로 너비와 숫자 동기화 */}
             <div className={styles.progressTrack}>
               <div className={styles.progressFill} style={{ width: `${introProgress}%` }} />
               <span className={styles.progressText}>
                 {tapReady ? 'Tap to start' : `Loading ${introProgress}%`}
               </span>
             </div>
-
           </div>
         </div>
       )}
@@ -301,18 +343,12 @@ export default function CompassPage() {
       ══════════════════════════════════════ */}
       {phase === 'search' && (
         <div className={styles.searchScreen}>
-
-          {/* 화면 깜박임 레이어 */}
           <div className={styles.tvBg} aria-hidden="true" />
-
-          {/* 로고 — TV 간섭 효과에 노출됨 */}
           <div className={styles.searchLogoLayer}>
             <div className={styles.logoBox}>
               <img src="/MPa_LOGO.svg" alt="MPa Logo" className={styles.logoImg} />
             </div>
           </div>
-
-          {/* 검색 인풋 — 플리커 영향 없음 (z-index 10) */}
           <div className={styles.searchInputLayer}>
             <div className={styles.inputBox}>
               <input
@@ -335,20 +371,17 @@ export default function CompassPage() {
       {phase === 'compass' && (
         <div className={`${styles.compassScreen} ${arrivalDark ? styles.arrivalDarkMode : ''}`}>
 
-          {/* 약한 플리커 — 도착 암전 전까지 유지 */}
           {!arrivalDark && <div className={styles.compassFlicker} aria-hidden="true" />}
+          {arrivalDark  && <div className={styles.arrivalOverlay} aria-hidden="true" />}
 
-          {/* 도착 암전 오버레이 */}
-          {arrivalDark && <div className={styles.arrivalOverlay} aria-hidden="true" />}
-
-          {/* 최상단 로고 */}
+          {/* 로고 */}
           <div className={styles.compassLogoBox}>
             <div className={styles.logoBox}>
               <img src="/MPa_LOGO.svg" alt="MPa Logo" className={styles.logoImg} />
             </div>
           </div>
 
-          {/* 남은거리 프로그레스 바 */}
+          {/* 거리 바 */}
           <div className={styles.distBar}>
             <div className={styles.distTrack}>
               <div className={styles.distFill} style={{ width: `${distProgress * 100}%` }} />
@@ -359,7 +392,7 @@ export default function CompassPage() {
             </div>
           </div>
 
-          {/* 나침반 SVG — 암전 시 비표시 (공간 유지) */}
+          {/* 나침반 SVG */}
           <div className={`${styles.compassArea} ${arrivalDark ? styles.compassHidden : ''}`}>
             <div className={styles.compassSvgWrap}>
               <svg width="100%" height="100%" viewBox="-20 -20 340 340" overflow="visible">
@@ -380,39 +413,35 @@ export default function CompassPage() {
                   </filter>
                 </defs>
 
-                {/* 외부 링 */}
-                <circle cx="150" cy="150" r="140"
-                  fill="none" stroke="#000" strokeWidth="1.7" />
+                {/* 꼭지점 십자가 */}
+                {corners.map(([cx, cy], i) => (
+                  <g key={i}>
+                    <line x1={cx - 10} y1={cy}      x2={cx + 10} y2={cy}      stroke="#000" strokeWidth="1.5" />
+                    <line x1={cx}      y1={cy - 10}  x2={cx}      y2={cy + 10} stroke="#000" strokeWidth="1.5" />
+                  </g>
+                ))}
 
-                {/* 글로우 레이어 — SVG filter로 원형 글로우 */}
+                {/* 외부 링 */}
+                <circle cx="150" cy="150" r="140" fill="none" stroke="#000" strokeWidth="1.7" />
+
+                {/* 내부 큰 십자가 */}
+                <line x1="90"  y1="150" x2="210" y2="150" stroke="#000" strokeWidth="1.5" />
+                <line x1="150" y1="90"  x2="150" y2="210" stroke="#000" strokeWidth="1.5" />
+
+                {/* 글로우 레이어 */}
                 {isAligned && (
-                  <circle
-                    cx={tgtCircleX}
-                    cy={tgtCircleY}
-                    r="18"
-                    fill="black"
-                    filter="url(#glowFilter)"
-                  />
+                  <circle cx={tgtCircleX} cy={tgtCircleY} r="18" fill="black" filter="url(#glowFilter)" />
                 )}
 
                 {/* 목표 원 — 항상 표시, 속 빈 원 */}
-                <circle
-                  cx={tgtCircleX}
-                  cy={tgtCircleY}
-                  r="18"
-                  fill="none"
-                  stroke="black"
-                  strokeWidth="2"
-                />
+                <circle cx={tgtCircleX} cy={tgtCircleY} r="18" fill="none" stroke="black" strokeWidth="2" />
 
                 {/* 사용자 헤딩 원 — 목표 원과 겹치는 부분만 표시 */}
-                <circle
-                  cx={userCircleX}
-                  cy={userCircleY}
-                  r="18"
-                  fill="black"
-                  clipPath="url(#tgtClip)"
-                />
+                <circle cx={userCircleX} cy={userCircleY} r="18" fill="black" clipPath="url(#tgtClip)" />
+
+                {/* 내부작은십자가 — 자이로스코프 수평 시 중앙 */}
+                <line x1={smallCrossX - 8} y1={smallCrossY}     x2={smallCrossX + 8} y2={smallCrossY}     stroke="#000" strokeWidth="1.5" />
+                <line x1={smallCrossX}     y1={smallCrossY - 8} x2={smallCrossX}     y2={smallCrossY + 8} stroke="#000" strokeWidth="1.5" />
               </svg>
             </div>
           </div>
@@ -455,6 +484,14 @@ export default function CompassPage() {
                 <button onClick={startGeo} className={styles.retryBtn}>재시도</button>
               </div>
             )}
+
+            {/* 즉시 도착 버튼 */}
+            <button
+              className={styles.arrivalBtn}
+              onClick={() => setIsArrived(true)}
+            >
+              즉시 도착
+            </button>
           </div>
 
         </div>
