@@ -50,14 +50,15 @@ export default function CompassPage() {
   const [isAligned, setIsAligned] = useState(false);
   const [isArrived, setIsArrived] = useState(false);
 
-  /* ── Tilt (gyroscope) ── */
-  const [tiltBeta,  setTiltBeta]  = useState(90);
+  /* ── Tilt (gyroscope) — 수평(flat) = beta:0, gamma:0 ── */
+  const [tiltBeta,  setTiltBeta]  = useState(0);
   const [tiltGamma, setTiltGamma] = useState(0);
 
   /* ── Refs ── */
-  const lastHRef       = useRef<number | null>(null);
-  const cntRef         = useRef(0);
-  const geoWatchRef    = useRef<number | null>(null);
+  const lastHRef         = useRef<number | null>(null);
+  const cntRef           = useRef(0);
+  const geoWatchRef      = useRef<number | null>(null);
+  const manualArrivedRef = useRef(false);
   const flickerAudioRef   = useRef<HTMLAudioElement | null>(null);
   const compassBgAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -246,7 +247,7 @@ export default function CompassPage() {
     setBearing(b);
     setDistance(d);
     setIsAligned(Math.abs(angDiff(b, heading)) <= ALIGN_DEG);
-    setIsArrived(d < ARRIVAL_KM);
+    setIsArrived(d < ARRIVAL_KM || manualArrivedRef.current);
   }, [userLat, userLon, heading, targetLat, targetLon]);
 
   /* ═══════════════════════════════════════════
@@ -282,9 +283,9 @@ export default function CompassPage() {
   const tgtCircleX = 150 + Math.sin(relAngle) * RING_R;
   const tgtCircleY = 150 - Math.cos(relAngle) * RING_R;
 
-  /* 내부작은십자가: 자이로스코프 위치 (수평 시 중앙) */
+  /* 내부작은십자가: 수평(beta=0, gamma=0)일 때 중앙 */
   const rawCrossX = 150 + tiltGamma * 2.5;
-  const rawCrossY = 150 - (tiltBeta - 90) * 2.5;
+  const rawCrossY = 150 + tiltBeta  * 2.5;
   const crossDx = rawCrossX - 150, crossDy = rawCrossY - 150;
   const crossDist = Math.sqrt(crossDx * crossDx + crossDy * crossDy);
   const crossClamp = crossDist > 115 ? 115 / crossDist : 1;
@@ -488,7 +489,7 @@ export default function CompassPage() {
             {/* 즉시 도착 버튼 */}
             <button
               className={styles.arrivalBtn}
-              onClick={() => setIsArrived(true)}
+              onClick={() => { manualArrivedRef.current = true; setIsArrived(true); }}
             >
               즉시 도착
             </button>
