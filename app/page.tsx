@@ -246,12 +246,6 @@ export default function CompassPage() {
   const tgtCircleY = 150 - Math.cos(relAngle) * RING_R;
 
 
-  /* 두 원 중심 거리 → 사용자 원 opacity (0: 숨김, 1: 완전 표시) */
-  const circleDistance = Math.sqrt(
-    (tgtCircleX - userCircleX) ** 2 + (tgtCircleY - userCircleY) ** 2
-  );
-  const userCircleOpacity = Math.max(0, Math.min(1, 1 - circleDistance / 36));
-
   /* Distance progress: 0(멀리) → 1(도착) */
   const distProgress = distance !== null
     ? Math.max(0, Math.min(1, 1 - distance / FILL_MAX_KM))
@@ -369,6 +363,13 @@ export default function CompassPage() {
           <div className={`${styles.compassArea} ${arrivalDark ? styles.compassHidden : ''}`}>
             <div className={styles.compassSvgWrap}>
               <svg width="100%" height="100%" viewBox="-20 -20 340 340">
+                <defs>
+                  {/* 목표 원 영역을 클립으로 정의 */}
+                  <clipPath id="tgtClip">
+                    <circle cx={tgtCircleX} cy={tgtCircleY} r="18" />
+                  </clipPath>
+                </defs>
+
                 {/* 외부 링 */}
                 <circle cx="150" cy="150" r="140"
                   fill="none" stroke="#000" strokeWidth="1.7" />
@@ -383,13 +384,13 @@ export default function CompassPage() {
                   strokeWidth="2"
                 />
 
-                {/* 사용자 헤딩 원 — 목표 원과 겹칠수록 드러남 */}
+                {/* 사용자 헤딩 원 — 목표 원과 겹치는 부분만 표시 */}
                 <circle
                   cx={userCircleX}
                   cy={userCircleY}
                   r="18"
                   fill="black"
-                  opacity={userCircleOpacity}
+                  clipPath="url(#tgtClip)"
                   className={isAligned ? styles.userCircleAligned : ''}
                 />
               </svg>
