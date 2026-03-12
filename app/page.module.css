@@ -321,6 +321,12 @@
   transition: color 1s ease-in;
 }
 
+/* 십자가(line) 흰색으로 전환 */
+.arrivalMode .compassSvgWrap line {
+  stroke: #fff;
+  transition: stroke 1s ease-in;
+}
+
 /* ── 최상단 로고 ── */
 .compassLogoBox {
   width: 100%;
