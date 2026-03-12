@@ -416,22 +416,10 @@
           drop-shadow(0 0 14px rgba(0, 0, 0, 0.4));
 }
 
-/* ── 목표 원 글로우: 채워진 원에 적용 → 원형 글로우 ── */
-.tgtCircleGlow {
-  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 1))
-          drop-shadow(0 0 8px rgba(0, 0, 0, 1))
-          drop-shadow(0 0 18px rgba(0, 0, 0, 1))
-          drop-shadow(0 0 35px rgba(0, 0, 0, 1))
-          drop-shadow(0 0 60px rgba(0, 0, 0, 0.9));
-}
-
-/* ── 사용자 헤딩 원: 방향 일치 시 글로우 ── */
-.userCircleAligned {
-  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 1))
-          drop-shadow(0 0 8px rgba(0, 0, 0, 1))
-          drop-shadow(0 0 18px rgba(0, 0, 0, 1))
-          drop-shadow(0 0 35px rgba(0, 0, 0, 1))
-          drop-shadow(0 0 60px rgba(0, 0, 0, 0.9));
+/* ── 목표 원: 방향 일치 시 글로우 (SVG filter로 대체됨) ── */
+.tgtCircleAligned {
+  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.8))
+          drop-shadow(0 0 14px rgba(0, 0, 0, 0.4));
 }
 
 /* ── 하단 정보 섹션 ── */

@@ -362,26 +362,33 @@ export default function CompassPage() {
           {/* 나침반 SVG — 암전 시 비표시 (공간 유지) */}
           <div className={`${styles.compassArea} ${arrivalDark ? styles.compassHidden : ''}`}>
             <div className={styles.compassSvgWrap}>
-              <svg width="100%" height="100%" viewBox="-20 -20 340 340">
+              <svg width="100%" height="100%" viewBox="-20 -20 340 340" overflow="visible">
                 <defs>
-                  {/* 목표 원 영역을 클립으로 정의 */}
                   <clipPath id="tgtClip">
                     <circle cx={tgtCircleX} cy={tgtCircleY} r="18" />
                   </clipPath>
+                  <filter id="glowFilter" x="-80%" y="-80%" width="260%" height="260%">
+                    <feGaussianBlur stdDeviation="5" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
                 </defs>
 
                 {/* 외부 링 */}
                 <circle cx="150" cy="150" r="140"
                   fill="none" stroke="#000" strokeWidth="1.7" />
 
-                {/* 글로우 레이어 — 채워진 원에 drop-shadow 적용해야 원형 글로우 */}
+                {/* 글로우 레이어 — SVG filter로 원형 글로우 */}
                 {isAligned && (
                   <circle
                     cx={tgtCircleX}
                     cy={tgtCircleY}
                     r="18"
                     fill="black"
-                    className={styles.tgtCircleGlow}
+                    filter="url(#glowFilter)"
                   />
                 )}
 
