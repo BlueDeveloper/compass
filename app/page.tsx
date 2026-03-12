@@ -22,7 +22,6 @@ export default function CompassPage() {
   const [tapReady,      setTapReady]      = useState(false);
   const [isFading,      setIsFading]      = useState(false);
   const [compassFadeIn, setCompassFadeIn] = useState(false);
-  const [arrivalDark,   setArrivalDark]   = useState(false);
   const [introProgress, setIntroProgress] = useState(0);
 
   /* ── Search ── */
@@ -141,12 +140,10 @@ export default function CompassPage() {
     }
   }, []);
 
-  /* 도착 → 나침반 배경음 정지 → 3초 후 암전 */
+  /* 도착 → 나침반 배경음 정지 */
   useEffect(() => {
-    if (!isArrived) { setArrivalDark(false); return; }
+    if (!isArrived) return;
     compassBgAudioRef.current?.pause();
-    const t = setTimeout(() => setArrivalDark(true), 3000);
-    return () => clearTimeout(t);
   }, [isArrived]);
 
   /* compass 진입 시 권한 요청 */
@@ -370,10 +367,9 @@ export default function CompassPage() {
           COMPASS SCREEN
       ══════════════════════════════════════ */}
       {phase === 'compass' && (
-        <div className={`${styles.compassScreen} ${arrivalDark ? styles.arrivalDarkMode : ''}`}>
+        <div className={`${styles.compassScreen} ${isArrived ? styles.arrivalMode : ''}`}>
 
-          {!arrivalDark && <div className={styles.compassFlicker} aria-hidden="true" />}
-          {arrivalDark  && <div className={styles.arrivalOverlay} aria-hidden="true" />}
+          {!isArrived && <div className={styles.compassFlicker} aria-hidden="true" />}
 
           {/* 로고 */}
           <div className={styles.compassLogoBox}>
@@ -394,7 +390,7 @@ export default function CompassPage() {
           </div>
 
           {/* 나침반 SVG */}
-          <div className={`${styles.compassArea} ${arrivalDark ? styles.compassHidden : ''}`}>
+          <div className={styles.compassArea}>
             <div className={styles.compassSvgWrap}>
               <svg width="100%" height="100%" viewBox="-20 -20 340 340" overflow="visible">
                 <defs>
@@ -448,7 +444,7 @@ export default function CompassPage() {
           </div>
 
           {/* 방향 안내 문구 */}
-          <div className={`${styles.directionGuide} ${isArrived ? styles.arrivalText : ''}`}>
+          <div className={styles.directionGuide}>
             Turn 127 degrees to the right...
           </div>
 

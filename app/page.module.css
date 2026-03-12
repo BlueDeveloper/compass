@@ -254,27 +254,22 @@
   flex-direction: column;
   align-items: center;
   overflow: hidden;
+  transition: background-color 3s ease-in;
 
-  /* 균일한 좌우 패딩 */
   padding-left: 0.8rem;
   padding-right: 0.8rem;
   padding-top: env(safe-area-inset-top, 20px);
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
 }
 
-/* ── 도착 암전 오버레이 ── */
-.arrivalOverlay {
-  position: fixed;
-  inset: 0;
-  background: #000;
-  z-index: 5;
-  pointer-events: none;
-  animation: fadeIn 1.5s ease-out forwards;
+/* ── 도착 모드: 배경 black 전환 + 모든 UI white 반전 ── */
+.arrivalMode {
+  background-color: #000;
 }
 
-/* ── 나침반 숨김 (공간 유지, 딜레이 후 페이드아웃) ── */
-.compassHidden {
-  animation: fadeOut 1s ease-out 1.5s forwards;
+/* 원 영역 — 1.5s 후(중간) fade out */
+.arrivalMode .compassArea {
+  animation: fadeOut 0.8s ease-out 1.5s forwards;
 }
 
 @keyframes fadeOut {
@@ -282,63 +277,48 @@
   to   { opacity: 0; }
 }
 
-/* ── 도착 암전 모드: 나침반 제외 모든 콘텐츠 흰색 ── */
-.arrivalDarkMode .compassLogoBox,
-.arrivalDarkMode .distBar,
-.arrivalDarkMode .directionGuide,
-.arrivalDarkMode .infoSection {
-  position: relative;
-  z-index: 10;
-}
-
-.arrivalDarkMode .logoImg {
+/* UI 요소 white 반전 */
+.arrivalMode .logoImg {
   filter: invert(1);
+  transition: filter 1s ease-in;
 }
 
-.arrivalDarkMode .distTrack {
+.arrivalMode .distTrack {
   background: transparent;
   border-color: rgba(255, 255, 255, 0.4);
+  transition: border-color 1s ease-in, background 1s ease-in;
 }
 
-.arrivalDarkMode .distFill {
+.arrivalMode .distFill {
   background: rgba(255, 255, 255, 0.15);
+  transition: background 1s ease-in;
 }
 
-.arrivalDarkMode .distTextRow {
+.arrivalMode .distTextRow {
   color: #fff;
-  mix-blend-mode: normal;
+  transition: color 1s ease-in;
 }
 
-.arrivalDarkMode .directionGuide {
+.arrivalMode .directionGuide {
   color: #fff;
+  transition: color 1s ease-in;
 }
 
-.arrivalDarkMode .infoLabel,
-.arrivalDarkMode .infoVal {
+.arrivalMode .infoLabel,
+.arrivalMode .infoVal {
   color: #fff;
+  transition: color 1s ease-in;
 }
 
-.arrivalDarkMode .infoSection {
-  border-left-color: rgba(255, 255, 255, 0.5);
-  border-bottom-color: rgba(255, 255, 255, 0.15);
+.arrivalMode .arrivalBtn {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.35);
+  transition: border-color 1s ease-in, color 1s ease-in;
 }
 
-@keyframes arrivalAnim {
-  0%   { opacity: 0; }
-  7%   { opacity: 1; }
-  14%  { opacity: 0; }
-  21%  { opacity: 0; }
-  28%  { opacity: 0.85; }
-  35%  { opacity: 0; }
-  42%  { opacity: 0; }
-  49%  { opacity: 1; }
-  56%  { opacity: 0; }
-  63%  { opacity: 0; }
-  70%  { opacity: 0.7; }
-  77%  { opacity: 0; }
-  84%  { opacity: 0; }
-  91%  { opacity: 0.9; }
-  100% { opacity: 0; }
+.arrivalMode .geoError {
+  color: rgba(255, 100, 100, 0.8);
+  transition: color 1s ease-in;
 }
 
 /* ── 최상단 로고 ── */
