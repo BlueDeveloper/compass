@@ -291,7 +291,7 @@ export default function CompassPage() {
   /* ═══════════════════════════════════════════
      COMPASS GEOMETRY
   ═══════════════════════════════════════════ */
-  const RING_R = 120;
+  const RING_R = 124;
 
   /* 사용자 원: 항상 12시(상단) 고정 */
   const userCircleX = 150;
