@@ -63,7 +63,9 @@ export default function CompassPage() {
   const arrivalTimerRef       = useRef<ReturnType<typeof setTimeout> | null>(null);
   const compassFadeInDoneRef  = useRef(false);
   const compassFadeInTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const initialDistanceRef    = useRef<number | null>(null); // 나침반 진입 시 초기 거리
+  const initialDistanceRef    = useRef<number | null>(null);
+  const simulatingRef         = useRef(false);
+  const simulationTimerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /* ── Audio refs ── */
   const flickerAudioRef   = useRef<HTMLAudioElement | null>(null);
@@ -132,6 +134,7 @@ export default function CompassPage() {
       poweroffAudioRef.current?.pause();
       audioCtxRef.current?.close();
       if (compassFadeInTimerRef.current) clearTimeout(compassFadeInTimerRef.current);
+      if (simulationTimerRef.current)    clearInterval(simulationTimerRef.current);
     };
   }, [getFlickerAudio, getCompassBgAudio, getPoweroffAudio]);
 
@@ -285,33 +288,52 @@ export default function CompassPage() {
     }, 1000);
   }, [getPoweroffAudio]);
 
-  /* 도착 전환 테스트 (로고 과녁) — 재클릭 시 리셋 후 재실행 */
+  /* 과녁 클릭 — 5초 거리 감소 시뮬레이션 → 도착 전환 / 재클릭 시 리셋 */
   const handleTestClick = useCallback(() => {
-    if (arrivedTriggeredRef.current) {
-      if (arrivalTimerRef.current) clearTimeout(arrivalTimerRef.current);
-      arrivedTriggeredRef.current = false;
-      initialDistanceRef.current  = null;
+    /* 리셋: 시뮬 중이거나 도착 상태면 초기화 */
+    if (simulatingRef.current || arrivedTriggeredRef.current) {
+      if (simulationTimerRef.current) { clearInterval(simulationTimerRef.current); simulationTimerRef.current = null; }
+      if (arrivalTimerRef.current)    { clearTimeout(arrivalTimerRef.current);     arrivalTimerRef.current = null; }
+      simulatingRef.current        = false;
+      arrivedTriggeredRef.current  = false;
+      initialDistanceRef.current   = null;
+      compassFadeInDoneRef.current = true;
       setArrivedPending(false);
       setIsArrived(false);
+      setDistance(null);
       if (compassGainRef.current && audioCtxRef.current) {
         compassGainRef.current.gain.cancelScheduledValues(audioCtxRef.current.currentTime);
         compassGainRef.current.gain.setValueAtTime(1.5, audioCtxRef.current.currentTime);
       }
       compassBgAudioRef.current?.play().catch(() => {});
+      return;
     }
-    triggerArrival();
-  }, [triggerArrival]);
 
-  /* 음량 증가 테스트 (distBar) — 클릭마다 150% ↔ 200% 토글 */
-  const volumeTestMaxRef = useRef(false);
-  const handleVolumeTest = useCallback(() => {
-    if (!compassGainRef.current || !audioCtxRef.current) return;
-    const ctx = audioCtxRef.current;
-    volumeTestMaxRef.current = !volumeTestMaxRef.current;
-    const target = volumeTestMaxRef.current ? 2.0 : 1.5;
-    compassGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
-    compassGainRef.current.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.5);
-  }, []);
+    /* 시뮬 시작 */
+    const startDist = distance ?? 1.0;
+    initialDistanceRef.current   = startDist;
+    compassFadeInDoneRef.current = true;
+    simulatingRef.current        = true;
+    const startTime = Date.now();
+
+    if (simulationTimerRef.current) clearInterval(simulationTimerRef.current);
+    simulationTimerRef.current = setInterval(() => {
+      const t       = Math.min(1, (Date.now() - startTime) / 5000);
+      const newDist = startDist * (1 - t);
+      setDistance(newDist);
+
+      if (newDist < ARRIVAL_KM && !arrivedTriggeredRef.current) {
+        clearInterval(simulationTimerRef.current!);
+        simulationTimerRef.current = null;
+        setDistance(0);
+        triggerArrival();
+      }
+      if (t >= 1) {
+        clearInterval(simulationTimerRef.current!);
+        simulationTimerRef.current = null;
+      }
+    }, 50);
+  }, [distance, triggerArrival]);
 
   /* ═══════════════════════════════════════════
      HEADING SENSOR
@@ -404,9 +426,11 @@ export default function CompassPage() {
     const b = calcBearing(userLat, userLon, targetLat, targetLon);
     const d = calcDist(userLat, userLon, targetLat, targetLon);
     setBearing(b);
-    setDistance(d);
+    if (!simulatingRef.current) {
+      setDistance(d);
+      if (d < ARRIVAL_KM && !arrivedTriggeredRef.current) triggerArrival();
+    }
     setIsAligned(Math.abs(angDiff(b, heading)) <= ALIGN_DEG);
-    if (d < ARRIVAL_KM && !arrivedTriggeredRef.current) triggerArrival();
   }, [userLat, userLon, heading, targetLat, targetLon, triggerArrival]);
 
   /* ═══════════════════════════════════════════
@@ -569,7 +593,7 @@ export default function CompassPage() {
           </div>
 
           {/* 거리 바 — distBar 클릭으로 도착 테스트 */}
-          <div className={styles.distBar} onClick={handleVolumeTest} style={{ cursor: 'pointer' }}>
+          <div className={styles.distBar}>
             <div className={styles.distTrack}>
               <div className={styles.distFill} style={{ width: `${distProgress * 100}%` }} />
               <div className={styles.distTextRow}>
