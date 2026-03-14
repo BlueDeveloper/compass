@@ -303,8 +303,10 @@ export default function CompassPage() {
   const tgtCircleY = 150 - Math.cos(relAngle) * RING_R;
 
   /* 내부작은십자가: 수평(beta=0, gamma=0)일 때 중앙 */
-  const rawCrossX = 150 + tiltGamma * 0.7;
-  const rawCrossY = 150 + tiltBeta  * 0.7;
+  const safeBeta  = Math.max(-85, Math.min(85, tiltBeta));
+  const safeGamma = Math.max(-85, Math.min(85, tiltGamma));
+  const rawCrossX = 150 + safeGamma * 0.7;
+  const rawCrossY = 150 + safeBeta  * 0.7;
   const crossDx = rawCrossX - 150, crossDy = rawCrossY - 150;
   const crossDist = Math.sqrt(crossDx * crossDx + crossDy * crossDy);
   const crossClamp = crossDist > 42 ? 42 / crossDist : 1;
