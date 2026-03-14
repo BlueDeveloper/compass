@@ -447,13 +447,13 @@ export default function CompassPage() {
                 ))}
 
                 {/* 내부 큰 십자가 */}
-                <line x1="90"  y1="150" x2="210" y2="150" stroke="#000" strokeWidth="1.5" />
-                <line x1="150" y1="90"  x2="150" y2="210" stroke="#000" strokeWidth="1.5" />
+                <line x1="90"  y1="150" x2="210" y2="150" stroke="#000" strokeWidth="1.95" />
+                <line x1="150" y1="90"  x2="150" y2="210" stroke="#000" strokeWidth="1.95" />
 
                 {/* 원 그룹 — 도착 시 fade out */}
                 <g className={styles.compassCircles}>
                   {/* 외부 링 */}
-                  <circle cx="150" cy="150" r={RING_R} fill="none" stroke="#000" strokeWidth="1.7" />
+                  <circle cx="150" cy="150" r={RING_R} fill="none" stroke="#000" strokeWidth="1.95" />
 
                   {/* 글로우 레이어 */}
                   {isAligned && (
@@ -461,15 +461,15 @@ export default function CompassPage() {
                   )}
 
                   {/* 목표 원 — 항상 표시, 속 빈 원 */}
-                  <circle cx={tgtCircleX} cy={tgtCircleY} r="13" fill="none" stroke="black" strokeWidth="2" />
+                  <circle cx={tgtCircleX} cy={tgtCircleY} r="13" fill="none" stroke="black" strokeWidth="1.95" />
 
                   {/* 사용자 헤딩 원 — 목표 원과 겹치는 부분만 표시 */}
                   <circle cx={userCircleX} cy={userCircleY} r="13" fill="black" clipPath="url(#tgtClip)" />
                 </g>
 
                 {/* 내부작은십자가 — 자이로스코프 수평 시 중앙 */}
-                <line x1={smallCrossX - 8} y1={smallCrossY}     x2={smallCrossX + 8} y2={smallCrossY}     stroke="#000" strokeWidth="1.5" />
-                <line x1={smallCrossX}     y1={smallCrossY - 8} x2={smallCrossX}     y2={smallCrossY + 8} stroke="#000" strokeWidth="1.5" />
+                <line x1={smallCrossX - 8} y1={smallCrossY}     x2={smallCrossX + 8} y2={smallCrossY}     stroke="#000" strokeWidth="1.95" />
+                <line x1={smallCrossX}     y1={smallCrossY - 8} x2={smallCrossX}     y2={smallCrossY + 8} stroke="#000" strokeWidth="1.95" />
               </svg>
             </div>
           </div>
