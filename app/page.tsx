@@ -63,66 +63,56 @@ export default function CompassPage() {
 
   const GAIN = 1.5; /* 볼륨 배율 — 1.0=원본, 1.5=150% */
 
-  /* ── AudioContext 초기화 (유저 제스처 후 한 번만) ── */
-  const getAudioCtx = useCallback(() => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new AudioContext();
-    }
-    return audioCtxRef.current;
-  }, []);
-
-  /* ── 오디오 엘리먼트 → GainNode 연결 헬퍼 ── */
-  const connectGain = useCallback((el: HTMLAudioElement) => {
-    const ctx = getAudioCtx();
-    const src = ctx.createMediaElementSource(el);
-    const gain = ctx.createGain();
-    gain.gain.value = GAIN;
-    src.connect(gain);
-    gain.connect(ctx.destination);
-  }, [getAudioCtx]);
-
-  /* ── Audio helpers ── */
+  /* ── Audio helpers (엘리먼트 생성만, AudioContext 없음) ── */
   const getFlickerAudio = useCallback(() => {
     if (!flickerAudioRef.current) {
-      const el = new Audio('/flicker.wav');
-      el.loop = true;
-      connectGain(el);
-      flickerAudioRef.current = el;
+      flickerAudioRef.current = new Audio('/flicker.wav');
+      flickerAudioRef.current.loop = true;
     }
     return flickerAudioRef.current;
-  }, [connectGain]);
+  }, []);
 
   const getCompassBgAudio = useCallback(() => {
     if (!compassBgAudioRef.current) {
-      const el = new Audio('/compass-bg.wav');
-      el.loop = true;
-      connectGain(el);
-      compassBgAudioRef.current = el;
+      compassBgAudioRef.current = new Audio('/compass-bg.wav');
+      compassBgAudioRef.current.loop = true;
     }
     return compassBgAudioRef.current;
-  }, [connectGain]);
+  }, []);
 
   const getPoweroffAudio = useCallback(() => {
     if (!poweroffAudioRef.current) {
-      const el = new Audio('/poweroff.wav');
-      connectGain(el);
-      poweroffAudioRef.current = el;
+      poweroffAudioRef.current = new Audio('/poweroff.wav');
     }
     return poweroffAudioRef.current;
-  }, [connectGain]);
+  }, []);
 
-  /* ── Audio preload on mount ── */
+  /* ── AudioContext + GainNode 연결 — 반드시 유저 제스처 후 호출 ── */
+  const initAudioCtx = useCallback(() => {
+    if (audioCtxRef.current) return;
+    const ctx = new AudioContext();
+    audioCtxRef.current = ctx;
+    const connect = (el: HTMLAudioElement) => {
+      const src = ctx.createMediaElementSource(el);
+      const gain = ctx.createGain();
+      gain.gain.value = GAIN;
+      src.connect(gain);
+      gain.connect(ctx.destination);
+    };
+    connect(getFlickerAudio());
+    connect(getCompassBgAudio());
+    connect(getPoweroffAudio());
+  }, [getFlickerAudio, getCompassBgAudio, getPoweroffAudio]);
+
+  /* ── Audio preload on mount (AudioContext 없이 파일만 로드) ── */
   useEffect(() => {
-    const flicker = getFlickerAudio();
-    flicker.load();
-    const compass = getCompassBgAudio();
-    compass.load();
-    const poweroff = getPoweroffAudio();
-    poweroff.load();
+    getFlickerAudio().load();
+    getCompassBgAudio().load();
+    getPoweroffAudio().load();
     return () => {
-      flicker.pause();
-      compass.pause();
-      poweroff.pause();
+      flickerAudioRef.current?.pause();
+      compassBgAudioRef.current?.pause();
+      poweroffAudioRef.current?.pause();
       audioCtxRef.current?.close();
     };
   }, [getFlickerAudio, getCompassBgAudio, getPoweroffAudio]);
@@ -165,10 +155,11 @@ export default function CompassPage() {
 
   const handleTapStart = useCallback(() => {
     if (!tapReady) return;
+    initAudioCtx();
     getFlickerAudio().play().catch(() => {});
     setIsFading(true);
     setTimeout(() => { setPhase('search'); setIsFading(false); }, 60);
-  }, [tapReady, getFlickerAudio]);
+  }, [tapReady, getFlickerAudio, initAudioCtx]);
 
   /* ═══════════════════════════════════════════
      GEOLOCATION
@@ -510,9 +501,11 @@ export default function CompassPage() {
                   <circle cx={userCircleX} cy={userCircleY} r="12" fill="black" clipPath="url(#tgtClip)" />
                 </g>
 
-                {/* 내부작은십자가 — 자이로스코프 수평 시 중앙 */}
-                <line x1={smallCrossX - 12} y1={smallCrossY}      x2={smallCrossX + 12} y2={smallCrossY}      stroke="#000" strokeWidth="2.2" />
-                <line x1={smallCrossX}      y1={smallCrossY - 12} x2={smallCrossX}      y2={smallCrossY + 12} stroke="#000" strokeWidth="2.2" />
+                {/* 내부작은십자가 — 자이로스코프 수평 시 중앙, 도착 시 숨김 */}
+                {!isArrived && <>
+                  <line x1={smallCrossX - 12} y1={smallCrossY}      x2={smallCrossX + 12} y2={smallCrossY}      stroke="#000" strokeWidth="2.2" />
+                  <line x1={smallCrossX}      y1={smallCrossY - 12} x2={smallCrossX}      y2={smallCrossY + 12} stroke="#000" strokeWidth="2.2" />
+                </>}
               </svg>
             </div>
           </div>

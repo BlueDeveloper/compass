@@ -300,8 +300,9 @@
 }
 
 .arrivalMode .distTrack {
-  border-color: #fff;
-  transition: border-color 1s ease-in;
+  border-color: transparent;
+  background: transparent;
+  transition: border-color 1s ease-in, background 1s ease-in;
 }
 
 .arrivalMode .distTextRow {
