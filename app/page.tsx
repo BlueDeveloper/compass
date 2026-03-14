@@ -476,12 +476,22 @@ export default function CompassPage() {
 
           {/* 방향 안내 문구 */}
           <div className={styles.directionGuide}>
-            Turn 127 degrees to the right...
+            {isArrived
+              ? 'Arrived.'
+              : isAligned
+                ? 'Direction to destination. Go straight.'
+                : turnDeg !== null
+                  ? `Turn ${turnDeg} degrees to the ${turnDir}.`
+                  : '--'}
           </div>
 
           {/* 하단 정보 */}
           <div className={styles.infoSection}>
             <div className={styles.infoGroup}>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Current Tilt:</span>
+                <span className={styles.infoVal}>{tiltBeta.toFixed(0)}°</span>
+              </div>
               <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Current direction:</span>
                 <span className={styles.infoVal}>{heading !== null ? `${heading.toFixed(0)}°` : '--'}</span>
@@ -505,18 +515,6 @@ export default function CompassPage() {
                 <span className={styles.infoVal}>{targetLat.toFixed(5)},&nbsp;{targetLon.toFixed(5)}</span>
               </div>
             </div>
-
-            <div className={styles.infoGroup}>
-              <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Tilt beta:</span>
-                <span className={styles.infoVal}>{tiltBeta.toFixed(1)}°</span>
-              </div>
-              <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Tilt gamma:</span>
-                <span className={styles.infoVal}>{tiltGamma.toFixed(1)}°</span>
-              </div>
-            </div>
-
 
             {geoError && (
               <div className={styles.geoError}>
