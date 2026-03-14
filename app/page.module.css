@@ -154,9 +154,11 @@
   justify-content: flex-start;
 }
 
+/* compassLogoBox와 동일: padding-top 0.6rem / padding-bottom 0.75rem */
 .searchKeyboard .searchLogoLayer {
   padding-top: 0.6rem;
   padding-bottom: 0.75rem;
+  margin-top: 0;
 }
 
 /* ─────────────────────────────────────────

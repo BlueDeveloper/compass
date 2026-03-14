@@ -24,6 +24,7 @@ export default function CompassPage() {
   const [compassFadeIn,  setCompassFadeIn]  = useState(false);
   const [introProgress,  setIntroProgress]  = useState(0);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [vvOffsetTop,     setVvOffsetTop]     = useState(0);
 
   /* ── Search ── */
   const [inputCoords, setInputCoords] = useState('37.5344789 126.9993445');
@@ -98,14 +99,25 @@ export default function CompassPage() {
     return () => clearInterval(id);
   }, [phase]);
 
-  /* ── 키보드 감지 (search 화면에서만) ── */
+  /* ── 키보드 감지 + iOS 스크롤 오프셋 추적 (search 화면에서만) ── */
   useEffect(() => {
-    if (phase !== 'search') { setKeyboardVisible(false); return; }
+    if (phase !== 'search') {
+      setKeyboardVisible(false);
+      setVvOffsetTop(0);
+      return;
+    }
     const vv = (window as any).visualViewport;
     if (!vv) return;
-    const handler = () => setKeyboardVisible(vv.height < window.innerHeight - 100);
+    const handler = () => {
+      setKeyboardVisible(vv.height < window.innerHeight - 100);
+      setVvOffsetTop(vv.offsetTop ?? 0);
+    };
     vv.addEventListener('resize', handler);
-    return () => vv.removeEventListener('resize', handler);
+    vv.addEventListener('scroll', handler);
+    return () => {
+      vv.removeEventListener('resize', handler);
+      vv.removeEventListener('scroll', handler);
+    };
   }, [phase]);
 
   const handleTapStart = useCallback(() => {
@@ -347,7 +359,10 @@ export default function CompassPage() {
           SEARCH SCREEN
       ══════════════════════════════════════ */}
       {phase === 'search' && (
-        <div className={`${styles.searchScreen} ${keyboardVisible ? styles.searchKeyboard : ''}`}>
+        <div
+          className={`${styles.searchScreen} ${keyboardVisible ? styles.searchKeyboard : ''}`}
+          style={keyboardVisible ? { transform: `translateY(${vvOffsetTop}px)` } : undefined}
+        >
           <div className={styles.tvBg} aria-hidden="true" />
           <div className={styles.searchLogoLayer}>
             <div className={styles.logoBox}>
