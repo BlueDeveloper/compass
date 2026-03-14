@@ -299,12 +299,18 @@ export default function CompassPage() {
       /* 나침반 배경음 페이드아웃 완료 후 pause (끊김 방지) */
       setTimeout(() => { compassBgAudioRef.current?.pause(); }, 850);
 
-      /* 파워오프 즉시 재생 — 배경음 페이드아웃과 크로스페이드 */
+      /* 파워오프 재생 — AudioContext resume 완료 후 play */
       if (poweroffGainRef.current) poweroffGainRef.current.gain.value = 2.0;
-      audioCtxRef.current?.resume();
-      const po = getPoweroffAudio();
-      po.currentTime = 0;
-      po.play().catch(() => {});
+      const playPoweroff = () => {
+        const po = getPoweroffAudio();
+        po.currentTime = 0;
+        po.play().catch(() => {});
+      };
+      if (audioCtxRef.current) {
+        audioCtxRef.current.resume().then(playPoweroff).catch(playPoweroff);
+      } else {
+        playPoweroff();
+      }
       setIsArrived(true);
     }, 5000);
   }, [getPoweroffAudio]);
