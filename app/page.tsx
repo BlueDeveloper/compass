@@ -288,14 +288,12 @@ export default function CompassPage() {
   ═══════════════════════════════════════════ */
   const triggerArrival = useCallback(() => {
     if (arrivedTriggeredRef.current) return;
-    debugger; // arrivedPending 시작 시점
     arrivedTriggeredRef.current = true;
     setArrivedPending(true);
 
     /* 5초 후 다크모드 전환 — 그동안 나침반 음원 유지 */
     if (arrivalTimerRef.current) clearTimeout(arrivalTimerRef.current);
     arrivalTimerRef.current = setTimeout(() => {
-      debugger; // isArrived 시작 시점 (5s 후)
       /* 5초 시점에 나침반 배경음 페이드아웃 */
       if (compassGainRef.current && audioCtxRef.current) {
         const ctx = audioCtxRef.current;
@@ -640,11 +638,9 @@ export default function CompassPage() {
 
           {/* 거리 바 */}
           <div className={styles.distBar}>
-            {!arrivedPending && (
-              <div className={styles.distTrack}>
-                <div className={styles.distFill} style={{ width: `${distProgress * 100}%` }} />
-              </div>
-            )}
+            <div className={styles.distTrack}>
+              <div className={styles.distFill} style={{ width: `${distProgress * 100}%` }} />
+            </div>
             <div className={styles.distTextRow}>
               <span>Distance to destination</span>
               <span>{fmtDist(distance)}</span>
