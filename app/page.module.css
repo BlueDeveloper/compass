@@ -289,9 +289,14 @@
   background-color: #000;
 }
 
-/* 원 그룹만 — 1.5s 후(중간) fade out, 십자가는 유지 */
+/* 원 그룹만 — 1.5s 후(중간) fade out */
 .arrivalMode .compassCircles {
   animation: fadeOut 0.8s ease-out 1.5s forwards;
+}
+
+/* SVG 요소 즉시 fade out */
+.svgFadeOut {
+  animation: fadeOut 0.8s ease-out forwards;
 }
 
 @keyframes fadeOut {

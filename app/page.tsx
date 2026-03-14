@@ -627,11 +627,13 @@ export default function CompassPage() {
                   <circle cx={userCircleX} cy={userCircleY} r="12" fill="black" clipPath="url(#tgtClip)" />
                 </g>
 
-                {/* 내부작은십자가 — 도착(pending 포함) 시 숨김 */}
-                {!isArrived && !arrivedPending && <>
-                  <line x1={smallCrossX - 12} y1={smallCrossY}      x2={smallCrossX + 12} y2={smallCrossY}      stroke="#000" strokeWidth="2.2" />
-                  <line x1={smallCrossX}      y1={smallCrossY - 12} x2={smallCrossX}      y2={smallCrossY + 12} stroke="#000" strokeWidth="2.2" />
-                </>}
+                {/* 내부작은십자가 — 도착 시 자연스럽게 fade out */}
+                {!isArrived && (
+                  <g className={arrivedPending ? styles.svgFadeOut : undefined}>
+                    <line x1={smallCrossX - 12} y1={smallCrossY}      x2={smallCrossX + 12} y2={smallCrossY}      stroke="#000" strokeWidth="2.2" />
+                    <line x1={smallCrossX}      y1={smallCrossY - 12} x2={smallCrossX}      y2={smallCrossY + 12} stroke="#000" strokeWidth="2.2" />
+                  </g>
+                )}
               </svg>
             </div>
           </div>
