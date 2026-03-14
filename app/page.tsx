@@ -31,7 +31,7 @@ export default function CompassPage() {
   const [isArrived,      setIsArrived]      = useState(false); // 다크모드 전환
 
   /* ── Search ── */
-  const [inputCoords, setInputCoords] = useState('37.5344789 126.9993445');
+  const [inputCoords, setInputCoords] = useState('37.5344789, 126.9993445');
   const [formError,   setFormError]   = useState('');
 
   /* ── Target ── */
@@ -476,14 +476,15 @@ export default function CompassPage() {
       const ctx = audioCtxRef.current;
       const g   = compassGainRef.current.gain;
       g.cancelScheduledValues(ctx.currentTime);
-      g.setValueAtTime(0, ctx.currentTime);                // 0s: 무음
-      g.linearRampToValueAtTime(1.5, ctx.currentTime + 10); // 10s: 150%
+      g.setValueAtTime(0, ctx.currentTime);                  // 0s: 무음
+      g.setValueAtTime(0, ctx.currentTime + 0.5);            // 0.5s: 무음 유지
+      g.linearRampToValueAtTime(1.5, ctx.currentTime + 4.5); // 4.5s: 150%
 
       compassFadeInDoneRef.current = false;
       if (compassFadeInTimerRef.current) clearTimeout(compassFadeInTimerRef.current);
       compassFadeInTimerRef.current = setTimeout(() => {
         compassFadeInDoneRef.current = true;
-      }, 10100);
+      }, 4600);
     }
 
     setTargetLat(lat);
@@ -583,7 +584,7 @@ export default function CompassPage() {
                 type="text"
                 value={inputCoords}
                 onChange={e => setInputCoords(e.target.value)}
-                placeholder="위도  경도"
+                placeholder="위도, 경도"
                 className={styles.coordInput}
                 onKeyPress={e => e.key === 'Enter' && handleSearch()}
               />
