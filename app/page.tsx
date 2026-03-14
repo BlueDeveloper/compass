@@ -476,15 +476,14 @@ export default function CompassPage() {
       const ctx = audioCtxRef.current;
       const g   = compassGainRef.current.gain;
       g.cancelScheduledValues(ctx.currentTime);
-      g.setValueAtTime(0, ctx.currentTime);          // 0s: 무음
-      g.setValueAtTime(0, ctx.currentTime + 1);      // 1s: 여전히 무음
-      g.linearRampToValueAtTime(1.5, ctx.currentTime + 4); // 4s: 150%
+      g.setValueAtTime(0, ctx.currentTime);               // 0s: 무음
+      g.linearRampToValueAtTime(1.5, ctx.currentTime + 5); // 5s: 150%
 
       compassFadeInDoneRef.current = false;
       if (compassFadeInTimerRef.current) clearTimeout(compassFadeInTimerRef.current);
       compassFadeInTimerRef.current = setTimeout(() => {
         compassFadeInDoneRef.current = true;
-      }, 4100);
+      }, 5100);
     }
 
     setTargetLat(lat);

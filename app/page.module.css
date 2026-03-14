@@ -139,8 +139,8 @@
 }
 
 @keyframes fadeIn {
-  0%, 25% { opacity: 0; }
-  100%    { opacity: 1; }
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 /* ═══════════════════════════════════════════
@@ -285,7 +285,7 @@
   position: fixed;
   inset: 0;
   background: #fff;
-  animation: fadeIn 4s ease-out;
+  animation: fadeIn 5s ease-out;
   display: flex;
   flex-direction: column;
   align-items: center;
