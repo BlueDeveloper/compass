@@ -226,15 +226,6 @@ export default function CompassPage() {
     };
   }, [phase]);
 
-  const handleTapStart = useCallback(() => {
-    if (!tapReady) return;
-    initAudioCtx();
-    requestPermission(); // iOS: 유저 제스처 컨텍스트에서 호출해야 팝업 표시
-    getFlickerAudio().play().catch(() => {});
-    setIsFading(true);
-    setTimeout(() => { setPhase('search'); setIsFading(false); }, 60);
-  }, [tapReady, getFlickerAudio, initAudioCtx, requestPermission]);
-
   /* ═══════════════════════════════════════════
      GEOLOCATION
   ═══════════════════════════════════════════ */
@@ -275,6 +266,15 @@ export default function CompassPage() {
       setPermissionGranted(true);
     }
   }, []);
+
+  const handleTapStart = useCallback(() => {
+    if (!tapReady) return;
+    initAudioCtx();
+    requestPermission(); // iOS: 유저 제스처 컨텍스트에서 호출해야 팝업 표시
+    getFlickerAudio().play().catch(() => {});
+    setIsFading(true);
+    setTimeout(() => { setPhase('search'); setIsFading(false); }, 60);
+  }, [tapReady, getFlickerAudio, initAudioCtx, requestPermission]);
 
   /* search 진입 시 위치 권한 요청 (geo는 useEffect에서 가능) */
   useEffect(() => {
