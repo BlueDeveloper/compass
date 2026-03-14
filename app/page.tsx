@@ -159,9 +159,11 @@ export default function CompassPage() {
 
   const handleTapStart = useCallback(() => {
     if (!tapReady) return;
-    initAudioCtx();
-    getFlickerAudio().play().catch(() => {});
-    setIsFading(true);
+    initAudioCtx();          // 제스처 핸들러 내에서 AudioContext resume
+    setIsFading(true);       // 화면 암전
+    requestAnimationFrame(() => {
+      getFlickerAudio().play().catch(() => {}); // 암전 렌더 후 재생
+    });
     setTimeout(() => { setPhase('search'); setIsFading(false); }, 60);
   }, [tapReady, getFlickerAudio, initAudioCtx]);
 
