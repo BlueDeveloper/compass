@@ -303,23 +303,9 @@
   background-color: #000;
 }
 
-/* distTrack — compassScreen background와 동일한 속도로 어두워짐 */
-.arrivalMode .distTrack {
-  background: #000;
-  transition: background 3s ease-in;
-}
-
-.arrivalMode .distFill {
-  background: #000;
-  transition: background 3s ease-in;
-}
-
-/* 원 그룹만 — 1.5s 후(중간) fade out */
-.arrivalMode .compassCircles {
-  animation: fadeOut 0.8s ease-out 1.5s forwards;
-}
-
-/* SVG 요소 fade out — compassCircles와 동일 속도 */
+/* ── 사라지는 요소: 동일 타이밍 (delay 1.5s, 0.8s ease-out) ── */
+.arrivalMode .compassCircles,
+.arrivalMode .distTrack,
 .svgFadeOut {
   animation: fadeOut 0.8s ease-out 1.5s forwards;
 }
@@ -329,44 +315,36 @@
   to   { opacity: 0; }
 }
 
-/* UI 요소 white 반전 */
+/* ── 흰색으로 전환되는 요소: 동일 타이밍 (delay 1.5s, 1s ease-in) ── */
 .arrivalMode .logoImg {
   filter: invert(1);
-  transition: filter 1s ease-in;
+  transition: filter 1s ease-in 1.5s;
 }
 
+.arrivalMode .compassSvgWrap line {
+  stroke: #fff;
+  transition: stroke 1s ease-in 1.5s;
+}
 
 .arrivalMode .distTextRow {
   color: #fff;
-  transition: color 1s ease-in;
+  transition: color 1s ease-in 1.5s;
 }
 
 .arrivalMode .directionGuide {
   color: #fff;
-  transition: color 1s ease-in;
+  transition: color 1s ease-in 1.5s;
 }
 
 .arrivalMode .infoLabel,
 .arrivalMode .infoVal {
   color: #fff;
-  transition: color 1s ease-in;
-}
-
-.arrivalMode .arrivalBtn {
-  border-color: rgba(255, 255, 255, 0.25);
-  color: rgba(255, 255, 255, 0.35);
-  transition: border-color 1s ease-in, color 1s ease-in;
+  transition: color 1s ease-in 1.5s;
 }
 
 .arrivalMode .geoError {
   color: rgba(255, 100, 100, 0.8);
-  transition: color 1s ease-in;
-}
-
-/* 십자가(line) 흰색으로 전환 */
-.arrivalMode .compassSvgWrap line {
-  stroke: #fff;
-  transition: stroke 1s ease-in;
+  transition: color 1s ease-in 1.5s;
 }
 
 /* ── 최상단 로고 ── */
