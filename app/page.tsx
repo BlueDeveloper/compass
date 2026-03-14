@@ -42,8 +42,10 @@ export default function CompassPage() {
   const [userLat,           setUserLat]           = useState<number | null>(null);
   const [userLon,           setUserLon]           = useState<number | null>(null);
   const [heading,           setHeading]           = useState<number | null>(null);
-  const [permissionGranted, setPermissionGranted] = useState(false);
-  const [geoError,          setGeoError]          = useState<string | null>(null);
+  const [permissionGranted,  setPermissionGranted]  = useState(false);
+  const [geoDenied,          setGeoDenied]          = useState(false);
+  const [orientationDenied,  setOrientationDenied]  = useState(false);
+  const [geoError,           setGeoError]           = useState<string | null>(null);
 
   /* ── Navigation ── */
   const [distance,       setDistance]       = useState<number | null>(null);
@@ -240,9 +242,14 @@ export default function CompassPage() {
     if (geoWatchRef.current !== null) navigator.geolocation.clearWatch(geoWatchRef.current);
     geoWatchRef.current = navigator.geolocation.watchPosition(
       p => { setGeoError(null); setUserLat(p.coords.latitude); setUserLon(p.coords.longitude); },
-      e => setGeoError(e.code === e.PERMISSION_DENIED
-        ? '위치 권한이 거부되었습니다.\niOS: 설정 > 개인정보 > 위치서비스 > Safari'
-        : '위치를 가져올 수 없습니다.'),
+      e => {
+        if (e.code === e.PERMISSION_DENIED) {
+          setGeoDenied(true);
+          setGeoError(null);
+        } else {
+          setGeoError('위치를 가져올 수 없습니다.');
+        }
+      },
       { enableHighAccuracy: true, timeout: 30000, maximumAge: 5000 }
     );
   }, []);
@@ -257,7 +264,8 @@ export default function CompassPage() {
   const requestPermission = useCallback(async () => {
     if (typeof (DeviceOrientationEvent as any)?.requestPermission === 'function') {
       const r = await (DeviceOrientationEvent as any).requestPermission();
-      if (r === 'granted') setPermissionGranted(true);
+      if (r === 'granted') { setPermissionGranted(true); setOrientationDenied(false); }
+      else setOrientationDenied(true);
     } else {
       setPermissionGranted(true);
     }
@@ -582,6 +590,16 @@ export default function CompassPage() {
               />
               {formError && <p className={styles.errorText}>{formError}</p>}
             </div>
+            {(geoDenied || orientationDenied) && (
+              <div className={styles.permissionWarning}>
+                {geoDenied && (
+                  <p>위치 권한 필요: 설정 &gt; 개인정보 &gt; 위치서비스 &gt; Safari</p>
+                )}
+                {orientationDenied && (
+                  <p>나침반 권한 필요: 설정 &gt; Safari &gt; 동작 및 방향</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -264,6 +264,20 @@
   color: #dc2626;
 }
 
+.permissionWarning {
+  margin-top: 0.5rem;
+  font-size: 13px;
+  color: #666666;
+  letter-spacing: 0.01em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.permissionWarning p {
+  margin: 0;
+}
+
 /* ═══════════════════════════════════════════
    COMPASS SCREEN
 ═══════════════════════════════════════════ */
