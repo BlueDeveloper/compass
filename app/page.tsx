@@ -6,8 +6,8 @@ import styles from './page.module.css';
 /* ═══════════════════════════════════════════
    CONSTANTS
 ═══════════════════════════════════════════ */
-const DEFAULT_LAT = 37.2164659;
-const DEFAULT_LON = 127.0351454;
+const DEFAULT_LAT = 37.5344789;
+const DEFAULT_LON = 126.9993445;
 const ARRIVAL_KM  = 0.05;
 const ALIGN_DEG   = 5;
 const FILL_MAX_KM = 1;
@@ -252,7 +252,7 @@ export default function CompassPage() {
   ═══════════════════════════════════════════ */
   const handleSearch = () => {
     setFormError('');
-    const parts = inputCoords.trim().split(/\s+/);
+    const parts = inputCoords.trim().split(/[\s,]+/);
     if (parts.length !== 2) { setFormError('위도와 경도를 공백으로 구분하여 입력하세요'); return; }
     const lat = parseFloat(parts[0]), lon = parseFloat(parts[1]);
     if (isNaN(lat) || isNaN(lon)) { setFormError('올바른 좌표를 입력하세요'); return; }
