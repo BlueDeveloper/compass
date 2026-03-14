@@ -395,8 +395,11 @@ export default function CompassPage() {
 
           {!isArrived && <div className={styles.compassFlicker} aria-hidden="true" />}
 
-          {/* 로고 */}
-          <div className={styles.compassLogoBox}>
+          {/* 로고 — 클릭 시 즉시 도착 */}
+          <div
+            className={styles.compassLogoBox}
+            onClick={() => { manualArrivedRef.current = true; setIsArrived(true); }}
+          >
             <div className={styles.logoBox}>
               <img src="/MPa_LOGO.svg" alt="MPa Logo" className={styles.logoImg} />
             </div>
@@ -496,13 +499,6 @@ export default function CompassPage() {
               </div>
             )}
 
-            {/* 즉시 도착 버튼 */}
-            <button
-              className={styles.arrivalBtn}
-              onClick={() => { manualArrivedRef.current = true; setIsArrived(true); }}
-            >
-              즉시 도착
-            </button>
           </div>
 
         </div>
