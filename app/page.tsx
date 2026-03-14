@@ -325,7 +325,7 @@ export default function CompassPage() {
     ? (angDiff(bearing, heading) > 0 ? 'right' : 'left') : null;
 
   /* 꼭지점 십자가 위치 */
-  const corners = [[10, 10], [290, 10], [10, 290], [290, 290]] as const;
+  const corners = [[15, 15], [285, 15], [15, 285], [285, 285]] as const;
 
   /* ═══════════════════════════════════════════
      RENDER
@@ -423,7 +423,7 @@ export default function CompassPage() {
               <svg width="100%" height="100%" viewBox="-20 -20 340 340" overflow="visible">
                 <defs>
                   <clipPath id="tgtClip">
-                    <circle cx={tgtCircleX} cy={tgtCircleY} r="13" />
+                    <circle cx={tgtCircleX} cy={tgtCircleY} r="12" />
                   </clipPath>
                   <filter id="glowFilter" x="-150%" y="-150%" width="400%" height="400%">
                     <feGaussianBlur stdDeviation="10" result="blur1" />
@@ -457,14 +457,14 @@ export default function CompassPage() {
 
                   {/* 글로우 레이어 */}
                   {isAligned && (
-                    <circle cx={tgtCircleX} cy={tgtCircleY} r="13" fill="black" filter="url(#glowFilter)" />
+                    <circle cx={tgtCircleX} cy={tgtCircleY} r="12" fill="black" filter="url(#glowFilter)" />
                   )}
 
                   {/* 목표 원 — 항상 표시, 속 빈 원 */}
-                  <circle cx={tgtCircleX} cy={tgtCircleY} r="13" fill="none" stroke="black" strokeWidth="1.95" />
+                  <circle cx={tgtCircleX} cy={tgtCircleY} r="12" fill="none" stroke="black" strokeWidth="1.95" />
 
                   {/* 사용자 헤딩 원 — 목표 원과 겹치는 부분만 표시 */}
-                  <circle cx={userCircleX} cy={userCircleY} r="13" fill="black" clipPath="url(#tgtClip)" />
+                  <circle cx={userCircleX} cy={userCircleY} r="12" fill="black" clipPath="url(#tgtClip)" />
                 </g>
 
                 {/* 내부작은십자가 — 자이로스코프 수평 시 중앙 */}
