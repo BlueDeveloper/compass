@@ -601,10 +601,10 @@ export default function CompassPage() {
           <div className={styles.distBar}>
             <div className={styles.distTrack}>
               <div className={styles.distFill} style={{ width: `${distProgress * 100}%` }} />
-              <div className={styles.distTextRow}>
-                <span>Distance to destination</span>
-                <span>{fmtDist(distance)}</span>
-              </div>
+            </div>
+            <div className={styles.distTextRow}>
+              <span>Distance to destination</span>
+              <span>{fmtDist(distance)}</span>
             </div>
           </div>
 

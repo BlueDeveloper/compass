@@ -310,14 +310,8 @@
   transition: filter 1s ease-in;
 }
 
-.arrivalMode .distFill {
-  animation: fadeOut 0.8s ease-out 1.5s forwards;
-}
-
 .arrivalMode .distTrack {
-  background: #000;
-  border-color: #000;
-  transition: background 1s ease-in, border-color 1s ease-in;
+  animation: fadeOut 0.8s ease-out 1.5s forwards;
 }
 
 .arrivalMode .distTextRow {
@@ -390,10 +384,13 @@
   transition: width 0.6s ease-out;
 }
 
-/* 텍스트 행 — 좌측 레이블 / 우측 거리값 */
+/* 텍스트 행 — distBar 기준 absolute (distTrack과 동일 영역) */
 .distTextRow {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
