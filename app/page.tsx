@@ -234,8 +234,8 @@ export default function CompassPage() {
   useEffect(() => {
     if (!permissionGranted) return;
     const handler = (e: DeviceOrientationEvent) => {
-      if (e.beta  !== null) setTiltBeta(p  => p  + 0.25 * (e.beta!  - p));
-      if (e.gamma !== null) setTiltGamma(p => p + 0.25 * (e.gamma! - p));
+      if (e.beta  !== null) { const b = Math.max(-90, Math.min(90, e.beta));  setTiltBeta(p  => p  + 0.25 * (b - p)); }
+      if (e.gamma !== null) { const g = Math.max(-90, Math.min(90, e.gamma)); setTiltGamma(p => p + 0.25 * (g - p)); }
     };
     window.addEventListener('deviceorientation', handler, true);
     return () => window.removeEventListener('deviceorientation', handler, true);
@@ -303,13 +303,11 @@ export default function CompassPage() {
   const tgtCircleY = 150 - Math.cos(relAngle) * RING_R;
 
   /* 내부작은십자가: 수평(beta=0, gamma=0)일 때 중앙 */
-  const safeBeta  = Math.max(-85, Math.min(85, tiltBeta));
-  const safeGamma = Math.max(-85, Math.min(85, tiltGamma));
-  const rawCrossX = 150 + safeGamma * 0.7;
-  const rawCrossY = 150 + safeBeta  * 0.7;
+  const rawCrossX = 150 + tiltGamma * (60 / 90);
+  const rawCrossY = 150 + tiltBeta  * (60 / 90);
   const crossDx = rawCrossX - 150, crossDy = rawCrossY - 150;
   const crossDist = Math.sqrt(crossDx * crossDx + crossDy * crossDy);
-  const crossClamp = crossDist > 42 ? 42 / crossDist : 1;
+  const crossClamp = crossDist > 60 ? 60 / crossDist : 1;
   const smallCrossX = 150 + crossDx * crossClamp;
   const smallCrossY = 150 + crossDy * crossClamp;
 
