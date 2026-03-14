@@ -291,7 +291,7 @@ export default function CompassPage() {
   /* ═══════════════════════════════════════════
      COMPASS GEOMETRY
   ═══════════════════════════════════════════ */
-  const RING_R = 130;
+  const RING_R = 120;
 
   /* 사용자 원: 항상 12시(상단) 고정 */
   const userCircleX = 150;
@@ -447,8 +447,8 @@ export default function CompassPage() {
                 ))}
 
                 {/* 내부 큰 십자가 */}
-                <line x1="90"  y1="150" x2="210" y2="150" stroke="#000" strokeWidth="1.95" />
-                <line x1="150" y1="90"  x2="150" y2="210" stroke="#000" strokeWidth="1.95" />
+                <line x1="90"  y1="150" x2="210" y2="150" stroke="#000" strokeWidth="1.5" />
+                <line x1="150" y1="90"  x2="150" y2="210" stroke="#000" strokeWidth="1.5" />
 
                 {/* 원 그룹 — 도착 시 fade out */}
                 <g className={styles.compassCircles}>
