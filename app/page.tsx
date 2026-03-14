@@ -287,23 +287,23 @@ export default function CompassPage() {
     arrivedTriggeredRef.current = true;
     setArrivedPending(true);
 
-    /* 나침반 배경음 페이드아웃 */
-    if (compassGainRef.current && audioCtxRef.current) {
-      const ctx = audioCtxRef.current;
-      compassGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
-      compassGainRef.current.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
-    }
-
+    /* 5초 후 다크모드 전환 — 그동안 나침반 음원 유지 */
     if (arrivalTimerRef.current) clearTimeout(arrivalTimerRef.current);
     arrivalTimerRef.current = setTimeout(() => {
+      /* 5초 시점에 나침반 배경음 페이드아웃 */
+      if (compassGainRef.current && audioCtxRef.current) {
+        const ctx = audioCtxRef.current;
+        compassGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
+        compassGainRef.current.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+      }
       compassBgAudioRef.current?.pause();
       if (poweroffGainRef.current) poweroffGainRef.current.gain.value = 2.0;
-      audioCtxRef.current?.resume(); // iOS: suspended 상태일 수 있으므로 resume
+      audioCtxRef.current?.resume();
       const po = getPoweroffAudio();
       po.currentTime = 0;
       po.play().catch(() => {});
       setIsArrived(true);
-    }, 1000);
+    }, 5000);
   }, [getPoweroffAudio]);
 
   /* 과녁 클릭 — 5초 거리 감소 시뮬레이션 → 도착 전환 / 재클릭 시 리셋 */
@@ -476,14 +476,14 @@ export default function CompassPage() {
       const ctx = audioCtxRef.current;
       const g   = compassGainRef.current.gain;
       g.cancelScheduledValues(ctx.currentTime);
-      g.setValueAtTime(0, ctx.currentTime);               // 0s: 무음
-      g.linearRampToValueAtTime(1.5, ctx.currentTime + 5); // 5s: 150%
+      g.setValueAtTime(0, ctx.currentTime);                // 0s: 무음
+      g.linearRampToValueAtTime(1.5, ctx.currentTime + 10); // 10s: 150%
 
       compassFadeInDoneRef.current = false;
       if (compassFadeInTimerRef.current) clearTimeout(compassFadeInTimerRef.current);
       compassFadeInTimerRef.current = setTimeout(() => {
         compassFadeInDoneRef.current = true;
-      }, 5100);
+      }, 10100);
     }
 
     setTargetLat(lat);
