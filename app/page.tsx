@@ -58,23 +58,48 @@ export default function CompassPage() {
   const manualArrivedRef = useRef(false);
   const flickerAudioRef   = useRef<HTMLAudioElement | null>(null);
   const compassBgAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef       = useRef<AudioContext | null>(null);
+
+  const GAIN = 1.5; /* 볼륨 배율 — 1.0=원본, 1.5=150% */
+
+  /* ── AudioContext 초기화 (유저 제스처 후 한 번만) ── */
+  const getAudioCtx = useCallback(() => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new AudioContext();
+    }
+    return audioCtxRef.current;
+  }, []);
+
+  /* ── 오디오 엘리먼트 → GainNode 연결 헬퍼 ── */
+  const connectGain = useCallback((el: HTMLAudioElement) => {
+    const ctx = getAudioCtx();
+    const src = ctx.createMediaElementSource(el);
+    const gain = ctx.createGain();
+    gain.gain.value = GAIN;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+  }, [getAudioCtx]);
 
   /* ── Audio helpers ── */
   const getFlickerAudio = useCallback(() => {
     if (!flickerAudioRef.current) {
-      flickerAudioRef.current = new Audio('/flicker.wav');
-      flickerAudioRef.current.loop = true;
+      const el = new Audio('/flicker.wav');
+      el.loop = true;
+      connectGain(el);
+      flickerAudioRef.current = el;
     }
     return flickerAudioRef.current;
-  }, []);
+  }, [connectGain]);
 
   const getCompassBgAudio = useCallback(() => {
     if (!compassBgAudioRef.current) {
-      compassBgAudioRef.current = new Audio('/compass-bg.wav');
-      compassBgAudioRef.current.loop = true;
+      const el = new Audio('/compass-bg.wav');
+      el.loop = true;
+      connectGain(el);
+      compassBgAudioRef.current = el;
     }
     return compassBgAudioRef.current;
-  }, []);
+  }, [connectGain]);
 
   /* ── Audio preload on mount ── */
   useEffect(() => {
@@ -85,6 +110,7 @@ export default function CompassPage() {
     return () => {
       flicker.pause();
       compass.pause();
+      audioCtxRef.current?.close();
     };
   }, [getFlickerAudio, getCompassBgAudio]);
 
