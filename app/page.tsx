@@ -143,9 +143,8 @@ export default function CompassPage() {
   }, []);
 
   useEffect(() => {
-    startGeo();
     return () => { if (geoWatchRef.current !== null) navigator.geolocation.clearWatch(geoWatchRef.current); };
-  }, [startGeo]);
+  }, []);
 
   /* ═══════════════════════════════════════════
      SENSOR PERMISSION
@@ -165,13 +164,13 @@ export default function CompassPage() {
     compassBgAudioRef.current?.pause();
   }, [isArrived]);
 
-  /* compass 진입 시 권한 요청 + 위치 미허용이면 재요청 */
+  /* compass 진입 시 위치 + 방향 권한 요청 */
   useEffect(() => {
     if (phase === 'compass') {
       requestPermission();
-      if (userLat === null) startGeo();
+      startGeo();
     }
-  }, [phase, requestPermission]);
+  }, [phase, requestPermission, startGeo]);
 
   /* ═══════════════════════════════════════════
      HEADING SENSOR
@@ -438,8 +437,8 @@ export default function CompassPage() {
                 {/* 꼭지점 십자가 */}
                 {corners.map(([cx, cy], i) => (
                   <g key={i}>
-                    <line x1={cx - 6} y1={cy}     x2={cx + 6} y2={cy}     stroke="#000" strokeWidth="2" />
-                    <line x1={cx}     y1={cy - 6}  x2={cx}     y2={cy + 6} stroke="#000" strokeWidth="2" />
+                    <line x1={cx - 6} y1={cy}     x2={cx + 6} y2={cy}     stroke="#000" strokeWidth="1.95" />
+                    <line x1={cx}     y1={cy - 6}  x2={cx}     y2={cy + 6} stroke="#000" strokeWidth="1.95" />
                   </g>
                 ))}
 
