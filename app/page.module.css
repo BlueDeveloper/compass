@@ -334,6 +334,8 @@
   flex-shrink: 0;
   padding-top: 0.6rem;
   padding-bottom: 0.75rem;
+  position: relative;
+  z-index: 10;
 }
 
 /* ── 남은거리 프로그레스 바 — progressTrack 기준 크기 ── */
