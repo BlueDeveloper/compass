@@ -492,6 +492,31 @@ export default function CompassPage() {
               </div>
             </div>
 
+            <div className={styles.infoGroup}>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Current location:</span>
+                <span className={styles.infoVal}>
+                  {userLat !== null ? userLat.toFixed(5) : '--'},&nbsp;
+                  {userLon !== null ? userLon.toFixed(5) : '--'}
+                </span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Destination location:</span>
+                <span className={styles.infoVal}>{targetLat.toFixed(5)},&nbsp;{targetLon.toFixed(5)}</span>
+              </div>
+            </div>
+
+            <div className={styles.infoGroup}>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Tilt beta:</span>
+                <span className={styles.infoVal}>{tiltBeta.toFixed(1)}°</span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Tilt gamma:</span>
+                <span className={styles.infoVal}>{tiltGamma.toFixed(1)}°</span>
+              </div>
+            </div>
+
 
             {geoError && (
               <div className={styles.geoError}>
