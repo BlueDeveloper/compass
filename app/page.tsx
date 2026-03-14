@@ -118,12 +118,14 @@ export default function CompassPage() {
 
     connect(getFlickerAudio(), 1.5); // 150% 고정, ref 불필요
 
-    /* poweroff: 유저 제스처 컨텍스트 내에서 play+pause로 iOS unlock */
-    const poGain = connect(getPoweroffAudio(), 0); // gain=0 으로 무음 unlock
+    /* poweroff: 유저 제스처 컨텍스트 내에서 play+pause로 iOS unlock
+       gain=0 유지 → pause 후에 2.0 설정 (unlock 중 소리 방지) */
+    const poGain = connect(getPoweroffAudio(), 0);
     poweroffGainRef.current = poGain;
     const poEl = getPoweroffAudio();
-    poEl.play().then(() => { poEl.pause(); poEl.currentTime = 0; }).catch(() => {});
-    poGain.gain.value = 2.0; // 실제 사용 gain 설정
+    poEl.play()
+      .then(() => { poEl.pause(); poEl.currentTime = 0; poGain.gain.value = 2.0; })
+      .catch(() => { poGain.gain.value = 2.0; });
 
     requestAnimationFrame(() => {
       compassGainRef.current = connect(getCompassBgAudio(), 0); // 0 → 나침반 진입 시 페이드인
