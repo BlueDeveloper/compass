@@ -310,8 +310,19 @@
   transition: filter 1s ease-in;
 }
 
-.arrivalMode .distBar {
+.arrivalMode .distFill {
   animation: fadeOut 0.8s ease-out 1.5s forwards;
+}
+
+.arrivalMode .distTrack {
+  background: #000;
+  border-color: #000;
+  transition: background 1s ease-in, border-color 1s ease-in;
+}
+
+.arrivalMode .distTextRow {
+  color: #fff;
+  transition: color 1s ease-in;
 }
 
 .arrivalMode .directionGuide {
