@@ -325,7 +325,7 @@ export default function CompassPage() {
     ? (angDiff(bearing, heading) > 0 ? 'right' : 'left') : null;
 
   /* 꼭지점 십자가 위치 */
-  const corners = [[-5, -5], [305, -5], [-5, 305], [305, 305]] as const;
+  const corners = [[10, 10], [290, 10], [10, 290], [290, 290]] as const;
 
   /* ═══════════════════════════════════════════
      RENDER
