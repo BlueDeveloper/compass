@@ -311,14 +311,12 @@
 }
 
 .arrivalMode .distTrack {
-  background: #000;
-  border-color: #000;
-  transition: background 1s ease-in 1.5s, border-color 1s ease-in 1.5s;
+  background: transparent;
+  border-color: transparent;
 }
 
 .arrivalMode .distFill {
-  background: #000;
-  transition: background 1s ease-in 1.5s;
+  background: transparent;
 }
 
 .arrivalMode .distTextRow {
