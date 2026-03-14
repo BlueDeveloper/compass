@@ -438,8 +438,8 @@ export default function CompassPage() {
                 {/* 꼭지점 십자가 */}
                 {corners.map(([cx, cy], i) => (
                   <g key={i}>
-                    <line x1={cx - 10} y1={cy}      x2={cx + 10} y2={cy}      stroke="#000" strokeWidth="1.5" />
-                    <line x1={cx}      y1={cy - 10}  x2={cx}      y2={cy + 10} stroke="#000" strokeWidth="1.5" />
+                    <line x1={cx - 6} y1={cy}     x2={cx + 6} y2={cy}     stroke="#000" strokeWidth="2" />
+                    <line x1={cx}     y1={cy - 6}  x2={cx}     y2={cy + 6} stroke="#000" strokeWidth="2" />
                   </g>
                 ))}
 
