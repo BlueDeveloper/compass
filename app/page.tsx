@@ -135,6 +135,22 @@ export default function CompassPage() {
     };
   }, [getFlickerAudio, getCompassBgAudio, getPoweroffAudio]);
 
+  /* ── 나침반 음량 실시간 폴링 (rAF로 실제 gain 값 추적) ── */
+  useEffect(() => {
+    if (phase !== 'compass') return;
+    let rafId: number;
+    let lastVal = -1;
+    const poll = () => {
+      if (compassGainRef.current) {
+        const v = Math.round(compassGainRef.current.gain.value * 100);
+        if (v !== lastVal) { lastVal = v; setDisplayVolume(v); }
+      }
+      rafId = requestAnimationFrame(poll);
+    };
+    rafId = requestAnimationFrame(poll);
+    return () => cancelAnimationFrame(rafId);
+  }, [phase]);
+
   /* ── 거리 기반 나침반 음량 조절 (페이드인 완료 후) ── */
   useEffect(() => {
     if (!compassFadeInDoneRef.current) return;
@@ -158,7 +174,6 @@ export default function CompassPage() {
     const ctx = audioCtxRef.current;
     compassGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
     compassGainRef.current.gain.setValueAtTime(g, ctx.currentTime);
-    setDisplayVolume(Math.round(g * 100));
   }, [distance, arrivedPending, isArrived]);
 
   /* ═══════════════════════════════════════════
@@ -296,7 +311,6 @@ export default function CompassPage() {
     const target = volumeTestMaxRef.current ? 2.0 : 1.5;
     compassGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
     compassGainRef.current.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.5);
-    setDisplayVolume(Math.round(target * 100));
   }, []);
 
   /* ═══════════════════════════════════════════
@@ -424,11 +438,9 @@ export default function CompassPage() {
       g.linearRampToValueAtTime(1.5, ctx.currentTime + 4); // 4s: 150%
 
       compassFadeInDoneRef.current = false;
-      setDisplayVolume(0);
       if (compassFadeInTimerRef.current) clearTimeout(compassFadeInTimerRef.current);
       compassFadeInTimerRef.current = setTimeout(() => {
         compassFadeInDoneRef.current = true;
-        setDisplayVolume(150);
       }, 4100);
     }
 
