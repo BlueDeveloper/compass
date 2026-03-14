@@ -311,7 +311,14 @@
 }
 
 .arrivalMode .distTrack {
-  animation: fadeOut 0.8s ease-out 1.5s forwards;
+  background: #000;
+  border-color: #000;
+  transition: background 1s ease-in 1.5s, border-color 1s ease-in 1.5s;
+}
+
+.arrivalMode .distFill {
+  background: #000;
+  transition: background 1s ease-in 1.5s;
 }
 
 .arrivalMode .distTextRow {
