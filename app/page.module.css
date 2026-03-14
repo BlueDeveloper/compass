@@ -408,7 +408,7 @@
 
 @keyframes glowPulse {
   0%, 100% { opacity: 0.12; }
-  50%       { opacity: 0.70; }
+  50%       { opacity: 1.00; }
 }
 
 /* ── 하단 정보 섹션 ── */
