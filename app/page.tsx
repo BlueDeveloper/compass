@@ -164,10 +164,13 @@ export default function CompassPage() {
     compassBgAudioRef.current?.pause();
   }, [isArrived]);
 
-  /* search 진입 시 위치 권한 요청 (iOS: 새로고침 후 재진입 시 재프롬프트) */
+  /* search 진입 시 모든 권한 요청 */
   useEffect(() => {
-    if (phase === 'search') startGeo();
-  }, [phase, startGeo]);
+    if (phase === 'search') {
+      startGeo();
+      requestPermission();
+    }
+  }, [phase, startGeo, requestPermission]);
 
 
   /* ═══════════════════════════════════════════
@@ -278,7 +281,6 @@ export default function CompassPage() {
     if (lat < -90  || lat > 90)   { setFormError('위도: -90 ~ +90'); return; }
     if (lon < -180 || lon > 180)  { setFormError('경도: -180 ~ +180'); return; }
 
-    requestPermission();
     flickerAudioRef.current?.pause();
     getCompassBgAudio().play().catch(() => {});
     setTargetLat(lat);
