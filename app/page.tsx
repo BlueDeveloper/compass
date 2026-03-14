@@ -64,8 +64,9 @@ export default function CompassPage() {
   const compassFadeInDoneRef  = useRef(false);
   const compassFadeInTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialDistanceRef    = useRef<number | null>(null);
-  const simulatingRef         = useRef(false);
-  const simulationTimerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  const simulatingRef           = useRef(false);
+  const simulationTimerRef      = useRef<ReturnType<typeof setInterval> | null>(null);
+  const simulationStartDistRef  = useRef<number>(1.0);
 
   /* ── Audio refs ── */
   const flickerAudioRef   = useRef<HTMLAudioElement | null>(null);
@@ -311,7 +312,8 @@ export default function CompassPage() {
 
     /* 시뮬 시작 */
     const startDist = distance ?? 1.0;
-    initialDistanceRef.current   = startDist;
+    initialDistanceRef.current      = startDist;
+    simulationStartDistRef.current  = startDist;
     compassFadeInDoneRef.current = true;
     simulatingRef.current        = true;
     const startTime = Date.now();
@@ -497,8 +499,11 @@ export default function CompassPage() {
   const smallCrossX = 150 + crossDx * crossClamp;
   const smallCrossY = 150 + crossDy * crossClamp;
 
+  const fillMax = simulatingRef.current
+    ? simulationStartDistRef.current
+    : FILL_MAX_KM;
   const distProgress = distance !== null
-    ? Math.max(0, Math.min(1, 1 - distance / FILL_MAX_KM))
+    ? Math.max(0, Math.min(1, 1 - distance / fillMax))
     : 0;
 
   const fmtDist = (d: number | null) =>

@@ -294,9 +294,9 @@
   animation: fadeOut 0.8s ease-out 1.5s forwards;
 }
 
-/* SVG 요소 즉시 fade out */
+/* SVG 요소 fade out — compassCircles와 동일 속도 */
 .svgFadeOut {
-  animation: fadeOut 0.8s ease-out forwards;
+  animation: fadeOut 0.8s ease-out 1.5s forwards;
 }
 
 @keyframes fadeOut {
@@ -310,19 +310,8 @@
   transition: filter 1s ease-in;
 }
 
-.arrivalMode .distFill {
+.arrivalMode .distBar {
   animation: fadeOut 0.8s ease-out 1.5s forwards;
-}
-
-.arrivalMode .distTrack {
-  border-color: transparent;
-  background: transparent;
-  transition: border-color 1s ease-in, background 1s ease-in;
-}
-
-.arrivalMode .distTextRow {
-  color: #fff;
-  transition: color 1s ease-in;
 }
 
 .arrivalMode .directionGuide {
