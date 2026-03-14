@@ -193,9 +193,9 @@
 }
 
 @keyframes compassBlink {
-  0%   { opacity: 0; }
-  50%  { opacity: 1; }
-  100% { opacity: 0; }
+  0%   { opacity: 0;    }
+  50%  { opacity: 0.18; }
+  100% { opacity: 0;    }
 }
 
 /* ── 로고 레이어 — 플리커 영향 없음 (z-index 10) ── */
@@ -344,6 +344,8 @@
   max-width: 420px;
   flex-shrink: 0;
   padding-bottom: 0.325rem;
+  position: relative;
+  z-index: 10;
 }
 
 .distTrack {
