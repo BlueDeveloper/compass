@@ -76,13 +76,17 @@ export default function CompassPage() {
     return compassBgAudioRef.current;
   }, []);
 
-  /* ── Audio cleanup on unmount ── */
+  /* ── Audio preload on mount ── */
   useEffect(() => {
+    const flicker = getFlickerAudio();
+    flicker.load();
+    const compass = getCompassBgAudio();
+    compass.load();
     return () => {
-      flickerAudioRef.current?.pause();
-      compassBgAudioRef.current?.pause();
+      flicker.pause();
+      compass.pause();
     };
-  }, []);
+  }, [getFlickerAudio, getCompassBgAudio]);
 
   /* ═══════════════════════════════════════════
      INTRO
