@@ -165,9 +165,12 @@ export default function CompassPage() {
     compassBgAudioRef.current?.pause();
   }, [isArrived]);
 
-  /* compass 진입 시 권한 요청 */
+  /* compass 진입 시 권한 요청 + 위치 미허용이면 재요청 */
   useEffect(() => {
-    if (phase === 'compass') requestPermission();
+    if (phase === 'compass') {
+      requestPermission();
+      if (userLat === null) startGeo();
+    }
   }, [phase, requestPermission]);
 
   /* ═══════════════════════════════════════════
