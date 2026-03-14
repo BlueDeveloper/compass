@@ -490,13 +490,13 @@ export default function CompassPage() {
       const g   = compassGainRef.current.gain;
       g.cancelScheduledValues(ctx.currentTime);
       g.setValueAtTime(0, ctx.currentTime);               // 0s: 0%
-      g.linearRampToValueAtTime(1.5, ctx.currentTime + 6); // 6s: 150%
+      g.linearRampToValueAtTime(1.5, ctx.currentTime + 5); // 5s: 150%
 
       compassFadeInDoneRef.current = false;
       if (compassFadeInTimerRef.current) clearTimeout(compassFadeInTimerRef.current);
       compassFadeInTimerRef.current = setTimeout(() => {
         compassFadeInDoneRef.current = true;
-      }, 6100);
+      }, 5100);
     }
 
     setTargetLat(lat);
