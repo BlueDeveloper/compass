@@ -430,9 +430,6 @@ export default function CompassPage() {
                     <feGaussianBlur in="SourceGraphic" stdDeviation="11" result="blur2" />
                     <feMerge>
                       <feMergeNode in="blur2" />
-                      <feMergeNode in="blur2" />
-                      <feMergeNode in="blur2" />
-                      <feMergeNode in="blur1" />
                       <feMergeNode in="blur1" />
                       <feMergeNode in="SourceGraphic" />
                     </feMerge>
