@@ -89,9 +89,13 @@ export default function CompassPage() {
 
   /* ── AudioContext + GainNode 연결 — 반드시 유저 제스처 후 호출 ── */
   const initAudioCtx = useCallback(() => {
-    if (audioCtxRef.current) return;
+    if (audioCtxRef.current) {
+      audioCtxRef.current.resume();
+      return;
+    }
     const ctx = new AudioContext();
     audioCtxRef.current = ctx;
+    ctx.resume();
     const connect = (el: HTMLAudioElement) => {
       const src = ctx.createMediaElementSource(el);
       const gain = ctx.createGain();
