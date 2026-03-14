@@ -268,7 +268,7 @@ export default function CompassPage() {
     }, 1000);
   }, [getPoweroffAudio]);
 
-  /* 테스트용: 두 번째 클릭 시 리셋 후 재실행 */
+  /* 도착 전환 테스트 (로고 과녁) — 재클릭 시 리셋 후 재실행 */
   const handleTestClick = useCallback(() => {
     if (arrivedTriggeredRef.current) {
       if (arrivalTimerRef.current) clearTimeout(arrivalTimerRef.current);
@@ -284,6 +284,17 @@ export default function CompassPage() {
     }
     triggerArrival();
   }, [triggerArrival]);
+
+  /* 음량 증가 테스트 (distBar) — 클릭마다 150% ↔ 200% 토글 */
+  const volumeTestMaxRef = useRef(false);
+  const handleVolumeTest = useCallback(() => {
+    if (!compassGainRef.current || !audioCtxRef.current) return;
+    const ctx = audioCtxRef.current;
+    volumeTestMaxRef.current = !volumeTestMaxRef.current;
+    const target = volumeTestMaxRef.current ? 2.0 : 1.5;
+    compassGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
+    compassGainRef.current.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.5);
+  }, []);
 
   /* ═══════════════════════════════════════════
      HEADING SENSOR
@@ -541,7 +552,7 @@ export default function CompassPage() {
           </div>
 
           {/* 거리 바 — distBar 클릭으로 도착 테스트 */}
-          <div className={styles.distBar} onClick={handleTestClick} style={{ cursor: 'pointer' }}>
+          <div className={styles.distBar} onClick={handleVolumeTest} style={{ cursor: 'pointer' }}>
             <div className={styles.distTrack}>
               <div className={styles.distFill} style={{ width: `${distProgress * 100}%` }} />
               <div className={styles.distTextRow}>
