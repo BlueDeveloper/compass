@@ -46,7 +46,8 @@ export default function CompassPage() {
   const [geoError,          setGeoError]          = useState<string | null>(null);
 
   /* ── Navigation ── */
-  const [distance,  setDistance]  = useState<number | null>(null);
+  const [distance,       setDistance]       = useState<number | null>(null);
+  const [displayVolume,  setDisplayVolume]  = useState(0); // 나침반 배경음 음량 표시 (%)
   const [bearing,   setBearing]   = useState<number | null>(null);
   const [isAligned, setIsAligned] = useState(false);
 
@@ -157,6 +158,7 @@ export default function CompassPage() {
     const ctx = audioCtxRef.current;
     compassGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
     compassGainRef.current.gain.setValueAtTime(g, ctx.currentTime);
+    setDisplayVolume(Math.round(g * 100));
   }, [distance, arrivedPending, isArrived]);
 
   /* ═══════════════════════════════════════════
@@ -294,6 +296,7 @@ export default function CompassPage() {
     const target = volumeTestMaxRef.current ? 2.0 : 1.5;
     compassGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
     compassGainRef.current.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.5);
+    setDisplayVolume(Math.round(target * 100));
   }, []);
 
   /* ═══════════════════════════════════════════
@@ -421,9 +424,11 @@ export default function CompassPage() {
       g.linearRampToValueAtTime(1.5, ctx.currentTime + 4); // 4s: 150%
 
       compassFadeInDoneRef.current = false;
+      setDisplayVolume(0);
       if (compassFadeInTimerRef.current) clearTimeout(compassFadeInTimerRef.current);
       compassFadeInTimerRef.current = setTimeout(() => {
         compassFadeInDoneRef.current = true;
+        setDisplayVolume(150);
       }, 4100);
     }
 
@@ -560,6 +565,11 @@ export default function CompassPage() {
                 <span>{fmtDist(distance)}</span>
               </div>
             </div>
+          </div>
+
+          {/* 음량 표시 */}
+          <div className={styles.volumeDisplay}>
+            Volume: {displayVolume}%
           </div>
 
           {/* 나침반 SVG */}
