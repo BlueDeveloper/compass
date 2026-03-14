@@ -296,7 +296,10 @@ export default function CompassPage() {
         compassGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
         compassGainRef.current.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
       }
-      compassBgAudioRef.current?.pause();
+      /* 나침반 배경음 페이드아웃 완료 후 pause (끊김 방지) */
+      setTimeout(() => { compassBgAudioRef.current?.pause(); }, 850);
+
+      /* 파워오프 즉시 재생 — 배경음 페이드아웃과 크로스페이드 */
       if (poweroffGainRef.current) poweroffGainRef.current.gain.value = 2.0;
       audioCtxRef.current?.resume();
       const po = getPoweroffAudio();
