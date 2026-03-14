@@ -453,7 +453,7 @@ export default function CompassPage() {
                 {/* 원 그룹 — 도착 시 fade out */}
                 <g className={styles.compassCircles}>
                   {/* 외부 링 */}
-                  <circle cx="150" cy="150" r="140" fill="none" stroke="#000" strokeWidth="1.7" />
+                  <circle cx="150" cy="150" r={RING_R} fill="none" stroke="#000" strokeWidth="1.7" />
 
                   {/* 글로우 레이어 */}
                   {isAligned && (
