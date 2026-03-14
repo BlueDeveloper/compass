@@ -403,7 +403,7 @@
 
 /* ── 목표 원: 방향 일치 시 글로우 펄스 ── */
 .glowCircle {
-  animation: glowPulse 2.4s ease-in-out infinite;
+  animation: glowPulse 1.4s ease-in-out infinite;
 }
 
 @keyframes glowPulse {
