@@ -169,10 +169,6 @@ export default function CompassPage() {
     if (phase === 'search') startGeo();
   }, [phase, startGeo]);
 
-  /* compass 진입 시 방향 센서 권한 요청 */
-  useEffect(() => {
-    if (phase === 'compass') requestPermission();
-  }, [phase, requestPermission]);
 
   /* ═══════════════════════════════════════════
      HEADING SENSOR
@@ -282,6 +278,7 @@ export default function CompassPage() {
     if (lat < -90  || lat > 90)   { setFormError('위도: -90 ~ +90'); return; }
     if (lon < -180 || lon > 180)  { setFormError('경도: -180 ~ +180'); return; }
 
+    requestPermission();
     flickerAudioRef.current?.pause();
     getCompassBgAudio().play().catch(() => {});
     setTargetLat(lat);
