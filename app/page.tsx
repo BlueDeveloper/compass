@@ -634,10 +634,6 @@ export default function CompassPage() {
             </div>
           </div>
 
-          {/* 음량 표시 */}
-          <div className={styles.volumeDisplay}>
-            Volume: {displayVolume}%
-          </div>
 
           {/* 나침반 SVG */}
           <div className={styles.compassArea}>
