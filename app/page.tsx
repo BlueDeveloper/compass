@@ -636,11 +636,13 @@ export default function CompassPage() {
             </div>
           </div>
 
-          {/* 거리 바 — distBar 클릭으로 도착 테스트 */}
+          {/* 거리 바 */}
           <div className={styles.distBar}>
-            <div className={styles.distTrack}>
-              <div className={styles.distFill} style={{ width: `${distProgress * 100}%` }} />
-            </div>
+            {!arrivedPending && (
+              <div className={styles.distTrack}>
+                <div className={styles.distFill} style={{ width: `${distProgress * 100}%` }} />
+              </div>
+            )}
             <div className={styles.distTextRow}>
               <span>Distance to destination</span>
               <span>{fmtDist(distance)}</span>

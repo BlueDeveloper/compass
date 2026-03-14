@@ -324,9 +324,6 @@
   transition: filter 1s ease-in;
 }
 
-.arrivalMode .distTrack {
-  animation: fadeOut 0.8s ease-out 1.5s forwards;
-}
 
 .arrivalMode .distTextRow {
   color: #fff;
