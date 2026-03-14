@@ -89,10 +89,7 @@ export default function CompassPage() {
 
   /* ── AudioContext + GainNode 연결 — 반드시 유저 제스처 후 호출 ── */
   const initAudioCtx = useCallback(() => {
-    if (audioCtxRef.current) {
-      audioCtxRef.current.resume();
-      return;
-    }
+    if (audioCtxRef.current) { audioCtxRef.current.resume(); return; }
     const ctx = new AudioContext();
     audioCtxRef.current = ctx;
     ctx.resume();
@@ -103,9 +100,11 @@ export default function CompassPage() {
       src.connect(gain);
       gain.connect(ctx.destination);
     };
-    connect(getFlickerAudio());
-    connect(getCompassBgAudio());
-    connect(getPoweroffAudio());
+    connect(getFlickerAudio()); // 즉시 — 바로 play() 필요
+    requestAnimationFrame(() => {
+      connect(getCompassBgAudio()); // 다음 프레임에 연결
+      connect(getPoweroffAudio());
+    });
   }, [getFlickerAudio, getCompassBgAudio, getPoweroffAudio]);
 
   /* ── Audio preload on mount (AudioContext 없이 파일만 로드) ── */
@@ -159,11 +158,9 @@ export default function CompassPage() {
 
   const handleTapStart = useCallback(() => {
     if (!tapReady) return;
-    initAudioCtx();          // 제스처 핸들러 내에서 AudioContext resume
-    setIsFading(true);       // 화면 암전
-    requestAnimationFrame(() => {
-      getFlickerAudio().play().catch(() => {}); // 암전 렌더 후 재생
-    });
+    initAudioCtx();
+    getFlickerAudio().play().catch(() => {});
+    setIsFading(true);
     setTimeout(() => { setPhase('search'); setIsFading(false); }, 60);
   }, [tapReady, getFlickerAudio, initAudioCtx]);
 
