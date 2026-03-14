@@ -185,7 +185,7 @@
 .compassFlicker {
   position: absolute;
   inset: 0;
-  background: #f5f5f5;
+  background: #f9f9f9;
   opacity: 0;
   animation: compassBlink 0.08s steps(1) infinite;
   pointer-events: none;
