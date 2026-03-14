@@ -229,10 +229,11 @@ export default function CompassPage() {
   const handleTapStart = useCallback(() => {
     if (!tapReady) return;
     initAudioCtx();
+    requestPermission(); // iOS: 유저 제스처 컨텍스트에서 호출해야 팝업 표시
     getFlickerAudio().play().catch(() => {});
     setIsFading(true);
     setTimeout(() => { setPhase('search'); setIsFading(false); }, 60);
-  }, [tapReady, getFlickerAudio, initAudioCtx]);
+  }, [tapReady, getFlickerAudio, initAudioCtx, requestPermission]);
 
   /* ═══════════════════════════════════════════
      GEOLOCATION
@@ -263,21 +264,24 @@ export default function CompassPage() {
   ═══════════════════════════════════════════ */
   const requestPermission = useCallback(async () => {
     if (typeof (DeviceOrientationEvent as any)?.requestPermission === 'function') {
-      const r = await (DeviceOrientationEvent as any).requestPermission();
-      if (r === 'granted') { setPermissionGranted(true); setOrientationDenied(false); }
-      else setOrientationDenied(true);
+      try {
+        const r = await (DeviceOrientationEvent as any).requestPermission();
+        if (r === 'granted') { setPermissionGranted(true); setOrientationDenied(false); }
+        else setOrientationDenied(true);
+      } catch {
+        setOrientationDenied(true);
+      }
     } else {
       setPermissionGranted(true);
     }
   }, []);
 
-  /* search 진입 시 모든 권한 요청 */
+  /* search 진입 시 위치 권한 요청 (geo는 useEffect에서 가능) */
   useEffect(() => {
     if (phase === 'search') {
       startGeo();
-      requestPermission();
     }
-  }, [phase, startGeo, requestPermission]);
+  }, [phase, startGeo]);
 
   /* ═══════════════════════════════════════════
      ARRIVAL
