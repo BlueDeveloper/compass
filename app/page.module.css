@@ -303,9 +303,15 @@
   background-color: #000;
 }
 
-/* distTrack — isArrived 즉시 빠르게 사라짐 (bg 아직 흰색이라 자연스러움) */
+/* distTrack — compassScreen background와 동일한 속도로 어두워짐 */
 .arrivalMode .distTrack {
-  animation: fadeOut 0.3s ease-out forwards;
+  background: #000;
+  transition: background 3s ease-in;
+}
+
+.arrivalMode .distFill {
+  background: #000;
+  transition: background 3s ease-in;
 }
 
 /* 원 그룹만 — 1.5s 후(중간) fade out */
