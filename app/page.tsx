@@ -164,13 +164,15 @@ export default function CompassPage() {
     compassBgAudioRef.current?.pause();
   }, [isArrived]);
 
-  /* compass 진입 시 위치 + 방향 권한 요청 */
+  /* search 진입 시 위치 권한 요청 (iOS: 새로고침 후 재진입 시 재프롬프트) */
   useEffect(() => {
-    if (phase === 'compass') {
-      requestPermission();
-      startGeo();
-    }
-  }, [phase, requestPermission, startGeo]);
+    if (phase === 'search') startGeo();
+  }, [phase, startGeo]);
+
+  /* compass 진입 시 방향 센서 권한 요청 */
+  useEffect(() => {
+    if (phase === 'compass') requestPermission();
+  }, [phase, requestPermission]);
 
   /* ═══════════════════════════════════════════
      HEADING SENSOR
