@@ -25,11 +25,7 @@ export default function CompassPage() {
   const [introProgress, setIntroProgress] = useState(0);
 
   /* ── Search ── */
-  const [inputCoords, setInputCoords] = useState(() => {
-    const lat = (Math.random() * 180 - 90).toFixed(7);
-    const lon = (Math.random() * 360 - 180).toFixed(7);
-    return `${lat} ${lon}`;
-  });
+  const [inputCoords, setInputCoords] = useState('37.5344789 126.9993445');
   const [formError, setFormError] = useState('');
 
   /* ── Target ── */
@@ -464,19 +460,6 @@ export default function CompassPage() {
               </div>
             </div>
 
-            <div className={styles.infoGroup}>
-              <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Current location:</span>
-                <span className={styles.infoVal}>
-                  {userLat !== null ? userLat.toFixed(5) : '--'},&nbsp;
-                  {userLon !== null ? userLon.toFixed(5) : '--'}
-                </span>
-              </div>
-              <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Destination location:</span>
-                <span className={styles.infoVal}>{targetLat.toFixed(5)},&nbsp;{targetLon.toFixed(5)}</span>
-              </div>
-            </div>
 
             {geoError && (
               <div className={styles.geoError}>
