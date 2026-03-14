@@ -431,6 +431,8 @@ export default function CompassPage() {
                     <feMerge>
                       <feMergeNode in="blur2" />
                       <feMergeNode in="blur2" />
+                      <feMergeNode in="blur2" />
+                      <feMergeNode in="blur1" />
                       <feMergeNode in="blur1" />
                       <feMergeNode in="SourceGraphic" />
                     </feMerge>
