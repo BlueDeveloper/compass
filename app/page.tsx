@@ -468,8 +468,8 @@ export default function CompassPage() {
                 </g>
 
                 {/* 내부작은십자가 — 자이로스코프 수평 시 중앙 */}
-                <line x1={smallCrossX - 12} y1={smallCrossY}      x2={smallCrossX + 12} y2={smallCrossY}      stroke="#000" strokeWidth="1.95" />
-                <line x1={smallCrossX}      y1={smallCrossY - 12} x2={smallCrossX}      y2={smallCrossY + 12} stroke="#000" strokeWidth="1.95" />
+                <line x1={smallCrossX - 12} y1={smallCrossY}      x2={smallCrossX + 12} y2={smallCrossY}      stroke="#000" strokeWidth="2.2" />
+                <line x1={smallCrossX}      y1={smallCrossY - 12} x2={smallCrossX}      y2={smallCrossY + 12} stroke="#000" strokeWidth="2.2" />
               </svg>
             </div>
           </div>
