@@ -622,7 +622,7 @@ export default function CompassPage() {
       {phase === 'compass' && (
         <div className={`${styles.compassScreen} ${isArrived ? styles.arrivalMode : ''}`}>
 
-          {!isArrived && !arrivedPending && <div className={styles.compassFlicker} aria-hidden="true" />}
+          {!isArrived && <div className={styles.compassFlicker} aria-hidden="true" />}
 
           {/* 로고 — 과녁(좌측 원형) 클릭 시 도착 처리 */}
           <div className={styles.compassLogoBox}>
