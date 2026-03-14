@@ -58,6 +58,7 @@ export default function CompassPage() {
   const manualArrivedRef = useRef(false);
   const flickerAudioRef   = useRef<HTMLAudioElement | null>(null);
   const compassBgAudioRef = useRef<HTMLAudioElement | null>(null);
+  const poweroffAudioRef  = useRef<HTMLAudioElement | null>(null);
   const audioCtxRef       = useRef<AudioContext | null>(null);
 
   const GAIN = 1.5; /* 볼륨 배율 — 1.0=원본, 1.5=150% */
@@ -101,18 +102,30 @@ export default function CompassPage() {
     return compassBgAudioRef.current;
   }, [connectGain]);
 
+  const getPoweroffAudio = useCallback(() => {
+    if (!poweroffAudioRef.current) {
+      const el = new Audio('/poweroff.wav');
+      connectGain(el);
+      poweroffAudioRef.current = el;
+    }
+    return poweroffAudioRef.current;
+  }, [connectGain]);
+
   /* ── Audio preload on mount ── */
   useEffect(() => {
     const flicker = getFlickerAudio();
     flicker.load();
     const compass = getCompassBgAudio();
     compass.load();
+    const poweroff = getPoweroffAudio();
+    poweroff.load();
     return () => {
       flicker.pause();
       compass.pause();
+      poweroff.pause();
       audioCtxRef.current?.close();
     };
-  }, [getFlickerAudio, getCompassBgAudio]);
+  }, [getFlickerAudio, getCompassBgAudio, getPoweroffAudio]);
 
   /* ═══════════════════════════════════════════
      INTRO
@@ -188,11 +201,13 @@ export default function CompassPage() {
     }
   }, []);
 
-  /* 도착 → 나침반 배경음 정지 */
+  /* 도착 → 나침반 배경음 정지 + poweroff 재생 */
   useEffect(() => {
     if (!isArrived) return;
     compassBgAudioRef.current?.pause();
-  }, [isArrived]);
+    getPoweroffAudio().currentTime = 0;
+    getPoweroffAudio().play().catch(() => {});
+  }, [isArrived, getPoweroffAudio]);
 
   /* search 진입 시 모든 권한 요청 */
   useEffect(() => {
