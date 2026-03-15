@@ -625,16 +625,6 @@ export default function CompassPage() {
               />
               {formError && <p className={styles.errorText}>{formError}</p>}
             </div>
-            {(geoDenied || orientationDenied) && (
-              <div className={styles.permissionWarning}>
-                {geoDenied && (
-                  <p>위치 권한 필요: 설정 &gt; 개인정보 &gt; 위치서비스 &gt; Safari</p>
-                )}
-                {orientationDenied && (
-                  <p>나침반 권한 필요: 설정 &gt; Safari &gt; 동작 및 방향</p>
-                )}
-              </div>
-            )}
           </div>
         </div>
       )}
