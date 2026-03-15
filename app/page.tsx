@@ -20,6 +20,9 @@ export default function CompassPage() {
   /* ── PC 차단 ── */
   const [isMobile, setIsMobile] = useState(true); // SSR 기본값 true
 
+  /* ── 인앱브라우저 감지 ── */
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+
   /* ── Phase ── */
   const [phase,             setPhase]             = useState<'intro' | 'search' | 'compass'>('intro');
   const [tapReady,          setTapReady]          = useState(false);
@@ -137,10 +140,11 @@ export default function CompassPage() {
     });
   }, [getFlickerAudio, getCompassBgAudio, getPoweroffAudio]);
 
-  /* ── PC 감지 (클라이언트 전용) ── */
+  /* ── PC 감지 + 인앱브라우저 감지 (클라이언트 전용) ── */
   useEffect(() => {
     const ua = navigator.userAgent;
     setIsMobile(/iPhone|iPad|iPod|Android|Mobile/i.test(ua));
+    setIsInAppBrowser(/KAKAOTALK|Line|Instagram|FBAN|FBAV|Twitter|NaverApp|MicroMessenger/i.test(ua));
   }, []);
 
   /* ── Audio preload on mount (AudioContext 없이 파일만 로드) ── */
@@ -568,6 +572,15 @@ export default function CompassPage() {
 
   return (
     <div className={styles.root}>
+
+      {isInAppBrowser && (
+        <div className={styles.inAppBanner}>
+          <p>나침반 기능은 Safari에서만 작동합니다</p>
+          <a href={typeof window !== 'undefined' ? window.location.href : ''} target="_blank" rel="noopener noreferrer" className={styles.inAppBannerBtn}>
+            Safari에서 열기
+          </a>
+        </div>
+      )}
 
       {isFading      && <div className={styles.fadeOverlay}   aria-hidden="true" />}
       {compassFadeIn && <div className={styles.fadeOverlayIn} aria-hidden="true" />}

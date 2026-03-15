@@ -20,6 +20,44 @@
 }
 
 /* ═══════════════════════════════════════════
+   인앱브라우저 배너
+═══════════════════════════════════════════ */
+.inAppBanner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: #000;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px;
+  font-family: 'Helvetica Neue', sans-serif;
+}
+
+.inAppBanner p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #ccc;
+}
+
+.inAppBannerBtn {
+  flex-shrink: 0;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 20px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════
    ROOT — 전체 화면 고정, 흰색 배경
 ═══════════════════════════════════════════ */
 .root {
