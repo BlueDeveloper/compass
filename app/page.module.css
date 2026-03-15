@@ -180,16 +180,28 @@
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 49px);
 }
 
-/* ── 키보드 열림 시 → 나침반 화면 로고 위치와 동일하게 상단 고정 ── */
+/* ── 키보드 열림 시 → compassScreen과 완전히 동일한 레이아웃 구조 ── */
 .searchKeyboard {
   justify-content: flex-start;
+  gap: 0;                    /* compassScreen에도 gap 없음 */
+  padding-left: 0.8rem;      /* compassScreen과 동일 */
+  padding-right: 0.8rem;
+  /* padding-top은 vvOffsetTop 보정을 위해 JS inline style로 덮어씀 */
 }
 
-/* compassLogoBox와 동일: padding-top 0.6rem / padding-bottom 0.75rem */
+/* compassLogoBox와 완전히 동일한 크기·여백 */
 .searchKeyboard .searchLogoLayer {
+  width: 100%;               /* compassLogoBox: width 100% */
+  max-width: 420px;
   padding-top: 0.6rem;
   padding-bottom: 0.75rem;
   margin-top: 0;
+}
+
+/* distBar와 동일한 너비 */
+.searchKeyboard .searchInputLayer {
+  width: 100%;
+  max-width: 420px;
 }
 
 /* ─────────────────────────────────────────

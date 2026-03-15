@@ -600,6 +600,12 @@ export default function CompassPage() {
       {phase === 'search' && (
         <div
           className={`${styles.searchScreen} ${keyboardVisible ? styles.searchKeyboard : ''}`}
+          style={keyboardVisible ? {
+            // vvOffsetTop: visualViewport.offsetTop 보정
+            // iOS Safari에서 키보드 시 visual viewport가 layout viewport보다 아래에서 시작하므로
+            // padding-top에 오프셋을 더해 compass screen과 동일한 위치에 표시
+            paddingTop: `calc(env(safe-area-inset-top, 20px) + ${vvOffsetTop}px)`
+          } : undefined}
         >
           <div className={styles.tvBg} aria-hidden="true" />
           <div className={styles.searchLogoLayer}>
