@@ -1,4 +1,25 @@
 /* ═══════════════════════════════════════════
+   PC 차단 화면
+═══════════════════════════════════════════ */
+.desktopBlock {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  font-family: 'Helvetica Neue';
+}
+
+.desktopBlock p {
+  font-size: 16px;
+  font-weight: 700;
+  color: #000;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════
    ROOT — 전체 화면 고정, 흰색 배경
 ═══════════════════════════════════════════ */
 .root {
@@ -306,7 +327,7 @@
 /* ── 사라지는 요소: 즉시 0.8s ease-out ── */
 .arrivalMode .compassCircles,
 .arrivalMode .distTrack,
-.svgFadeOut {
+.arrivalMode .compassCross {
   animation: fadeOut 0.8s ease-out forwards;
 }
 
@@ -430,7 +451,7 @@
   padding: 0 0 1.5rem;
   position: relative;
   z-index: 10;
-  margin-top: 13px;
+  margin-top: 14px;
 }
 
 .compassSvgWrap {

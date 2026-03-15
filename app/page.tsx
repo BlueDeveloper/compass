@@ -17,6 +17,9 @@ const FILL_MAX_KM = 1;
 ═══════════════════════════════════════════ */
 export default function CompassPage() {
 
+  /* ── PC 차단 ── */
+  const [isMobile, setIsMobile] = useState(true); // SSR 기본값 true
+
   /* ── Phase ── */
   const [phase,             setPhase]             = useState<'intro' | 'search' | 'compass'>('intro');
   const [tapReady,          setTapReady]          = useState(false);
@@ -133,6 +136,12 @@ export default function CompassPage() {
       compassGainRef.current = connect(getCompassBgAudio(), 0); // 0 → 나침반 진입 시 페이드인
     });
   }, [getFlickerAudio, getCompassBgAudio, getPoweroffAudio]);
+
+  /* ── PC 감지 (클라이언트 전용) ── */
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    setIsMobile(/iPhone|iPad|iPod|Android|Mobile/i.test(ua));
+  }, []);
 
   /* ── Audio preload on mount (AudioContext 없이 파일만 로드) ── */
   useEffect(() => {
@@ -548,6 +557,15 @@ export default function CompassPage() {
   /* ═══════════════════════════════════════════
      RENDER
   ═══════════════════════════════════════════ */
+  /* ── PC 차단 화면 ── */
+  if (!isMobile) {
+    return (
+      <div className={styles.desktopBlock}>
+        <p>Please access via the mobile web.</p>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.root}>
 
@@ -582,7 +600,6 @@ export default function CompassPage() {
       {phase === 'search' && (
         <div
           className={`${styles.searchScreen} ${keyboardVisible ? styles.searchKeyboard : ''}`}
-          style={keyboardVisible ? { transform: `translateY(${vvOffsetTop}px)` } : undefined}
         >
           <div className={styles.tvBg} aria-hidden="true" />
           <div className={styles.searchLogoLayer}>
@@ -691,13 +708,11 @@ export default function CompassPage() {
                   <circle cx={userCircleX} cy={userCircleY} r="12" fill="black" clipPath="url(#tgtClip)" />
                 </g>
 
-                {/* 내부작은십자가 — 도착 시 자연스럽게 fade out */}
-                {!isArrived && (
-                  <g className={arrivedPending ? styles.svgFadeOut : undefined}>
-                    <line x1={smallCrossX - 12} y1={smallCrossY}      x2={smallCrossX + 12} y2={smallCrossY}      stroke="#000" strokeWidth="2.2" />
-                    <line x1={smallCrossX}      y1={smallCrossY - 12} x2={smallCrossX}      y2={smallCrossY + 12} stroke="#000" strokeWidth="2.2" />
-                  </g>
-                )}
+                {/* 내부작은십자가 — arrivalMode 진입 시 다른 요소와 동일하게 fade out */}
+                <g className={styles.compassCross}>
+                  <line x1={smallCrossX - 12} y1={smallCrossY}      x2={smallCrossX + 12} y2={smallCrossY}      stroke="#000" strokeWidth="2.2" />
+                  <line x1={smallCrossX}      y1={smallCrossY - 12} x2={smallCrossX}      y2={smallCrossY + 12} stroke="#000" strokeWidth="2.2" />
+                </g>
               </svg>
             </div>
           </div>
